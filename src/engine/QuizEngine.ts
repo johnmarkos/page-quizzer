@@ -6,6 +6,7 @@ import type {
   EngineState,
   EngineEvent,
   EngineEventPayloads,
+  EngineSnapshot,
 } from './types.js';
 import { shuffle } from './utils.js';
 
@@ -138,6 +139,26 @@ export class QuizEngine {
     } else {
       this.#showCurrentQuestion();
     }
+  }
+
+  /** Serialize engine state for persistence (e.g., across service worker restarts) */
+  serialize(): EngineSnapshot {
+    return {
+      state: this.#state,
+      problems: this.#problems.map(p => ({ ...p, options: [...p.options] })),
+      currentIndex: this.#currentIndex,
+      answers: [...this.#answers],
+      startedAt: this.#startedAt,
+    };
+  }
+
+  /** Restore engine from a serialized snapshot. Does not emit events. */
+  restore(snapshot: EngineSnapshot): void {
+    this.#state = snapshot.state;
+    this.#problems = snapshot.problems.map(p => ({ ...p, options: [...p.options] }));
+    this.#currentIndex = snapshot.currentIndex;
+    this.#answers = [...snapshot.answers];
+    this.#startedAt = snapshot.startedAt;
   }
 
   #showCurrentQuestion(): void {

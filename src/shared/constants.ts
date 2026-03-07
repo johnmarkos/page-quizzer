@@ -8,4 +8,6 @@ export const STORAGE_KEYS = {
   DENSITY: 'density',
   MAX_QUESTIONS: 'maxQuestions',
   SESSIONS: 'sessions',
+  ENGINE_SNAPSHOT: 'engineSnapshot',
+  LAST_EXTRACTED: 'lastExtracted',
 } as const;

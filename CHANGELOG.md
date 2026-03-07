@@ -1,5 +1,31 @@
 # Changelog
 
+## v0.1.1 — Readability + Persistence (2026-03-07)
+
+### Content Extraction
+- Integrated `@mozilla/readability` as proper npm dependency, bundled by esbuild into content script
+- Removed manual vendoring plan (`src/lib/` directory) — esbuild handles bundling
+
+### Service Worker Persistence
+- Engine state persisted to `chrome.storage.local` on every state transition
+- Restored automatically when service worker restarts mid-quiz
+- `QuizEngine.serialize()` / `restore()` methods for snapshot/restore lifecycle
+- Panel requests current state on open via `GET_STATE` message
+- Persisted state cleared on quiz completion
+
+### Bug Fixes
+- Fixed: incorrect answer options were not highlighted red (panel now tracks selected option index)
+- Fixed: message types `GET_SETTINGS`, `SAVE_SETTINGS`, `TEST_CONNECTION`, `GET_SESSIONS` were missing from the `Message` union, requiring `as any` casts in the service worker
+- Removed dead `currentProblems` variable from panel
+- Removed premature `DETECT_OPENQUIZZER` message handler with `as any` cast from content script
+
+### Testing
+- 29 tests (was 26): added serialize, restore, and defensive copy tests
+
+### Process
+- Added self-review loop to AGENTS.md (adapted from OpenQuizzer)
+- Expanded AGENTS.md with project overview, readability guidelines, lessons learned
+
 ## v0.1.0 — Initial scaffold (2026-03-07)
 
 ### Quiz Engine (shared core)

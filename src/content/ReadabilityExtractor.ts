@@ -1,7 +1,5 @@
+import { Readability } from '@mozilla/readability';
 import type { ExtractedContent } from '../shared/messages.js';
-
-// Readability is loaded as a content script; we reference it globally
-declare const Readability: any;
 
 export function extractContent(): ExtractedContent {
   // Clone the document since Readability mutates the DOM
@@ -13,15 +11,13 @@ export function extractContent(): ExtractedContent {
   let excerpt = '';
 
   try {
-    if (typeof Readability !== 'undefined') {
-      const reader = new Readability(clone);
-      const article = reader.parse();
-      if (article) {
-        title = article.title || title;
-        content = article.content || '';
-        textContent = article.textContent || '';
-        excerpt = article.excerpt || '';
-      }
+    const reader = new Readability(clone);
+    const article = reader.parse();
+    if (article) {
+      title = article.title || title;
+      content = article.content || '';
+      textContent = article.textContent || '';
+      excerpt = article.excerpt || '';
     }
   } catch {
     // Readability failed — fall through to fallback

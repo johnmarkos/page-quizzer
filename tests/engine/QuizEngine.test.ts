@@ -181,6 +181,66 @@ describe('QuizEngine', () => {
     expect(events.length).toBe(1); // no new events after off
   });
 
+  // --- Serialize / Restore ---
+
+  it('serializes engine state', () => {
+    engine.loadProblems([mockProblem('1'), mockProblem('2')]);
+    engine.start(false);
+    engine.selectOption(0);
+
+    const snapshot = engine.serialize();
+    expect(snapshot.state).toBe('answered');
+    expect(snapshot.problems.length).toBe(2);
+    expect(snapshot.currentIndex).toBe(0);
+    expect(snapshot.answers.length).toBe(1);
+    expect(snapshot.startedAt).toBeGreaterThan(0);
+  });
+
+  it('restores engine from snapshot', () => {
+    engine.loadProblems([mockProblem('1'), mockProblem('2'), mockProblem('3')]);
+    engine.start(false);
+    engine.selectOption(0); // answer first correctly
+    engine.next();
+
+    // Snapshot mid-quiz at question 2
+    const snapshot = engine.serialize();
+    expect(snapshot.state).toBe('practicing');
+    expect(snapshot.currentIndex).toBe(1);
+
+    // Restore into a fresh engine
+    const restored = new QuizEngine();
+    restored.restore(snapshot);
+
+    expect(restored.state).toBe('practicing');
+    expect(restored.currentIndex).toBe(1);
+    expect(restored.totalProblems).toBe(3);
+    expect(restored.currentProblem?.id).toBe('2');
+
+    // Continue the quiz
+    const completions = collectEvents(restored, 'quizComplete');
+    restored.selectOption(0);
+    restored.next();
+    restored.selectOption(0);
+    restored.next();
+
+    expect(completions.length).toBe(1);
+    expect(completions[0].score.correct).toBe(3);
+    expect(completions[0].score.total).toBe(3);
+  });
+
+  it('restore makes defensive copies', () => {
+    engine.loadProblems([mockProblem('1')]);
+    engine.start(false);
+    const snapshot = engine.serialize();
+
+    // Mutate the snapshot after restoring
+    const restored = new QuizEngine();
+    restored.restore(snapshot);
+    snapshot.problems[0].question = 'Mutated!';
+
+    expect(restored.currentProblem?.question).toBe('Question 1?');
+  });
+
   it('makes defensive copies of problems', () => {
     const original = [mockProblem('1')];
     engine.loadProblems(original);

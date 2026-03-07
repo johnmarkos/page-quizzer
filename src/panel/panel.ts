@@ -9,7 +9,7 @@ function show(el: HTMLElement) { el.classList.remove('hidden'); }
 function hide(el: HTMLElement) { el.classList.add('hidden'); }
 
 // --- State ---
-let currentProblems: Problem[] = [];
+let selectedOptionIndex = -1;
 
 // --- Navigation ---
 document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -39,9 +39,9 @@ $('generate-btn').addEventListener('click', async () => {
     if (response?.type === 'QUIZ_ERROR') {
       showError(response.payload.error);
     } else if (response?.type === 'QUIZ_GENERATED') {
-      currentProblems = response.payload.problems;
+      const count = response.payload.problems.length;
       ($('ready-info') as HTMLElement).textContent =
-        `Generated ${currentProblems.length} questions from "${response.payload.title}"`;
+        `Generated ${count} questions from "${response.payload.title}"`;
       showQuizSection('quiz-ready');
     }
   } catch (err) {
@@ -113,6 +113,7 @@ function showQuestion(payload: { problem: Problem; index: number; total: number 
     btn.className = 'option-btn';
     btn.innerHTML = `<span class="option-key">${i + 1}</span>${escapeHtml(opt.text)}`;
     btn.addEventListener('click', () => {
+      selectedOptionIndex = i;
       chrome.runtime.sendMessage({ type: 'ANSWER_QUESTION', payload: { optionIndex: i } });
     });
     container.appendChild(btn);
@@ -135,20 +136,16 @@ function showAnswerResult(payload: { correct: boolean; correctIndex: number; exp
     hide(explanationText);
   }
 
-  // Highlight options
+  // Highlight correct answer green, selected wrong answer red
   const options = document.querySelectorAll('.option-btn');
   options.forEach((btn, i) => {
     (btn as HTMLButtonElement).disabled = true;
-    if (i === payload.correctIndex) btn.classList.add('correct');
+    if (i === payload.correctIndex) {
+      btn.classList.add('correct');
+    } else if (!payload.correct && i === selectedOptionIndex) {
+      btn.classList.add('incorrect');
+    }
   });
-
-  // Find the selected (incorrect) one
-  if (!payload.correct) {
-    // The selected button was clicked before the result came back
-    // We can identify it by checking which isn't the correct one and was clicked
-    // Since we don't track which was clicked here, mark all non-correct as potentially incorrect
-    // Actually, we'll rely on the fact that the user sees correct highlighted green
-  }
 }
 
 function showComplete(payload: SessionSummary) {
@@ -259,3 +256,26 @@ function escapeHtml(text: string): string {
   div.textContent = text;
   return div.innerHTML;
 }
+
+// --- Restore state on panel open ---
+// If the service worker was restarted mid-quiz, the panel needs to catch up
+async function checkRestoredState() {
+  try {
+    const response = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
+    if (response?.type === 'RESTORED_STATE' && response.payload) {
+      const { state, problem, index, total } = response.payload;
+      if (state === 'practicing' && problem) {
+        showQuestion({ problem, index, total });
+      }
+      // If answered, we can't restore the answer highlights — show the question
+      // and let the user re-answer (minor UX tradeoff vs. complexity)
+      if (state === 'answered' && problem) {
+        showQuestion({ problem, index, total });
+      }
+    }
+  } catch {
+    // Service worker not ready yet — panel will show idle state
+  }
+}
+
+checkRestoredState();

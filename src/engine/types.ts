@@ -39,6 +39,15 @@ export type EngineEvent =
   | 'answerResult'
   | 'quizComplete';
 
+/** Serializable snapshot of engine state for persistence across service worker restarts */
+export type EngineSnapshot = {
+  state: EngineState;
+  problems: Problem[];
+  currentIndex: number;
+  answers: Answer[];
+  startedAt: number;
+};
+
 export type EngineEventPayloads = {
   stateChange: { from: EngineState; to: EngineState };
   questionShow: { problem: Problem; index: number; total: number };

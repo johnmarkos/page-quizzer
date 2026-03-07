@@ -8,5 +8,6 @@ export type {
   EngineState,
   EngineEvent,
   EngineEventPayloads,
+  EngineSnapshot,
 } from './types.js';
 export { shuffle, generateId, clamp } from './utils.js';

@@ -3,17 +3,53 @@ import { QuizGenerator } from './QuizGenerator.js';
 import { StorageManager, type SessionRecord } from './StorageManager.js';
 import { createProvider } from '../providers/index.js';
 import type { Message, ExtractedContent } from '../shared/messages.js';
+import type { EngineSnapshot } from '../engine/types.js';
 import { generateId } from '../engine/utils.js';
+import { STORAGE_KEYS } from '../shared/constants.js';
 
 const storage = new StorageManager();
 const engine = new QuizEngine();
 
 let lastExtracted: ExtractedContent | null = null;
 
-// Open side panel on action click
+// --- Service worker persistence ---
+// Persist engine state on every state change so Chrome can kill/restart the worker safely
+
+engine.on('stateChange', async () => {
+  await persistState();
+});
+
+async function persistState() {
+  const snapshot = engine.serialize();
+  await chrome.storage.local.set({
+    [STORAGE_KEYS.ENGINE_SNAPSHOT]: snapshot,
+    [STORAGE_KEYS.LAST_EXTRACTED]: lastExtracted,
+  });
+}
+
+async function restoreState() {
+  const data = await chrome.storage.local.get([
+    STORAGE_KEYS.ENGINE_SNAPSHOT,
+    STORAGE_KEYS.LAST_EXTRACTED,
+  ]);
+  const snapshot = data[STORAGE_KEYS.ENGINE_SNAPSHOT] as EngineSnapshot | undefined;
+  if (snapshot && snapshot.state !== 'idle' && snapshot.problems.length > 0) {
+    engine.restore(snapshot);
+    lastExtracted = data[STORAGE_KEYS.LAST_EXTRACTED] || null;
+  }
+}
+
+async function clearPersistedState() {
+  await chrome.storage.local.remove([STORAGE_KEYS.ENGINE_SNAPSHOT, STORAGE_KEYS.LAST_EXTRACTED]);
+}
+
+// Restore on startup
+restoreState();
+
+// --- Side panel setup ---
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 
-// Wire engine events to panel messages
+// --- Wire engine events to panel messages ---
 engine.on('questionShow', (payload) => {
   broadcast({ type: 'QUESTION_SHOW', payload });
 });
@@ -25,7 +61,7 @@ engine.on('answerResult', (payload) => {
 engine.on('quizComplete', async (payload) => {
   broadcast({ type: 'QUIZ_COMPLETE', payload });
 
-  // Save session
+  // Save session record
   if (lastExtracted) {
     const record: SessionRecord = {
       ...payload,
@@ -36,9 +72,12 @@ engine.on('quizComplete', async (payload) => {
     };
     await storage.saveSession(record);
   }
+
+  // Clear persisted mid-quiz state
+  await clearPersistedState();
 });
 
-// Message handling
+// --- Message handling ---
 chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
   handleMessage(message, sender).then(sendResponse).catch(err => {
     sendResponse({ type: 'QUIZ_ERROR', payload: { error: err.message } });
@@ -62,18 +101,38 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
     case 'SKIP_QUESTION':
       engine.skip();
       return { type: 'ok' };
-    case 'GET_SETTINGS' as any:
+    case 'GET_SETTINGS':
       return { type: 'SETTINGS', payload: await storage.getSettings() };
-    case 'SAVE_SETTINGS' as any:
-      await storage.saveSettings((message as any).payload);
+    case 'SAVE_SETTINGS':
+      await storage.saveSettings(message.payload);
       return { type: 'ok' };
-    case 'TEST_CONNECTION' as any:
+    case 'TEST_CONNECTION':
       return await handleTestConnection();
-    case 'GET_SESSIONS' as any:
+    case 'GET_SESSIONS':
       return { type: 'SESSIONS', payload: await storage.getSessions() };
+    case 'GET_STATE':
+      return await handleGetState();
     default:
       return { type: 'ok' };
   }
+}
+
+/** Panel can request current engine state on open (in case worker was restored) */
+async function handleGetState() {
+  const state = engine.state;
+  if (state === 'practicing' || state === 'answered') {
+    return {
+      type: 'RESTORED_STATE',
+      payload: {
+        state,
+        problem: engine.currentProblem,
+        index: engine.currentIndex,
+        total: engine.totalProblems,
+        title: lastExtracted?.title || 'Restored Quiz',
+      },
+    };
+  }
+  return { type: 'RESTORED_STATE', payload: { state } };
 }
 
 async function handleGenerateQuiz() {

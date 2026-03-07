@@ -4,11 +4,11 @@ Future features and improvements for PageQuizzer. Completed work is in `CHANGELO
 
 ## Next Up
 
-- [ ] **Vendor Readability.js** — Bundle Mozilla Readability for robust content extraction across diverse sites
+- [x] **Vendor Readability.js** — Bundle Mozilla Readability for robust content extraction across diverse sites
+- [x] **Service worker persistence** — Persist engine state to chrome.storage on every answer; restore on wake
 - [ ] **OpenQuizzer detection** — Detect OpenQuizzer pages, parse problems natively (no LLM call needed)
 - [ ] **Additional providers** — OpenAI (GPT-4o-mini), Google (Gemini Flash), Ollama (local models)
 - [ ] **Topic categorization** — Lightweight LLM prompt to tag quizzes with 1-3 topic labels, filter history by topic
-- [ ] **Service worker persistence** — Persist engine state to chrome.storage on every answer; restore on wake
 
 ## Future
 

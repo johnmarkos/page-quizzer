@@ -80,6 +80,33 @@ export type GeneratingStatusMessage = {
   payload: { status: string };
 };
 
+// Settings messages
+export type GetSettingsRequest = {
+  type: 'GET_SETTINGS';
+};
+
+export type SaveSettingsRequest = {
+  type: 'SAVE_SETTINGS';
+  payload: {
+    provider: string;
+    apiKey: string;
+    density: number;
+    maxQuestions: number;
+  };
+};
+
+export type TestConnectionRequest = {
+  type: 'TEST_CONNECTION';
+};
+
+export type GetSessionsRequest = {
+  type: 'GET_SESSIONS';
+};
+
+export type GetStateRequest = {
+  type: 'GET_STATE';
+};
+
 export type Message =
   | ExtractContentRequest
   | ExtractContentResponse
@@ -93,4 +120,9 @@ export type Message =
   | QuestionShowMessage
   | AnswerResultMessage
   | QuizCompleteMessage
-  | GeneratingStatusMessage;
+  | GeneratingStatusMessage
+  | GetSettingsRequest
+  | SaveSettingsRequest
+  | TestConnectionRequest
+  | GetSessionsRequest
+  | GetStateRequest;

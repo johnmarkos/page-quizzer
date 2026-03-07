@@ -1,5 +1,4 @@
 import { extractContent } from './ReadabilityExtractor.js';
-import { detectOpenQuizzer } from './OpenQuizzerDetector.js';
 import type { Message } from '../shared/messages.js';
 
 chrome.runtime.onMessage.addListener(
@@ -15,12 +14,6 @@ chrome.runtime.onMessage.addListener(
         });
       }
       return true; // keep channel open for async response
-    }
-
-    if (message.type === 'DETECT_OPENQUIZZER' as any) {
-      const result = detectOpenQuizzer();
-      sendResponse({ type: 'OPENQUIZZER_RESULT', payload: result });
-      return true;
     }
   }
 );
