@@ -92,6 +92,32 @@ Fix issues. Review again. **Iterate until the reviewer finds nothing significant
 
 **Escape hatch:** If the same issue recurs or you're uncertain, flag it for human review and move on.
 
+## Security Review
+
+**Periodic, mandatory.** Approach as a staff-level security engineer. This is a browser extension that handles API keys and injects scripts into every page the user visits — the attack surface is real.
+
+### Checklist
+
+- [ ] **API key storage** — Keys must be in `chrome.storage.local` only (not `sync`, which can leak to other devices). Never logged, never included in error messages, never sent anywhere except the intended provider API.
+- [ ] **XSS in rendered content** — Any user-generated or LLM-generated text rendered in the panel must be escaped. Check every use of `.innerHTML` — should it be `.textContent` instead? The `escapeHtml()` helper must be used for all dynamic content in HTML templates.
+- [ ] **Content script isolation** — The content script runs in the context of every web page. It must not leak page data to the extension beyond what's explicitly extracted. It must not expose extension internals to the page.
+- [ ] **CSP compliance** — No `eval()`, no inline scripts, no `new Function()`. Readability.js is eval-free (verified). Any new dependencies must be checked.
+- [ ] **Message validation** — Messages from content scripts could theoretically be spoofed by a malicious page. Validate message shape before acting on it. Never trust `sender.tab` for security-critical decisions without verification.
+- [ ] **Network requests** — All outbound requests should go only to the configured provider API. No telemetry, no analytics, no unexpected network calls. Audit every `fetch()` call.
+- [ ] **Permissions minimality** — The manifest should request only the permissions actually needed. Audit `permissions` and `host_permissions` after adding features. `<all_urls>` in content scripts is broad — document why it's necessary (content extraction on any page).
+- [ ] **Dependency supply chain** — Check `package.json` dependencies. Minimize runtime dependencies (currently just `@mozilla/readability`). Review lockfile changes. No postinstall scripts.
+- [ ] **Storage data sensitivity** — Quiz history contains URLs the user visited. This is sensitive browsing data. It stays in `chrome.storage.local` (never transmitted). Export feature must warn if exporting to a shared location.
+
+### When to run
+
+- After adding any new dependency
+- After adding any new permission to the manifest
+- After any change to content script or message handling
+- After any change to how API keys are stored or transmitted
+- Periodically during staff reviews (every 3-4 milestones)
+
+Fix issues immediately. If a security concern requires an architectural change, flag it for the project owner.
+
 ## Multi-Model Workflow
 
 This project uses multiple AI models with different roles:
