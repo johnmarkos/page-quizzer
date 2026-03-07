@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "PageQuizzer",
+  "version": "0.1.0",
+  "description": "Generate quiz questions from any web page for retrieval practice",
+  "permissions": ["sidePanel", "activeTab", "storage"],
+  "background": {
+    "service_worker": "dist/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["dist/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "side_panel": {
+    "default_path": "src/panel/panel.html"
+  },
+  "action": {
+    "default_title": "PageQuizzer"
+  },
+  "icons": {}
+}

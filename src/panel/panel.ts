@@ -1,0 +1,261 @@
+import type { Problem, SessionSummary } from '../engine/types.js';
+
+// --- DOM helpers ---
+function $(id: string): HTMLElement {
+  return document.getElementById(id)!;
+}
+
+function show(el: HTMLElement) { el.classList.remove('hidden'); }
+function hide(el: HTMLElement) { el.classList.add('hidden'); }
+
+// --- State ---
+let currentProblems: Problem[] = [];
+
+// --- Navigation ---
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+    const viewId = (btn as HTMLElement).dataset.view + '-view';
+    $(viewId).classList.remove('hidden');
+
+    if ((btn as HTMLElement).dataset.view === 'settings') loadSettings();
+    if ((btn as HTMLElement).dataset.view === 'history') loadHistory();
+  });
+});
+
+// --- Quiz Flow ---
+function showQuizSection(section: string) {
+  ['quiz-idle', 'quiz-loading', 'quiz-ready', 'quiz-question', 'quiz-complete', 'quiz-error']
+    .forEach(id => hide($(id)));
+  show($(section));
+}
+
+$('generate-btn').addEventListener('click', async () => {
+  showQuizSection('quiz-loading');
+  try {
+    const response = await chrome.runtime.sendMessage({ type: 'GENERATE_QUIZ' });
+    if (response?.type === 'QUIZ_ERROR') {
+      showError(response.payload.error);
+    } else if (response?.type === 'QUIZ_GENERATED') {
+      currentProblems = response.payload.problems;
+      ($('ready-info') as HTMLElement).textContent =
+        `Generated ${currentProblems.length} questions from "${response.payload.title}"`;
+      showQuizSection('quiz-ready');
+    }
+  } catch (err) {
+    showError(err instanceof Error ? err.message : 'Failed to generate quiz');
+  }
+});
+
+$('start-btn').addEventListener('click', () => {
+  chrome.runtime.sendMessage({ type: 'START_QUIZ' });
+});
+
+$('next-btn').addEventListener('click', () => {
+  chrome.runtime.sendMessage({ type: 'NEXT_QUESTION' });
+});
+
+$('skip-btn').addEventListener('click', () => {
+  chrome.runtime.sendMessage({ type: 'SKIP_QUESTION' });
+});
+
+$('retry-btn').addEventListener('click', () => {
+  chrome.runtime.sendMessage({ type: 'START_QUIZ' });
+});
+
+$('new-quiz-btn').addEventListener('click', () => {
+  showQuizSection('quiz-idle');
+});
+
+$('error-dismiss-btn').addEventListener('click', () => {
+  showQuizSection('quiz-idle');
+});
+
+// --- Message listener (from background) ---
+chrome.runtime.onMessage.addListener((message) => {
+  switch (message.type) {
+    case 'GENERATING_STATUS':
+      ($('loading-status') as HTMLElement).textContent = message.payload.status;
+      break;
+
+    case 'QUESTION_SHOW':
+      showQuestion(message.payload);
+      break;
+
+    case 'ANSWER_RESULT':
+      showAnswerResult(message.payload);
+      break;
+
+    case 'QUIZ_COMPLETE':
+      showComplete(message.payload);
+      break;
+  }
+});
+
+function showQuestion(payload: { problem: Problem; index: number; total: number }) {
+  showQuizSection('quiz-question');
+  hide($('feedback'));
+  show($('skip-btn'));
+
+  const { problem, index, total } = payload;
+  const pct = ((index / total) * 100).toFixed(0);
+  ($('progress-fill') as HTMLElement).style.width = pct + '%';
+  ($('progress-text') as HTMLElement).textContent = `Question ${index + 1} of ${total}`;
+  ($('question-text') as HTMLElement).textContent = problem.question;
+
+  const container = $('options-container');
+  container.innerHTML = '';
+
+  problem.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-key">${i + 1}</span>${escapeHtml(opt.text)}`;
+    btn.addEventListener('click', () => {
+      chrome.runtime.sendMessage({ type: 'ANSWER_QUESTION', payload: { optionIndex: i } });
+    });
+    container.appendChild(btn);
+  });
+}
+
+function showAnswerResult(payload: { correct: boolean; correctIndex: number; explanation?: string }) {
+  hide($('skip-btn'));
+  show($('feedback'));
+
+  const feedbackText = $('feedback-text');
+  feedbackText.textContent = payload.correct ? 'Correct!' : 'Incorrect';
+  feedbackText.className = payload.correct ? 'correct' : 'incorrect';
+
+  const explanationText = $('explanation-text');
+  if (payload.explanation) {
+    explanationText.textContent = payload.explanation;
+    show(explanationText);
+  } else {
+    hide(explanationText);
+  }
+
+  // Highlight options
+  const options = document.querySelectorAll('.option-btn');
+  options.forEach((btn, i) => {
+    (btn as HTMLButtonElement).disabled = true;
+    if (i === payload.correctIndex) btn.classList.add('correct');
+  });
+
+  // Find the selected (incorrect) one
+  if (!payload.correct) {
+    // The selected button was clicked before the result came back
+    // We can identify it by checking which isn't the correct one and was clicked
+    // Since we don't track which was clicked here, mark all non-correct as potentially incorrect
+    // Actually, we'll rely on the fact that the user sees correct highlighted green
+  }
+}
+
+function showComplete(payload: SessionSummary) {
+  showQuizSection('quiz-complete');
+  ($('score-display') as HTMLElement).textContent = payload.score.percentage + '%';
+  ($('score-breakdown') as HTMLElement).textContent =
+    `${payload.score.correct} correct, ${payload.score.incorrect} incorrect, ${payload.score.skipped} skipped out of ${payload.score.total}`;
+}
+
+function showError(message: string) {
+  showQuizSection('quiz-error');
+  ($('error-text') as HTMLElement).textContent = message;
+}
+
+// --- Settings ---
+async function loadSettings() {
+  const response = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
+  if (response?.payload) {
+    const s = response.payload;
+    (document.getElementById('provider-select') as HTMLSelectElement).value = s.provider;
+    (document.getElementById('api-key-input') as HTMLInputElement).value = s.apiKey;
+    (document.getElementById('density-slider') as HTMLInputElement).value = String(s.density);
+    ($('density-value') as HTMLElement).textContent = String(s.density);
+    (document.getElementById('max-questions-input') as HTMLInputElement).value = String(s.maxQuestions);
+  }
+}
+
+$('density-slider').addEventListener('input', (e) => {
+  ($('density-value') as HTMLElement).textContent = (e.target as HTMLInputElement).value;
+});
+
+$('save-settings-btn').addEventListener('click', async () => {
+  const settings = {
+    provider: (document.getElementById('provider-select') as HTMLSelectElement).value,
+    apiKey: (document.getElementById('api-key-input') as HTMLInputElement).value,
+    density: Number((document.getElementById('density-slider') as HTMLInputElement).value),
+    maxQuestions: Number((document.getElementById('max-questions-input') as HTMLInputElement).value),
+  };
+  await chrome.runtime.sendMessage({ type: 'SAVE_SETTINGS', payload: settings });
+  ($('save-settings-btn') as HTMLElement).textContent = 'Saved!';
+  setTimeout(() => { ($('save-settings-btn') as HTMLElement).textContent = 'Save Settings'; }, 1500);
+});
+
+$('test-connection-btn').addEventListener('click', async () => {
+  const status = $('connection-status');
+  status.textContent = 'Testing...';
+  status.className = '';
+  try {
+    const response = await chrome.runtime.sendMessage({ type: 'TEST_CONNECTION' });
+    if (response?.payload?.success) {
+      status.textContent = 'Connected!';
+      status.className = 'correct';
+    } else {
+      status.textContent = 'Failed';
+      status.className = 'error';
+    }
+  } catch {
+    status.textContent = 'Error';
+    status.className = 'error';
+  }
+});
+
+// --- History ---
+async function loadHistory() {
+  const response = await chrome.runtime.sendMessage({ type: 'GET_SESSIONS' });
+  const sessions = response?.payload || [];
+  const list = $('history-list');
+  const empty = $('history-empty');
+
+  if (sessions.length === 0) {
+    show(empty);
+    list.innerHTML = '';
+    return;
+  }
+
+  hide(empty);
+  list.innerHTML = sessions
+    .slice()
+    .reverse()
+    .map((s: any) => `
+      <div class="history-item">
+        <div class="history-title">${escapeHtml(s.title)}</div>
+        <div class="history-meta">
+          ${s.score.percentage}% &middot; ${s.score.correct}/${s.score.total} &middot;
+          ${new Date(s.date).toLocaleDateString()}
+        </div>
+      </div>
+    `)
+    .join('');
+}
+
+// --- Keyboard shortcuts ---
+document.addEventListener('keydown', (e) => {
+  const key = e.key;
+  if (['1', '2', '3', '4'].includes(key)) {
+    const options = document.querySelectorAll('.option-btn:not(:disabled)');
+    const idx = Number(key) - 1;
+    if (options[idx]) (options[idx] as HTMLButtonElement).click();
+  }
+  if (key === 'Enter') {
+    const nextBtn = $('next-btn');
+    if (!nextBtn.closest('.hidden')) nextBtn.click();
+  }
+});
+
+function escapeHtml(text: string): string {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
