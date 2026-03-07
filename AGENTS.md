@@ -92,27 +92,43 @@ Fix issues. Review again. **Iterate until the reviewer finds nothing significant
 
 **Escape hatch:** If the same issue recurs or you're uncertain, flag it for human review and move on.
 
-## Staff Engineer Reviews
+## Multi-Model Workflow
 
-The project owner periodically brings in Claude Opus 4.6 as a "staff engineer" to review the entire codebase. When doing a staff review:
+This project uses multiple AI models with different roles:
+
+- **Claude Opus 4.6** — Staff engineer. Architecture decisions, code review, AGENTS.md maintenance. Does thorough full-codebase reviews after other models implement features.
+- **GPT 5.4 / other models** — Volume implementation. Picks up tasks from ROADMAP.md, implements them following these guidelines, runs self-review.
+
+### For implementers (any model):
+
+1. Read this entire file and ROADMAP.md before starting
+2. Pick a task from the **Task Queue** section of ROADMAP.md
+3. Follow all Architecture Rules — they will be checked
+4. Run `npm test` and `npm run build` — both must pass
+5. Run the self-review checklist
+6. Update CHANGELOG.md with what you did
+7. Mark the ROADMAP task as done (`[x]`)
+
+### For staff reviews (Opus):
 
 1. Read every source file, not just diffs
 2. Check all architecture rules are followed
 3. Verify test coverage matches current functionality
 4. Check CHANGELOG.md accurately reflects what's in the code
 5. Look for drift from OpenQuizzer's design philosophy (event-driven, defensive, readable)
-6. Review AGENTS.md itself — update Lessons Learned, trim cruft
-7. Flag anything that needs human decision-making
+6. Look for: `as any` casts, `chrome.*` in engine, direct API calls outside providers, untyped messages
+7. Review AGENTS.md itself — update Lessons Learned, trim cruft
+8. Flag anything that needs human decision-making
 
 ## Commit Attribution
 
-Include model and tool info. Format:
+Include model and tool info. Examples:
 
 ```
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+Co-Authored-By: GPT 5.4 <noreply@openai.com>
+Co-Authored-By: Gemini <noreply@google.com>
 ```
-
-Other models should use their own attribution line.
 
 ## Roadmap & Changelog
 

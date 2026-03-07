@@ -2,27 +2,74 @@
 
 Future features and improvements for PageQuizzer. Completed work is in `CHANGELOG.md`.
 
-## Next Up
+Tasks are designed to be **discrete and independently implementable** — each should be completable in one session, have clear acceptance criteria, and be reviewable without understanding the full history.
 
-- [ ] **OpenQuizzer detection** — Detect OpenQuizzer pages, parse problems natively (no LLM call needed). Content script detects DOM structure, maps OpenQuizzer problem format to QuizEngine Problem type. Badge in panel.
-- [ ] **Additional providers** — OpenAI (GPT-4o-mini), Google (Gemini Flash), Ollama (local models). Each provider extends `BaseProvider`. Ollama: no API key, custom base URL, health check.
-- [ ] **Topic categorization** — Lightweight LLM prompt (run in parallel with quiz gen) to tag quizzes with 1-3 topic labels. Store with session, add topic filter to history view.
+## Task Queue — Ready to Implement
 
-## Future
+These are well-defined, can be picked up in any order (unless noted), and each produces a testable, committable result.
 
-- [ ] **Export/import history** — Download quiz history as JSON, import on another browser. Round-trip must be lossless.
-- [ ] **"Paste your own text" mode** — Manual text input when extraction fails or for non-web content
-- [ ] **Question quality feedback** — "Report bad question" button, feed back into prompt iteration
-- [ ] **Free-text questions** — LLM-graded open-ended responses alongside multiple-choice
-- [ ] **Spaced repetition** — Track per-question performance, resurface missed questions across sessions
-- [ ] **Extract QuizzerCore** — Pull `src/engine/` into its own npm package (`quizzer-core` repo). OpenQuizzer and PageQuizzer both import it. Engine API surface must remain identical.
+### Providers
+
+- [ ] **P1: OpenAI provider** — `src/providers/OpenAIProvider.ts`. Extends `BaseProvider`. Uses chat completions API with `response_format: { type: "json_object" }` for structured output. Default model: `gpt-4o-mini`. Add to provider registry. Add to settings dropdown in panel HTML. Test: factory creates it, name/model getters work.
+
+- [ ] **P2: Gemini provider** — `src/providers/GeminiProvider.ts`. Extends `BaseProvider`. Uses Gemini API with JSON mode. Default model: `gemini-2.0-flash`. Add to registry and settings dropdown. Test: same pattern as P1.
+
+- [ ] **P3: Ollama provider** — `src/providers/OllamaProvider.ts`. Extends `BaseProvider`. No API key required. Custom `baseUrl` (default `http://localhost:11434`). `testConnection()` hits `/api/tags` endpoint. `generateQuiz()` uses `/api/generate` with JSON format. Default model: `llama3.2`. Add to registry. Settings UI: base URL input instead of API key when Ollama selected. Test: factory, defaults, URL construction.
+
+### Content & Extraction
+
+- [ ] **C1: Paste-your-own-text mode** — Add a textarea to the quiz-idle section in `panel.html`. "Paste text" button toggles between URL extraction and manual input. When text is pasted, skip content script extraction entirely — construct an `ExtractedContent` object directly in the panel and pass it to `GENERATE_QUIZ` (add optional `content` field to the message). Service worker uses provided content if present, otherwise extracts from tab. Test: manual — paste text, generate quiz.
+
+- [ ] **C2: Highlight-to-quiz** — Add context menu item ("Quiz this selection") via `chrome.contextMenus` in service worker. When triggered, send message to content script to get `window.getSelection().toString()`. Use that text instead of full-page extraction. Requires adding `contextMenus` permission to manifest. Test: manual.
+
+- [ ] **C3: OpenQuizzer detection** — Wire `OpenQuizzerDetector` into content script. On page load, run detection. If detected, send `OPENQUIZZER_DETECTED` message to service worker. Panel shows "OpenQuizzer page detected — Load native quiz" badge. Clicking it loads problems directly into engine (no LLM call). Add `OPENQUIZZER_DETECTED` and `LOAD_OPENQUIZZER` to message protocol. Test: create a fixture HTML file with OpenQuizzer structure, verify detector parses it.
+
+### Quiz Experience
+
+- [ ] **Q1: Question type — true/false** — Add `true-false` question type. A `Problem` with exactly 2 options: "True" and "False". Update quiz generation prompt to sometimes produce true/false questions. Panel renders them as two large buttons instead of four small ones. Engine already handles 2-option problems correctly (no engine changes needed). Test: engine grading with 2-option problem.
+
+- [ ] **Q2: Answer explanation improvements** — When showing answer result, if the LLM provided an explanation, render it in a styled callout box. Add a "Why?" button that only appears if explanation exists. Small CSS addition + panel logic. Test: manual.
+
+- [ ] **Q3: Question review at end of quiz** — After quiz completion, show a "Review Missed" button on the score view. Clicking it shows a scrollable list of incorrectly-answered questions with the correct answer highlighted. Data is already in `SessionSummary.answers` — just need to display it. Service worker needs to hold the problems array and return it via a `GET_REVIEW` message. Test: manual.
+
+- [ ] **Q4: Retry missed questions only** — On the score view, add "Retry Missed" button alongside the existing "Retry" button. Sends a new message `RETRY_MISSED` to service worker, which calls `engine.loadProblems()` with only the problems the user got wrong, then `engine.start()`. Test: engine — load 3 problems, answer 1 wrong, retry missed gives 1 problem.
+
+- [ ] **Q5: Timer mode** — Optional countdown timer per question (configurable: 15/30/60 seconds, or off). Timer runs in the panel (not engine — engine stays timer-agnostic). When timer expires, auto-skip. Add timer setting to settings view and `chrome.storage.sync`. Show countdown bar in quiz view. Test: manual.
+
+### Data & History
+
+- [ ] **D1: Export history as JSON** — Add "Export" button to history view. Calls `GET_SESSIONS`, creates a Blob, triggers download via `URL.createObjectURL`. File named `pagequizzer-history-YYYY-MM-DD.json`. Test: manual.
+
+- [ ] **D2: Import history from JSON** — Add "Import" button + hidden file input to history view. Parse uploaded JSON, validate it's an array of `SessionRecord` objects (check required fields), merge with existing sessions (deduplicate by `id`). Save to storage. Test: export → import round-trip preserves data.
+
+- [ ] **D3: Topic categorization** — `src/prompts/topic-categorization.ts` already has the prompt. Add `categorizeTopics()` method to `BaseProvider` (default implementation: parse JSON response). Call it in `QuizGenerator` in parallel with quiz generation (use `Promise.all`). Store topics in `SessionRecord.topics` (field already exists). Add topic filter chips to history view. Test: prompt template produces valid JSON shape.
+
+- [ ] **D4: Per-question performance tracking** — Track how many times each question (by content hash) has been seen and answered correctly. Store in `chrome.storage.local` as a map: `{ [hash]: { seen: number, correct: number } }`. Update after each answer. No UI yet — this is the data layer for future spaced repetition. Test: unit test the tracking logic as a pure function.
+
+### Settings & Polish
+
+- [ ] **S1: Model selection dropdown** — Settings view shows available models per provider (hardcoded list per provider class — add a `models` getter to `BaseProvider`). When provider changes, model dropdown updates. Selected model saved to storage. Test: provider model lists are non-empty arrays.
+
+- [ ] **S2: Keyboard shortcut help** — Show a small "?" icon in quiz view header. Clicking it shows/hides a tooltip: "1-4: select answer, Enter: next question, S: skip". Pure panel HTML/CSS, no messages needed.
+
+- [ ] **S3: Quiz progress indicator in extension icon** — Use `chrome.action.setBadgeText` to show current question number (e.g., "3/10") while a quiz is active. Clear badge on complete or idle. Add to service worker's engine event handlers. Requires no new permissions.
+
+- [ ] **S4: Error recovery for failed generation** — If quiz generation fails mid-chunk (e.g., API rate limit), keep the questions generated so far and offer "Start with N questions" instead of showing an error. Only show error if zero questions were generated. Modify `QuizGenerator` and service worker error handling.
+
+## Future — Needs Design
+
+These need architectural decisions before implementation. Flag for staff review.
+
+- [ ] **Spaced repetition** — Requires D4 first. Algorithm choice (SM-2? Leitner?), UI for "practice weak areas" mode, integration with engine `start()` to accept problem ordering hints.
+- [ ] **Free-text questions** — LLM-graded open-ended responses. Needs new question type in engine, new grading flow (async LLM call during quiz), prompt design for grading rubric.
+- [ ] **Extract QuizzerCore** — Pull `src/engine/` into `quizzer-core` repo as npm package. Requires: API surface freeze, package.json setup, CI/CD, OpenQuizzer migration path, versioning strategy.
+- [ ] **Firefox/Safari ports** — Manifest V3 differences, polyfill strategy for `chrome.sidePanel` (Firefox doesn't have it — use sidebar?).
 
 ## Exploring
 
-- [ ] **Firefox/Safari ports** — Manifest V3 is converging across browsers
-- [ ] **Highlight-to-quiz** — Select text on page, generate questions from just the selection
-- [ ] **PDF support** — Extract text from PDF viewer tabs
-- [ ] **Collaborative quizzes** — Share generated quizzes via link
+- [ ] PDF support — extract text from PDF viewer tabs
+- [ ] Collaborative quizzes — share generated quizzes via link
+- [ ] Question quality feedback — "report bad question" button
 
 ## Won't Do (Out of Scope)
 
@@ -32,4 +79,4 @@ Future features and improvements for PageQuizzer. Completed work is in `CHANGELO
 
 ---
 
-_Completed items move to CHANGELOG.md. Update at the end of every milestone._
+_Each completed task gets a CHANGELOG entry and moves out of this file. Update ROADMAP.md at the end of every session._
