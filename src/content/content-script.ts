@@ -2,23 +2,32 @@ import { extractContent as extractReadableContent } from './ReadabilityExtractor
 import { extractPdfContent } from './PdfExtractor.js';
 import type { Message } from '../shared/messages.js';
 
-chrome.runtime.onMessage.addListener(
-  (message: Message, _sender, sendResponse) => {
-    if (message.type === 'EXTRACT_CONTENT') {
-      extractCurrentPageContent()
-        .then((content) => {
-          sendResponse({ type: 'EXTRACT_CONTENT_RESULT', payload: content });
-        })
-        .catch((err) => {
-          sendResponse({
-            type: 'EXTRACT_CONTENT_RESULT',
-            payload: { error: err instanceof Error ? err.message : 'Extraction failed' },
+const CONTENT_SCRIPT_READY_FLAG = '__pageQuizzerContentScriptReady';
+const contentScriptGlobal = globalThis as typeof globalThis & {
+  [CONTENT_SCRIPT_READY_FLAG]?: boolean;
+};
+
+if (!contentScriptGlobal[CONTENT_SCRIPT_READY_FLAG]) {
+  contentScriptGlobal[CONTENT_SCRIPT_READY_FLAG] = true;
+
+  chrome.runtime.onMessage.addListener(
+    (message: Message, _sender, sendResponse) => {
+      if (message.type === 'EXTRACT_CONTENT') {
+        extractCurrentPageContent()
+          .then((content) => {
+            sendResponse({ type: 'EXTRACT_CONTENT_RESULT', payload: content });
+          })
+          .catch((err) => {
+            sendResponse({
+              type: 'EXTRACT_CONTENT_RESULT',
+              payload: { error: err instanceof Error ? err.message : 'Extraction failed' },
+            });
           });
-        });
-      return true; // keep channel open for async response
+        return true; // keep channel open for async response
+      }
     }
-  }
-);
+  );
+}
 
 async function extractCurrentPageContent() {
   const pdfContent = await extractPdfContent();

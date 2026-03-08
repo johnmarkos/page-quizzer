@@ -11,6 +11,7 @@ import { buildReviewItems } from './review-missed.js';
 import { mergeSessionRecords, parseImportedSessions } from './history-import.js';
 import { buildQuizBadgeText, shouldClearQuizBadge } from './quiz-badge.js';
 import { resolveConnectionSettings } from './connection-settings.js';
+import { canInjectContentScript, isMissingContentScriptError } from './content-script-bridge.js';
 
 type CompletedQuizData = {
   problems: Problem[];
@@ -187,9 +188,7 @@ async function handleGenerateQuiz() {
 
   broadcastStatus('Extracting page content...');
 
-  const extractResponse = await chrome.tabs.sendMessage(tab.id, {
-    type: 'EXTRACT_CONTENT',
-  });
+  const extractResponse = await extractContentFromTab(tab);
 
   if (extractResponse?.payload?.error) {
     throw new Error(extractResponse.payload.error);
@@ -225,6 +224,31 @@ async function handleGenerateQuiz() {
     type: 'QUIZ_GENERATED',
     payload: { problems, title: lastExtracted.title },
   };
+}
+
+async function extractContentFromTab(tab: chrome.tabs.Tab) {
+  if (!tab.id) {
+    throw new Error('No active tab');
+  }
+
+  try {
+    return await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CONTENT' });
+  } catch (error) {
+    if (!isMissingContentScriptError(error)) {
+      throw error;
+    }
+
+    if (!canInjectContentScript(tab.url)) {
+      throw new Error('PageQuizzer cannot access this page. Try a normal web page or refresh the tab.');
+    }
+
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      files: ['dist/content.js'],
+    });
+
+    return await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CONTENT' });
+  }
 }
 
 async function handleTestConnection(

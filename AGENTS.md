@@ -198,6 +198,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - Engine restore does not replay events, so extension-level UI derived from engine state (like action badges) needs an explicit resync step on service worker startup
 - Settings test actions should use the current form values, not just persisted storage; otherwise "Test Connection" style flows fail on fresh unsaved credentials
 - If a provider/API check can fail for multiple external reasons, surface the exact API error in the UI or logs; a generic `Failed` status is not enough to debug real integrations
+- After an extension reload, existing tabs may not have a live content script anymore; recover by reinjecting the bundled script on demand instead of assuming the user will refresh the page
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

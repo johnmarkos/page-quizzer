@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.1.14 — Content Script Auto-Recovery (2026-03-08)
+
+### Bug Fixes
+- Fixed quiz generation on already-open tabs after extension reload by reinjecting the content script when Chrome reports that no receiver exists
+- Added a guard in the content script so repeated programmatic injection does not register duplicate message listeners
+- Added a clearer error for unsupported pages where PageQuizzer cannot inject extraction code
+
+### Testing
+- 60 tests (was 58): added helper coverage for missing-receiver detection and supported injection targets
+
+### Security Review
+- Added the `scripting` permission only to recover content-script attachment on the active tab during quiz generation
+- Programmatic injection is restricted to normal page protocols (`http`, `https`, `file`) and still uses the extension’s existing bundled content script
+- `npm audit --omit=dev` reported 0 vulnerabilities
+
 ## v0.1.13 — Connection Test Diagnostics (2026-03-08)
 
 ### Bug Fixes
