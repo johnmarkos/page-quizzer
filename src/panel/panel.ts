@@ -312,7 +312,20 @@ $('why-btn').addEventListener('click', () => {
 chrome.runtime.onMessage.addListener((message) => {
   switch (message.type) {
     case 'GENERATING_STATUS':
+      showQuizSection('quiz-loading');
       ($('loading-status') as HTMLElement).textContent = message.payload.status;
+      break;
+
+    case 'QUIZ_GENERATED':
+      renderReadyState(
+        message.payload.title,
+        message.payload.problems.length,
+        message.payload.warning,
+      );
+      break;
+
+    case 'QUIZ_ERROR':
+      showError(message.payload.error);
       break;
 
     case 'QUESTION_SHOW':

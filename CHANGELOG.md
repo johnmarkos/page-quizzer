@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.1.44 — Highlight-to-Quiz (2026-03-08)
+
+### Content & Extraction
+- Added a `Quiz this selection` context-menu action that generates a quiz from the user’s highlighted text instead of the whole page
+- Added a typed content-script selection message and background selection-content builder so highlighted text flows through the same `ExtractedContent`/generation pipeline as other content sources
+- Opened the side panel on context-menu generation when possible and updated the panel to react to externally-triggered loading, generated, and error states
+
+### Review Loop
+- The first reviewer pass found a real edge case: `window.getSelection()` can be empty or drift from what Chrome reports to the context-menu event. Fixed by falling back to `info.selectionText` before rejecting the action as “no selection.”
+
+### Security Review
+- Added only the `contextMenus` permission; no new network destinations were introduced
+- Reused the existing content-script attach/host-permission path instead of adding a separate injection or page-data channel
+- `npm audit --omit=dev` reported 0 vulnerabilities
+
+### Testing
+- 130 tests (was 127): added selection-content helper coverage for normalization, `ExtractedContent` construction, and context-menu fallback selection resolution
+
 ## v0.1.43 — Ollama Provider (2026-03-08)
 
 ### Providers

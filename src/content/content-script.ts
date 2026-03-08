@@ -25,6 +25,13 @@ if (!contentScriptGlobal[CONTENT_SCRIPT_READY_FLAG]) {
           });
         return true; // keep channel open for async response
       }
+
+      if (message.type === 'GET_SELECTION_TEXT') {
+        sendResponse({
+          type: 'GET_SELECTION_TEXT_RESULT',
+          payload: { text: getSelectedText() },
+        });
+      }
     }
   );
 }
@@ -36,4 +43,8 @@ async function extractCurrentPageContent() {
   }
 
   return extractReadableContent();
+}
+
+function getSelectedText(): string {
+  return globalThis.getSelection?.()?.toString().trim() || '';
 }

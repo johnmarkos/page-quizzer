@@ -37,8 +37,10 @@ import {
   isHostPermissionInjectionError,
 } from './content-script-bridge.js';
 import { extractPdfContentFromTabUrl } from './PdfBackgroundExtractor.js';
+import { buildSelectionContent, resolveSelectedText } from './selection-content.js';
 
 const CONTENT_SCRIPT_PATH = 'dist/content.js';
+const QUIZ_SELECTION_CONTEXT_MENU_ID = 'quiz-selection';
 
 const storage = new StorageManager();
 const engine = new QuizEngine();
@@ -100,6 +102,41 @@ clearQuizBadge();
 const restorePromise = restoreState();
 
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: QUIZ_SELECTION_CONTEXT_MENU_ID,
+      title: 'Quiz this selection',
+      contexts: ['selection'],
+    });
+  });
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId !== QUIZ_SELECTION_CONTEXT_MENU_ID || !tab?.id) {
+    return;
+  }
+
+  void restorePromise.then(async () => {
+    await ensureActiveTabSession(tab.id!);
+    try {
+      await openSidePanelForTab(tab.id!);
+      broadcastStatus('Reading selected text...');
+      const content = await getSelectedContentFromTab(tab, info.selectionText);
+      broadcastStatus('Generating quiz from selection...');
+      const result = await handleGenerateQuiz(tab, content);
+      broadcast(result);
+    } catch (err) {
+      broadcast({
+        type: 'QUIZ_ERROR',
+        payload: {
+          error: err instanceof Error ? err.message : 'Failed to generate quiz from selection',
+        },
+      });
+    }
+  });
+});
 
 chrome.tabs.onRemoved.addListener((tabId) => {
   if (!(String(tabId) in tabSessions)) {
@@ -338,6 +375,36 @@ async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: Extrac
 }
 
 async function extractContentFromTab(tab: chrome.tabs.Tab) {
+  const extractResponse = await requestContentScript(tab, { type: 'EXTRACT_CONTENT' });
+  return extractResponse;
+}
+
+async function getSelectedContentFromTab(
+  tab: chrome.tabs.Tab,
+  fallbackSelectionText?: string,
+): Promise<ExtractedContent> {
+  const response = await requestContentScript(tab, { type: 'GET_SELECTION_TEXT' });
+  if (!('payload' in response) || !response.payload || 'error' in response.payload) {
+    throw new Error(
+      'error' in response.payload
+        ? response.payload.error
+        : 'Could not read the selected text from this tab.',
+    );
+  }
+
+  const selectedText = resolveSelectedText(response.payload.text, fallbackSelectionText);
+  if (!selectedText) {
+    throw new Error('No text is selected on this page. Highlight some text and try again.');
+  }
+
+  if (!tab.url) {
+    throw new Error('Could not determine this tab URL for the selected text.');
+  }
+
+  return buildSelectionContent(selectedText, tab.url, tab.title);
+}
+
+async function requestContentScript(tab: chrome.tabs.Tab, message: Message) {
   if (!tab.id) {
     throw new Error('No active tab');
   }
@@ -363,7 +430,7 @@ async function extractContentFromTab(tab: chrome.tabs.Tab) {
     }
   }
 
-  return await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CONTENT' });
+  return await chrome.tabs.sendMessage(tab.id, message);
 }
 
 async function attachContentScript(tabId: number) {
@@ -371,6 +438,14 @@ async function attachContentScript(tabId: number) {
     target: { tabId },
     files: [CONTENT_SCRIPT_PATH],
   });
+}
+
+async function openSidePanelForTab(tabId: number) {
+  try {
+    await chrome.sidePanel.open({ tabId });
+  } catch {
+    // Best effort — context-menu generation still persists ready state if the panel is closed.
+  }
 }
 
 async function handleTestConnection(

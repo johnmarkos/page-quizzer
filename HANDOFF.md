@@ -2,6 +2,11 @@
 
 ## Completed
 
+- Added a `Quiz this selection` context-menu action that generates a quiz from highlighted page text
+- Added a typed `GET_SELECTION_TEXT` content-script message and reused the existing content-script attachment path for selection reads
+- Added a background helper that turns selected text into `ExtractedContent`, so selection quizzes go through the normal generator path instead of special-case quiz plumbing
+- Updated the panel to react to externally-triggered generation messages, so context-menu generation can show loading/ready/error states when the panel is open
+- Fixed a review-found edge case by falling back to Chrome’s context-menu `selectionText` when `window.getSelection()` is empty
 - Added an Ollama provider with `/api/generate` JSON-schema generation, `/api/tags` connection testing, and `llama3.2` as the default model
 - Added provider-side metadata helpers for API-key requirements, base-URL support, and Ollama URL normalization
 - Added Ollama to the provider registry and settings provider picker
@@ -47,6 +52,10 @@
 
 ## Decisions
 
+- Kept highlight-to-quiz on the existing `ExtractedContent` pipeline instead of inventing a separate “selection quiz” request shape; the only special step is obtaining the selected text
+- Reused the existing content-script injection/access path for selection reads so host-permission behavior stays consistent with normal extraction
+- Treated `window.getSelection()` as the preferred source but used `chrome.contextMenus`’s `selectionText` as a fallback because context-menu selections can outlive or differ from page selection state
+- Opened the side panel as a best-effort convenience from the context-menu handler, but kept the actual ready state persisted in the tab session so the feature still works if side-panel open fails
 - Kept provider-specific API-key/base-URL rules inside `src/providers/` helpers instead of scattering `provider === 'ollama'` checks through panel/background code
 - Kept Ollama generation on `/api/generate` with JSON schema format so it matches the roadmap and reuses the existing prompt/schema contract
 - Treated default localhost Ollama as a normal built-in permission case via manifest `host_permissions`, but kept custom Ollama hosts on runtime optional permission requests from the panel
@@ -79,12 +88,14 @@
 
 ## Validation
 
-- `npm test` passed with 127/127 tests
+- `npm test` passed with 130/130 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- If a feature can trigger quiz generation from outside the panel, the panel needs to react to background `GENERATING_STATUS` / `QUIZ_GENERATED` / `QUIZ_ERROR` messages too; otherwise external generation silently finishes off-screen
+- `window.getSelection()` is not always the same as what Chrome exposes to a context-menu click; for selection-driven features, keep a fallback to `info.selectionText`
 - If a panel action ultimately uses saved background settings, permission preflight should use that same saved settings source too; otherwise unsaved form changes can prompt for one host while the background actually fetches another
 - Default-provider host permissions and runtime optional-host requests can coexist cleanly: give the common default endpoint a built-in permission, then use runtime prompts only for custom hosts
 - Ollama base URLs should be normalized once, including trimming trailing slashes and a user-supplied `/api` suffix, before building endpoints or permission patterns

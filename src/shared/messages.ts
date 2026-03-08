@@ -6,9 +6,18 @@ export type ExtractContentRequest = {
   type: 'EXTRACT_CONTENT';
 };
 
+export type GetSelectionTextRequest = {
+  type: 'GET_SELECTION_TEXT';
+};
+
 export type ExtractContentResponse = {
   type: 'EXTRACT_CONTENT_RESULT';
   payload: ExtractedContent | { error: string };
+};
+
+export type GetSelectionTextResponse = {
+  type: 'GET_SELECTION_TEXT_RESULT';
+  payload: { text: string } | { error: string };
 };
 
 export type ExtractedContent = {
@@ -232,7 +241,9 @@ export type ImportSessionsResultMessage = {
 
 export type Message =
   | ExtractContentRequest
+  | GetSelectionTextRequest
   | ExtractContentResponse
+  | GetSelectionTextResponse
   | GenerateQuizRequest
   | StartQuizRequest
   | AnswerQuestionRequest
