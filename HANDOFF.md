@@ -2,6 +2,9 @@
 
 ## Completed
 
+- Fixed a quiz export bug where the exported HTML could use the wrong in-memory problem set instead of the full completed quiz
+- Added `src/background/export-quiz-data.ts` as a pure resolver for export payloads, preferring `lastCompletedQuiz.problems` when exporting from the completed score state
+- Added focused tests for export resolution, including the exact completed-vs-current problem-set distinction and defensive cloning
 - Completed `L2` by adding persisted per-document section progress for long-form content
 - Added `ProgressManager` to store progress in `chrome.storage.local` keyed by document URL, with per-section `quizzed`, `scorePercentage`, and `lastQuizzed` metadata
 - Recorded section-quiz completion back onto the full document using a persisted `activeSectionIndex`, so the correct section gets credit after quiz completion
@@ -71,6 +74,7 @@
 
 ## Decisions
 
+- Treated quiz export as its own source-of-truth problem: when the visible state is a completed score screen, export should come from the stable completed quiz snapshot, not whichever mutable problem array happens to be current in the worker
 - Keyed document progress by the full document URL and merged progress onto freshly computed sections by section index; this keeps the stored shape simple and lets updated section titles/word counts replace stale metadata on rebuild
 - Stored section progress annotations in the same `pendingSections` payload the panel already restores, instead of creating a second parallel progress message/state branch
 - Treated "generate a normal quiz from this page" as a hard reset of prior section context so stale `sectionSource`/`activeSectionIndex` data cannot leak across flows
@@ -120,12 +124,13 @@
 
 ## Validation
 
-- `npm test` passed with 142/142 tests
+- `npm test` passed with 146/146 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- If a feature exports or persists quiz data from a completed score view, prefer the stable completed quiz snapshot over mutable “current problems” state; retries, narrowed flows, or later state changes can otherwise export the wrong problem set
 - If long-form completion needs to be written back after a section quiz ends, persist the selected section index separately from the narrowed extracted content; `lastExtracted` alone is not enough to identify the parent section safely
 - If a restorable picker view shows derived progress, persist the annotated section list or rebuild it through one helper consistently; otherwise restored panel state and freshly generated picker state will drift
 - If the real product complaint is “the answer is obvious because the other options are generic,” improving the prompt alone is not enough; add a structural filter for vague distractors and domain-specific-option outliers too

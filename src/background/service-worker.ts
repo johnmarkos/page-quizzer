@@ -44,6 +44,7 @@ import {
   shouldOfferSectionChoice,
 } from './content-sections.js';
 import { ProgressManager } from './ProgressManager.js';
+import { resolveExportQuizData } from './export-quiz-data.js';
 
 const CONTENT_SCRIPT_PATH = 'dist/content.js';
 const QUIZ_SELECTION_CONTEXT_MENU_ID = 'quiz-selection';
@@ -673,17 +674,20 @@ function handleGetReview() {
 }
 
 function handleGetExportQuiz() {
-  if (!lastExtracted || currentProblems.length === 0) {
+  const exportData = resolveExportQuizData({
+    lastExtracted,
+    currentProblems,
+    lastCompletedQuiz,
+    engineState: engine.state,
+  });
+
+  if (!exportData) {
     throw new Error('No quiz available to export.');
   }
 
   return {
     type: 'EXPORT_QUIZ_DATA',
-    payload: {
-      title: lastExtracted.title,
-      sourceUrl: lastExtracted.url,
-      problems: cloneProblems(currentProblems),
-    },
+    payload: exportData,
   };
 }
 

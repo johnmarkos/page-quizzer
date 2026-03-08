@@ -60,6 +60,10 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [x] **Q9: Harder questions for long-form content** — Improve book/article question difficulty so answers are less obvious by tone alone and more often require conceptual discrimination. Likely needs another prompt revision plus stricter post-generation rejection of giveaway distractors and shallow recall questions. Test: manual comparison on long-form books/PDFs.
 
+- [ ] **Q10: Front-matter question suppression for books/PDFs** — Further reduce questions about copyright pages, publisher blurbs, edition data, tables of contents, and similar front matter even when that text still survives extraction/sectioning. Likely needs stronger front-matter detection plus an explicit generation/filter rule for book metadata. Test: manual on real books/PDFs that currently surface this trivia.
+
+- [ ] **Q11: Second-pass question critic for obvious/easy questions** — Add a lightweight post-generation review pass that rejects questions answerable by “pick the only non-dumb option” heuristics. Focus on weak distractors, tone/register mismatches, and questions solvable without reading the source. Start with provider-agnostic structural heuristics; if needed, escalate to an optional LLM critic pass. Test: manual comparison on real books/articles plus pure tests for any structural rejection rules.
+
 ### Data & History
 
 - [x] **D1: Export history as JSON** — Add "Export" button to history view. Calls `GET_SESSIONS`, creates a Blob, triggers download via `URL.createObjectURL`. File named `pagequizzer-history-YYYY-MM-DD.json`. Test: manual.

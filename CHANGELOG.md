@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.1.50 — Quiz Export Source Fix (2026-03-08)
+
+### Bug Fixes
+- Fixed exported quizzes sometimes containing only the currently active or narrowed problem set instead of the full completed quiz
+- Resolved export data through a dedicated background helper that prefers the stable completed quiz problems when the engine is in the `complete` state
+- Kept exported problem data defensively cloned so the export path cannot mutate live in-memory quiz state
+
+### Review Loop
+- The first reviewer pass pushed on source-of-truth ambiguity: export was reading directly from mutable worker state. Fixed by extracting a pure resolver and testing the exact completed-vs-current quiz selection behavior.
+- A second reviewer pass found no further significant issues.
+
+### Testing
+- 146 tests (was 142): added export-data resolver coverage for active quizzes, completed quizzes, no-quiz cases, and defensive cloning
+
 ## v0.1.49 — Document Progress Tracking (2026-03-08)
 
 ### Long-Form Content

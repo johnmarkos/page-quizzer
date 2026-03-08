@@ -243,6 +243,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - If a panel feature introduces a new message payload branch, add pure tests for the payload-construction helper as well as any downstream content helper; otherwise the visible feature can work in one path while the actual request shape goes unverified
 - If a long-form section quiz needs completion credit later, persist the selected section index separately from the narrowed extracted content; the subsection payload alone is not enough to identify the parent section reliably on restore/complete
 - If a picker view shows derived progress data, rebuild or persist that annotated view consistently through one helper; otherwise freshly generated picker state and restored picker state will drift
+- If a completed-score feature needs to export quiz content, prefer the stable completed quiz snapshot over mutable current-problem state; otherwise retries or narrowed follow-up flows can export the wrong quiz
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable
