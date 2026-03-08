@@ -276,7 +276,12 @@ function showQuestion(payload: { problem: Problem; index: number; total: number 
   problem.options.forEach((opt, i) => {
     const btn = document.createElement('button');
     btn.className = problem.options.length === 2 ? 'option-btn true-false-btn' : 'option-btn';
-    btn.innerHTML = `<span class="option-key">${i + 1}</span>${escapeHtml(opt.text)}`;
+    btn.innerHTML = `
+      <span class="option-btn-content">
+        <span class="option-key">${i + 1}</span>
+        <span class="option-text">${escapeHtml(opt.text)}</span>
+      </span>
+    `;
     btn.addEventListener('click', () => {
       selectedOptionIndex = i;
       chrome.runtime.sendMessage({ type: 'ANSWER_QUESTION', payload: { optionIndex: i } });

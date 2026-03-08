@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.1.34 — Answer Choice Typography Polish (2026-03-08)
+
+### Quiz Experience
+- Refined answer-choice markup so the number badge and answer text live in separate layout elements instead of one inline text flow
+- Fixed wrapped answer choices where the number badge skewed line spacing and vertical rhythm
+- Kept true/false buttons centered with the same new structure so the typography fix does not regress the two-option layout
+
+### Review
+- Re-checked dynamic answer rendering for XSS safety: option text still goes through `escapeHtml()` before being inserted into panel markup
+
 ## v0.1.33 — Per-Tab Quiz Sessions (2026-03-08)
 
 ### Quiz State

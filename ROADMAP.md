@@ -56,7 +56,7 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [ ] **Q7: Question quality filter** — Add a lightweight post-generation pass that rejects or regenerates questions with weak distractors, trivial fact recall, or obvious answer-pattern giveaways. Test: pure heuristics where feasible, manual review on sample pages.
 
-- [ ] **Q8: Answer choice typography polish** — Clean up the answer choice layout so the numbered key badge does not skew line spacing or vertical rhythm for wrapped options. Likely needs CSS/layout refinement in `panel.css` and possibly slightly different markup in `panel.ts`. Test: manual on long wrapped options.
+- [x] **Q8: Answer choice typography polish** — Clean up the answer choice layout so the numbered key badge does not skew line spacing or vertical rhythm for wrapped options. Likely needs CSS/layout refinement in `panel.css` and possibly slightly different markup in `panel.ts`. Test: manual on long wrapped options.
 
 ### Data & History
 

@@ -219,6 +219,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - If metadata like topic tags is generated before quiz completion but saved only at the end, persist it alongside the in-progress quiz snapshot; otherwise service-worker restarts silently drop it
 - If quiz state is scoped per tab, the background and panel both need explicit tab-switch resync logic; restoring only the engine snapshot is not enough to make the visible quiz view follow the active tab
 - Don’t persist empty per-tab session placeholders; they create dead storage entries and make tab-routing state harder to reason about than storing only ready/in-progress/completed tabs
+- For wrapped answer choices, line-height tweaks alone are usually not enough; separate the number badge and option text into their own layout elements so the badge does not distort multi-line text rhythm
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

@@ -196,8 +196,15 @@ nav {
   border-radius: var(--radius);
   cursor: pointer;
   font-size: 14px;
+  line-height: 1.45;
   color: var(--text);
   transition: border-color 0.15s;
+}
+
+.option-btn-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .option-btn:hover:not(:disabled) {
@@ -227,22 +234,33 @@ nav {
   padding: 18px 16px;
 }
 
-.true-false-btn .option-key {
-  display: block;
-  margin: 0 auto 10px;
+.true-false-btn .option-btn-content {
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
 .option-key {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
   width: 24px;
   height: 24px;
-  line-height: 24px;
-  text-align: center;
   background: var(--border);
   border-radius: 4px;
-  margin-right: 8px;
   font-size: 12px;
   font-weight: bold;
+  line-height: 1;
+}
+
+.option-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.true-false-btn .option-text {
+  text-align: center;
 }
 
 /* Feedback */
