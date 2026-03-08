@@ -1,5 +1,22 @@
 # Handoff
 
+## Staff Review (2026-03-07)
+
+Opus 4.6 reviewed the full codebase (~13,600 lines, 60 commits by GPT-5.4). Six blocking issues were found and fixed in commit `ca75ba3`:
+
+1. `AnthropicProvider.ts` — `(b: any)` and untyped `response.json()` → added `AnthropicContentBlock` / `AnthropicMessagesResponse` types
+2. `OpenQuizzerDetector.ts` — `(p: any)` on untrusted page JSON → added `RawOpenQuizzerProblem` type + runtime shape validation
+3. `QuizEngine.ts` — `Listener<any>` in event map → `Listener<never>` with safe cast in `#emit`
+4. `StorageManager.ts` — `Record<string, any>` → `Record<string, string | number>` / `Record<string, string>`
+5. `manifest.json` — missing CSP → added `script-src 'self'; object-src 'self'`
+6. `messages.ts` — `{ type: 'ok' }` not in Message union → added `OkMessage`
+
+### Advisory issues (non-blocking, pick up next session)
+- `manifest.json` `icons` is `{}` — add real icons or remove the key
+- Several providers duplicate JSON-parse-and-throw error handling — could extract a shared `fetchProviderJson()` helper
+- `OpenQuizzerDetector` is wired into content script but the feature is embryonic — consider gating or finishing it
+- CHANGELOG.md should get a v0.1.1 entry covering the staff review fixes
+
 ## Completed
 
 - Completed `L5` by adding a `Library` tab backed by tracked document progress rather than quiz history

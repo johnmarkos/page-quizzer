@@ -53,6 +53,15 @@ src/
 - Descriptive variable names — no single-letter variables outside tight loops
 - When in doubt, a short comment is better than making the reader trace through code
 
+## Branching & Pull Requests
+
+All changes to `main` require a pull request. No direct commits to `main`.
+
+- **Branch naming:** `feat/`, `fix/`, `chore/` prefixes (e.g., `fix/staff-review-advisory`)
+- **Before opening a PR:** run `npm test`, `npm run build`, and the self-review checklist
+- **CI runs on every PR:** checkout → Node 20 → `npm ci` → `npm test` → `npm run build` → `npm audit --omit=dev`
+- **Branch protection** is configured in the GitHub UI (require PRs, require CI status check)
+
 ## Testing Philosophy (Goldilocks)
 
 Write meaningful tests that verify important behavior. Not too many, not too few.
