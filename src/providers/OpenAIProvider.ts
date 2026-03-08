@@ -82,7 +82,12 @@ export class OpenAIProvider extends BaseProvider {
       }),
     });
 
-    return response.ok;
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`OpenAI API error (${response.status}): ${err}`);
+    }
+
+    return true;
   }
 
   #parseQuestions(raw: RawQuizQuestion[]): Problem[] {

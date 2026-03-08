@@ -66,7 +66,13 @@ export class AnthropicProvider extends BaseProvider {
         messages: [{ role: 'user', content: 'Say "ok"' }],
       }),
     });
-    return response.ok;
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`Anthropic API error (${response.status}): ${err}`);
+    }
+
+    return true;
   }
 
   #parseQuestions(raw: RawQuizQuestion[]): Problem[] {

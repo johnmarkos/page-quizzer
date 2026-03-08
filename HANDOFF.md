@@ -2,16 +2,16 @@
 
 ## Completed
 
-- Fixed the settings `Test Connection` flow for provider API checks
-- The panel now sends the currently selected provider and API key instead of relying only on saved settings
-- The background resolves current form values against stored settings before calling the provider
-- Provider switches during connection testing no longer inherit a stale model from a different provider
+- Improved provider connection test diagnostics in Settings
+- Provider `testConnection()` calls now throw detailed API errors instead of returning a silent boolean failure
+- The service worker logs provider/model context for connection test failures
+- The settings UI now shows the actual returned error text instead of a generic `Failed`
 
 ## Decisions
 
-- Kept the fix narrow to the test-connection path instead of auto-saving settings as a side effect of testing
-- Added `src/background/connection-settings.ts` as a pure helper so the stored-vs-override behavior is covered by unit tests
-- Left full model-selection UI for `S1`; this fix just avoids reusing a mismatched stored model across providers
+- Kept the fix on the existing `TEST_CONNECTION` path instead of adding a separate debug mode
+- Reused the existing `CONNECTION_RESULT` message and extended it with an optional `error` field
+- Logged only provider/model metadata and the error message, not the API key
 
 ## Validation
 
@@ -21,4 +21,4 @@
 
 ## Gotchas
 
-- Before this fix, testing a new OpenAI key without clicking `Save Settings` would still hit the previously saved provider/key, which produced misleading failures
+- This change is diagnostic first: it may reveal a deeper OpenAI-specific request or account issue, but it removes the blind spot so the next fix can target the real failure

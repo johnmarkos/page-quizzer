@@ -367,15 +367,21 @@ $('test-connection-btn').addEventListener('click', async () => {
         apiKey: (document.getElementById('api-key-input') as HTMLInputElement).value,
       },
     });
-    if (response?.payload?.success) {
+    if (response?.type === 'CONNECTION_RESULT' && response.payload.success) {
       status.textContent = 'Connected!';
       status.className = 'correct';
+    } else if (response?.type === 'CONNECTION_RESULT') {
+      status.textContent = response.payload.error || 'Failed';
+      status.className = 'error';
+    } else if (response?.type === 'QUIZ_ERROR') {
+      status.textContent = response.payload.error;
+      status.className = 'error';
     } else {
       status.textContent = 'Failed';
       status.className = 'error';
     }
-  } catch {
-    status.textContent = 'Error';
+  } catch (error) {
+    status.textContent = error instanceof Error ? error.message : 'Error';
     status.className = 'error';
   }
 });

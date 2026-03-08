@@ -197,6 +197,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - Global panel shortcuts should only act on visible quiz controls and should ignore focused form/button elements; otherwise hidden views can still consume keys
 - Engine restore does not replay events, so extension-level UI derived from engine state (like action badges) needs an explicit resync step on service worker startup
 - Settings test actions should use the current form values, not just persisted storage; otherwise "Test Connection" style flows fail on fresh unsaved credentials
+- If a provider/API check can fail for multiple external reasons, surface the exact API error in the UI or logs; a generic `Failed` status is not enough to debug real integrations
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

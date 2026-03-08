@@ -121,7 +121,7 @@ export type SettingsMessage = {
 
 export type ConnectionResultMessage = {
   type: 'CONNECTION_RESULT';
-  payload: { success: boolean };
+  payload: { success: boolean; error?: string };
 };
 
 export type SessionsMessage = {

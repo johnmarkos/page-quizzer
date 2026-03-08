@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.1.13 — Connection Test Diagnostics (2026-03-08)
+
+### Bug Fixes
+- Changed provider connection tests to return real API failure details instead of a generic `Failed` status
+- Added service-worker logging for connection test failures with provider and model context
+
+### Testing
+- Existing 58-test suite and production build passed after the diagnostics update
+
+### Security Review
+- Message-handling review stayed within the existing provider API surfaces
+- `npm audit --omit=dev` reported 0 vulnerabilities
+
 ## v0.1.12 — Connection Test Uses Current Form Values (2026-03-08)
 
 ### Bug Fixes

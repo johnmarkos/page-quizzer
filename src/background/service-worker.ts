@@ -241,8 +241,22 @@ async function handleTestConnection(
     apiKey: settings.apiKey,
     model: settings.model,
   });
-  const ok = await provider.testConnection();
-  return { type: 'CONNECTION_RESULT', payload: { success: ok } };
+
+  try {
+    await provider.testConnection();
+    return { type: 'CONNECTION_RESULT', payload: { success: true } };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Connection test failed';
+    console.error('Provider connection test failed', {
+      provider: settings.provider,
+      model: settings.model ?? null,
+      error: message,
+    });
+    return {
+      type: 'CONNECTION_RESULT',
+      payload: { success: false, error: message },
+    };
+  }
 }
 
 async function handleImportSessions(json: string) {
