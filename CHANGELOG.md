@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.1.26 — Real File-Scheme Access Check (2026-03-08)
+
+### Bug Fixes
+- Replaced the unconditional local `file://` PDF block with a real Chrome file-scheme access check using `chrome.extension.isAllowedFileSchemeAccess()`
+- Allowed local PDF extraction to proceed when the user has already enabled `Allow access to file URLs`, instead of always surfacing the setup message
+- Added a more specific fallback error for local PDFs that still cannot be read after file access is enabled
+
+### Security Review
+- Added explicit `file:///*` host coverage so local-PDF access is declared in the manifest, while keeping actual file access gated by Chrome’s per-extension `Allow access to file URLs` toggle
+
+### Testing
+- 71 tests (was 68): added focused coverage for the file-scheme access callback helper and the new local-PDF read error path
+
 ## v0.1.25 — Local PDF Guidance (2026-03-08)
 
 ### Bug Fixes

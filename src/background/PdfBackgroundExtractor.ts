@@ -11,7 +11,12 @@ import {
   textContentToString,
   type PdfMetadata,
 } from '../shared/pdf.js';
-import { buildLocalPdfAccessError, isLocalFilePdfUrl } from './pdf-source.js';
+import {
+  buildLocalPdfAccessError,
+  buildLocalPdfReadError,
+  hasAllowedFileSchemeAccess,
+  isLocalFilePdfUrl,
+} from './pdf-source.js';
 
 const PDF_JS_MODULE_PATH = 'dist/pdfjs.js';
 
@@ -24,12 +29,26 @@ export async function extractPdfContentFromTabUrl(
     return null;
   }
 
-  if (isLocalFilePdfUrl(pdfUrl)) {
+  const isLocalPdf = isLocalFilePdfUrl(pdfUrl);
+  if (isLocalPdf && !(await hasAllowedFileSchemeAccess())) {
     throw buildLocalPdfAccessError();
   }
 
-  const response = await fetch(pdfUrl, { credentials: 'include' });
+  let response: Response;
+
+  try {
+    response = await fetch(pdfUrl, { credentials: 'include' });
+  } catch (error) {
+    if (isLocalPdf) {
+      throw buildLocalPdfReadError();
+    }
+    throw error;
+  }
+
   if (!response.ok) {
+    if (isLocalPdf) {
+      throw buildLocalPdfReadError();
+    }
     throw new Error(`Failed to fetch PDF (${response.status})`);
   }
 
