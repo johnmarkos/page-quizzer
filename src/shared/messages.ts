@@ -108,6 +108,50 @@ export type ReviewDataMessage = {
   payload: { items: ReviewItem[] };
 };
 
+export type SettingsMessage = {
+  type: 'SETTINGS';
+  payload: {
+    provider: string;
+    apiKey: string;
+    density: number;
+    maxQuestions: number;
+    model?: string;
+  };
+};
+
+export type ConnectionResultMessage = {
+  type: 'CONNECTION_RESULT';
+  payload: { success: boolean };
+};
+
+export type SessionsMessage = {
+  type: 'SESSIONS';
+  payload: Array<{
+    id: string;
+    url: string;
+    title: string;
+    date: number;
+    topics?: string[];
+    score: SessionSummary['score'];
+    answers: SessionSummary['answers'];
+    startedAt: number;
+    completedAt: number;
+  }>;
+};
+
+export type RestoredStateMessage = {
+  type: 'RESTORED_STATE';
+  payload:
+    | { state: 'idle' | 'complete' }
+    | {
+        state: 'practicing' | 'answered';
+        problem: Problem | null;
+        index: number;
+        total: number;
+        title: string;
+      };
+};
+
 // Settings messages
 export type GetSettingsRequest = {
   type: 'GET_SETTINGS';
@@ -131,8 +175,21 @@ export type GetSessionsRequest = {
   type: 'GET_SESSIONS';
 };
 
+export type ImportSessionsRequest = {
+  type: 'IMPORT_SESSIONS';
+  payload: { json: string };
+};
+
 export type GetStateRequest = {
   type: 'GET_STATE';
+};
+
+export type ImportSessionsResultMessage = {
+  type: 'IMPORT_RESULT';
+  payload: {
+    importedCount: number;
+    totalCount: number;
+  };
 };
 
 export type Message =
@@ -152,8 +209,14 @@ export type Message =
   | QuizCompleteMessage
   | GeneratingStatusMessage
   | ReviewDataMessage
+  | SettingsMessage
+  | ConnectionResultMessage
+  | SessionsMessage
+  | RestoredStateMessage
+  | ImportSessionsResultMessage
   | GetSettingsRequest
   | SaveSettingsRequest
   | TestConnectionRequest
   | GetSessionsRequest
+  | ImportSessionsRequest
   | GetStateRequest;

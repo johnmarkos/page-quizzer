@@ -63,4 +63,8 @@ export class StorageManager {
     const { sessions = [] } = await chrome.storage.local.get(STORAGE_KEYS.SESSIONS);
     return sessions;
   }
+
+  async setSessions(records: SessionRecord[]): Promise<void> {
+    await chrome.storage.local.set({ [STORAGE_KEYS.SESSIONS]: records });
+  }
 }

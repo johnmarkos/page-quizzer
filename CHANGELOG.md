@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.1.9 — History Import (2026-03-08)
+
+### Data & History
+- Added an `Import History` action with a hidden JSON file input in the history view
+- Imported history is parsed in the panel but validated and merged in the background before writing to storage
+- Merged imported records with existing history by `id`, preserving chronological order and deduplicating repeated sessions
+
+### Security Review
+- Treated imported history as untrusted local input and validated every required `SessionRecord` field before storage writes
+- Kept import local-only: no network calls, no HTML rendering from imported JSON, and history titles remain escaped on render
+
+### Testing
+- 49 tests (was 46): added import validation, merge behavior, and export/import round-trip coverage
+
 ## v0.1.8 — History Export (2026-03-08)
 
 ### Data & History

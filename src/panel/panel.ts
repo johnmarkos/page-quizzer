@@ -127,6 +127,44 @@ $('export-history-btn').addEventListener('click', async () => {
   }
 });
 
+$('import-history-btn').addEventListener('click', () => {
+  (document.getElementById('import-history-input') as HTMLInputElement).click();
+});
+
+$('import-history-input').addEventListener('change', async (event) => {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) {
+    return;
+  }
+
+  try {
+    const json = await file.text();
+    const response = await chrome.runtime.sendMessage({
+      type: 'IMPORT_SESSIONS',
+      payload: { json },
+    });
+
+    if (response?.type === 'QUIZ_ERROR') {
+      showError(response.payload.error);
+      return;
+    }
+
+    if (response?.type === 'IMPORT_RESULT') {
+      await loadHistory();
+      const importBtn = $('import-history-btn') as HTMLButtonElement;
+      importBtn.textContent = `Imported ${response.payload.importedCount}`;
+      setTimeout(() => {
+        importBtn.textContent = 'Import History';
+      }, 1500);
+    }
+  } catch (err) {
+    showError(err instanceof Error ? err.message : 'Failed to import history');
+  } finally {
+    input.value = '';
+  }
+});
+
 $('why-btn').addEventListener('click', () => {
   const explanationBox = $('explanation-box');
   const whyBtn = $('why-btn') as HTMLButtonElement;
@@ -338,7 +376,7 @@ async function loadHistory() {
   list.innerHTML = sessions
     .slice()
     .reverse()
-    .map((s: any) => `
+    .map((s) => `
       <div class="history-item">
         <div class="history-title">${escapeHtml(s.title)}</div>
         <div class="history-meta">

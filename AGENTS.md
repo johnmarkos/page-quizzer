@@ -191,6 +191,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - For panel-only interaction polish, reset transient UI state explicitly when views/questions change; hidden DOM from a prior state will otherwise leak into later quiz steps
 - If multiple providers parse the same LLM response shape, centralize that normalization in one helper; otherwise feature support like new question types will drift across providers
 - For panel features with browser APIs like downloads/Blob URLs, keep the side-effect thin and move filename/serialization logic into a pure helper so it stays testable without DOM harnesses
+- Imported local files are untrusted input too: validate them in the background before merging into storage, rather than trusting panel-side parsing alone
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

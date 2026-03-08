@@ -8,6 +8,7 @@ import { generateId } from '../engine/utils.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
 import { cloneProblems, getMissedProblems } from './retry-missed.js';
 import { buildReviewItems } from './review-missed.js';
+import { mergeSessionRecords, parseImportedSessions } from './history-import.js';
 
 type CompletedQuizData = {
   problems: Problem[];
@@ -140,6 +141,8 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
       return await handleTestConnection();
     case 'GET_SESSIONS':
       return { type: 'SESSIONS', payload: await storage.getSessions() };
+    case 'IMPORT_SESSIONS':
+      return await handleImportSessions(message.payload.json);
     case 'GET_STATE':
       return await handleGetState();
     default:
@@ -228,6 +231,21 @@ async function handleTestConnection() {
   });
   const ok = await provider.testConnection();
   return { type: 'CONNECTION_RESULT', payload: { success: ok } };
+}
+
+async function handleImportSessions(json: string) {
+  const importedSessions = parseImportedSessions(json);
+  const existingSessions = await storage.getSessions();
+  const mergedSessions = mergeSessionRecords(existingSessions, importedSessions);
+  await storage.setSessions(mergedSessions);
+
+  return {
+    type: 'IMPORT_RESULT',
+    payload: {
+      importedCount: importedSessions.length,
+      totalCount: mergedSessions.length,
+    },
+  };
 }
 
 function handleRetryMissed() {
