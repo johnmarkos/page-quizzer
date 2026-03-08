@@ -68,7 +68,7 @@ export type ReviewItem = {
 // Background → Panel
 export type QuizGeneratedMessage = {
   type: 'QUIZ_GENERATED';
-  payload: { problems: Problem[]; title: string };
+  payload: { problems: Problem[]; title: string; warning?: string };
 };
 
 export type QuizErrorMessage = {
@@ -148,6 +148,7 @@ export type RestoredStateMessage = {
         state: 'ready';
         title: string;
         total: number;
+        warning?: string;
       }
     | {
         state: 'complete';

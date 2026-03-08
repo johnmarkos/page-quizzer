@@ -40,6 +40,7 @@ let lastExtracted: ExtractedContent | null = null;
 let currentProblems: Problem[] = [];
 let currentTopics: string[] = [];
 let lastCompletedQuiz: CompletedQuizData | null = null;
+let currentGenerationWarning: string | null = null;
 
 engine.on('stateChange', async () => {
   await persistState();
@@ -133,6 +134,7 @@ async function persistState() {
           summary: cloneSummary(lastCompletedQuiz.summary),
         }
       : null,
+    generationWarning: currentGenerationWarning,
   };
 
   tabSessions = hasSessionData(session)
@@ -211,6 +213,7 @@ async function handleGetState() {
         state: 'ready',
         title: lastExtracted.title,
         total: currentProblems.length,
+        warning: currentGenerationWarning ?? undefined,
       },
     };
   }
@@ -290,11 +293,12 @@ async function handleGenerateQuiz(tab: chrome.tabs.Tab) {
   currentProblems = cloneProblems(problems);
   currentTopics = cloneTopics(generatedQuiz.topics);
   lastCompletedQuiz = null;
+  currentGenerationWarning = generatedQuiz.warning ?? null;
   engine.loadProblems(problems);
 
   return {
     type: 'QUIZ_GENERATED',
-    payload: { problems, title: lastExtracted.title },
+    payload: { problems, title: lastExtracted.title, warning: generatedQuiz.warning },
   };
 }
 
@@ -396,6 +400,7 @@ function handleRetryMissed() {
 
   currentProblems = cloneProblems(missedProblems);
   currentTopics = [];
+  currentGenerationWarning = null;
   engine.loadProblems(missedProblems);
   engine.start();
   return { type: 'ok' };
@@ -441,6 +446,7 @@ function applyTabSession(session: ReturnType<typeof getTabQuizSession>, tabId: n
         summary: cloneSummary(session.lastCompletedQuiz.summary),
       }
     : null;
+  currentGenerationWarning = session.generationWarning ?? null;
 }
 
 async function ensureActiveTabSession(tabId: number) {

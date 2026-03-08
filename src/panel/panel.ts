@@ -68,10 +68,11 @@ $('generate-btn').addEventListener('click', async () => {
     if (response?.type === 'QUIZ_ERROR') {
       showError(response.payload.error);
     } else if (response?.type === 'QUIZ_GENERATED') {
-      const count = response.payload.problems.length;
-      ($('ready-info') as HTMLElement).textContent =
-        `Generated ${count} questions from "${response.payload.title}"`;
-      showQuizSection('quiz-ready');
+      renderReadyState(
+        response.payload.title,
+        response.payload.problems.length,
+        response.payload.warning,
+      );
     }
   } catch (err) {
     showError(err instanceof Error ? err.message : 'Failed to generate quiz');
@@ -551,9 +552,11 @@ async function checkRestoredState() {
         break;
       }
       case 'ready':
-        ($('ready-info') as HTMLElement).textContent =
-          `Generated ${restoredState.payload.total} questions from "${restoredState.payload.title}"`;
-        showQuizSection('quiz-ready');
+        renderReadyState(
+          restoredState.payload.title,
+          restoredState.payload.total,
+          restoredState.payload.warning,
+        );
         break;
       case 'complete':
         showComplete(restoredState.payload.summary);
@@ -601,6 +604,25 @@ function renderModelOptions(provider: ProviderName, requestedModel?: string) {
     .map(model => `<option value="${escapeHtml(model)}">${escapeHtml(model)}</option>`)
     .join('');
   modelSelect.value = selectedModel;
+}
+
+function renderReadyState(title: string, count: number, warning?: string) {
+  ($('ready-info') as HTMLElement).textContent = `Generated ${count} questions from "${title}"`;
+
+  const warningEl = $('ready-warning');
+  const startBtn = $('start-btn') as HTMLButtonElement;
+
+  if (warning) {
+    warningEl.textContent = `${warning}. You can still start with ${count} question${count === 1 ? '' : 's'}.`;
+    show(warningEl);
+    startBtn.textContent = `Start with ${count} Question${count === 1 ? '' : 's'}`;
+  } else {
+    warningEl.textContent = '';
+    hide(warningEl);
+    startBtn.textContent = 'Start Quiz';
+  }
+
+  showQuizSection('quiz-ready');
 }
 
 function renderHistory() {

@@ -11,6 +11,7 @@ export type TabQuizSession = {
   lastExtracted: ExtractedContent | null;
   currentTopics: string[];
   lastCompletedQuiz: CompletedQuizData | null;
+  generationWarning: string | null;
 };
 
 export type TabQuizSessionMap = Record<string, TabQuizSession>;
@@ -27,6 +28,7 @@ export function createEmptySession(): TabQuizSession {
     lastExtracted: null,
     currentTopics: [],
     lastCompletedQuiz: null,
+    generationWarning: null,
   };
 }
 
@@ -80,5 +82,6 @@ export function cloneTabQuizSession(session: TabQuizSession): TabQuizSession {
           },
         }
       : null,
+    generationWarning: session.generationWarning ?? null,
   };
 }

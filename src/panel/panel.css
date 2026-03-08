@@ -184,6 +184,21 @@ nav {
   line-height: 1.4;
 }
 
+#ready-info {
+  margin-bottom: 10px;
+}
+
+#ready-warning {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg));
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 /* Options */
 .option-btn {
   display: block;

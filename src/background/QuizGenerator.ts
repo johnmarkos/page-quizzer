@@ -12,6 +12,7 @@ export type GenerationOptions = {
 export type GeneratedQuiz = {
   problems: Problem[];
   topics: string[];
+  warning?: string;
 };
 
 export class QuizGenerator {
@@ -46,20 +47,34 @@ export class QuizGenerator {
         remainingQuestions + buildGenerationBuffer(remainingQuestions),
       );
 
-      const problems = await this.#provider.generateQuiz({
-        content: chunks[i],
-        density: options.density,
-        maxQuestions: requestedQuestions,
-        title: content.title,
-      });
-      const acceptedProblems = filterLowQualityQuestions(problems);
-      if (acceptedProblems.length < problems.length) {
-        console.warn(
-          'Filtered low-quality questions',
-          `${problems.length - acceptedProblems.length}/${problems.length}`,
-        );
+      try {
+        const problems = await this.#provider.generateQuiz({
+          content: chunks[i],
+          density: options.density,
+          maxQuestions: requestedQuestions,
+          title: content.title,
+        });
+        const acceptedProblems = filterLowQualityQuestions(problems);
+        if (acceptedProblems.length < problems.length) {
+          console.warn(
+            'Filtered low-quality questions',
+            `${problems.length - acceptedProblems.length}/${problems.length}`,
+          );
+        }
+        allProblems.push(...acceptedProblems);
+      } catch (error) {
+        if (allProblems.length === 0) {
+          throw error;
+        }
+
+        const message = error instanceof Error ? error.message : 'Unknown generation error';
+        console.warn('Quiz generation stopped early', `chunk ${i + 1}/${chunks.length}`, message);
+        return {
+          problems: allProblems.slice(0, options.maxQuestions),
+          topics: await topicPromise,
+          warning: `Generation stopped early on chunk ${i + 1} of ${chunks.length}: ${message}`,
+        };
       }
-      allProblems.push(...acceptedProblems);
 
       if (allProblems.length >= options.maxQuestions) break;
     }

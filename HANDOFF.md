@@ -2,6 +2,9 @@
 
 ## Completed
 
+- Added partial quiz recovery for mid-generation chunk failures: if later chunks fail after accepted questions already exist, PageQuizzer now keeps the partial quiz instead of failing the whole run
+- Added ready-state warnings and `Start with N Questions` UI so partial generation is explicitly surfaced to the user
+- Persisted partial-generation warnings in tab-scoped quiz session state so the recovery message survives service-worker restarts before the quiz starts
 - Added a lightweight post-generation question-quality filter that drops obviously weak multiple-choice questions before they reach the engine
 - Added a small over-generation buffer in `QuizGenerator` so filtering poor questions does not immediately collapse the final quiz count
 - Strengthened the quiz-generation prompt so distractors are instructed to be realistic misunderstandings, parallel in style/detail, and less obviously giveaway
@@ -26,6 +29,8 @@
 
 ## Decisions
 
+- Treated chunk failures as recoverable only after at least one accepted question exists; if generation never produced usable questions, the user still gets a normal error instead of an empty “recovered” quiz
+- Kept the partial-recovery warning in extension state rather than inferring it from problem count alone, because the ready UI needs to distinguish “short quiz by choice” from “short quiz because generation stopped early”
 - Kept the quality filter conservative and structural: reject only patterns that are clearly low-signal or giveaway, rather than trying to “understand” subject matter correctness heuristically
 - Put the filter in the background generator layer instead of `src/providers/` so provider outputs all pass through one shared quality gate
 - Kept the “better quizzes” work prompt-only for this milestone instead of mixing it with post-generation heuristics; that isolates whether improved question quality comes from instruction tuning before adding more moving parts
@@ -46,12 +51,13 @@
 
 ## Validation
 
-- `npm test` passed with 98/98 tests
+- `npm test` passed with 100/100 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- Partial recovery needs to be persisted too; otherwise a service-worker restart between generation and quiz start would silently drop the warning and revert the ready screen to looking like a normal full-success run
 - Quality heuristics should be biased toward obviously bad structural patterns; if they get too semantic or too aggressive, they will quietly delete valid questions and make quiz counts unpredictable
 - If filtered questions reduce final counts, requesting a small buffer at generation time is simpler and safer than trying to regenerate recursively inside provider code
 - If prompt quality is the thing being changed, bump the prompt version and add prompt-specific assertions; otherwise later question-quality comparisons are hard to attribute to a specific instruction set

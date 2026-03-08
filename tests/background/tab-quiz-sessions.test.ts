@@ -41,6 +41,7 @@ describe('tab quiz sessions', () => {
         },
         currentTopics: ['Physics'],
         lastCompletedQuiz: null,
+        generationWarning: 'Stopped early',
       },
     };
 

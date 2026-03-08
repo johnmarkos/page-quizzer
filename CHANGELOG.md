@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.1.37 — Partial Quiz Recovery (2026-03-08)
+
+### Reliability
+- Recovered partial quiz generation when a later chunk fails after some usable questions have already been produced
+- Returned the accepted questions to the ready state instead of failing the whole run, and surfaced a warning so the user can still start with the partial quiz
+- Kept the hard-error path only for cases where zero usable questions were generated
+
+### Panel & State
+- Added ready-state warning support in the message contract and tab-session persistence so partial-generation recovery survives service-worker restarts
+- Updated the ready screen to show a warning and switch the CTA to `Start with N Questions` when generation stopped early
+
+### Testing
+- 100 tests (was 98): added chunk-failure generator coverage for both partial-success and zero-question hard-error cases
+
 ## v0.1.36 — Question Quality Filter (2026-03-08)
 
 ### Quiz Quality
