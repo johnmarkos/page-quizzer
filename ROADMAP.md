@@ -44,7 +44,7 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [ ] **Q1: Question type — true/false** — Add `true-false` question type. A `Problem` with exactly 2 options: "True" and "False". Update quiz generation prompt to sometimes produce true/false questions. Panel renders them as two large buttons instead of four small ones. Engine already handles 2-option problems correctly (no engine changes needed). Test: engine grading with 2-option problem.
 
-- [ ] **Q2: Answer explanation improvements** — When showing answer result, if the LLM provided an explanation, render it in a styled callout box. Add a "Why?" button that only appears if explanation exists. Small CSS addition + panel logic. Test: manual.
+- [x] **Q2: Answer explanation improvements** — When showing answer result, if the LLM provided an explanation, render it in a styled callout box. Add a "Why?" button that only appears if explanation exists. Small CSS addition + panel logic. Test: manual.
 
 - [x] **Q3: Question review at end of quiz** — After quiz completion, show a "Review Missed" button on the score view. Clicking it shows a scrollable list of incorrectly-answered questions with the correct answer highlighted. Data is already in `SessionSummary.answers` — just need to display it. Service worker needs to hold the problems array and return it via a `GET_REVIEW` message. Test: manual.
 

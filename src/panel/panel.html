@@ -40,8 +40,14 @@
         <h2 id="question-text"></h2>
         <div id="options-container"></div>
         <div id="feedback" class="hidden">
-          <p id="feedback-text"></p>
-          <p id="explanation-text"></p>
+          <div class="feedback-header">
+            <p id="feedback-text"></p>
+            <button id="why-btn" class="text-btn hidden" type="button">Why?</button>
+          </div>
+          <div id="explanation-box" class="hidden">
+            <p class="explanation-label">Explanation</p>
+            <p id="explanation-text"></p>
+          </div>
           <button id="next-btn" class="primary-btn">Next</button>
         </div>
         <button id="skip-btn" class="secondary-btn">Skip</button>

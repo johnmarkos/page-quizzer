@@ -11,6 +11,7 @@ function hide(el: HTMLElement) { el.classList.add('hidden'); }
 
 // --- State ---
 let selectedOptionIndex = -1;
+let currentExplanation = '';
 
 // --- Navigation ---
 document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -104,6 +105,20 @@ $('error-dismiss-btn').addEventListener('click', () => {
   showQuizSection('quiz-idle');
 });
 
+$('why-btn').addEventListener('click', () => {
+  const explanationBox = $('explanation-box');
+  const whyBtn = $('why-btn') as HTMLButtonElement;
+  const isHidden = explanationBox.classList.contains('hidden');
+
+  if (isHidden) {
+    show(explanationBox);
+    whyBtn.textContent = 'Hide Why';
+  } else {
+    hide(explanationBox);
+    whyBtn.textContent = 'Why?';
+  }
+});
+
 // --- Message listener (from background) ---
 chrome.runtime.onMessage.addListener((message) => {
   switch (message.type) {
@@ -129,6 +144,7 @@ function showQuestion(payload: { problem: Problem; index: number; total: number 
   showQuizSection('quiz-question');
   hide($('feedback'));
   show($('skip-btn'));
+  resetExplanationState();
 
   const { problem, index, total } = payload;
   const pct = ((index / total) * 100).toFixed(0);
@@ -159,13 +175,8 @@ function showAnswerResult(payload: { correct: boolean; correctIndex: number; exp
   feedbackText.textContent = payload.correct ? 'Correct!' : 'Incorrect';
   feedbackText.className = payload.correct ? 'correct' : 'incorrect';
 
-  const explanationText = $('explanation-text');
-  if (payload.explanation) {
-    explanationText.textContent = payload.explanation;
-    show(explanationText);
-  } else {
-    hide(explanationText);
-  }
+  currentExplanation = payload.explanation?.trim() || '';
+  updateExplanationUI();
 
   // Highlight correct answer green, selected wrong answer red
   const options = document.querySelectorAll('.option-btn');
@@ -181,6 +192,7 @@ function showAnswerResult(payload: { correct: boolean; correctIndex: number; exp
 
 function showComplete(payload: SessionSummary) {
   showQuizSection('quiz-complete');
+  resetExplanationState();
   ($('score-display') as HTMLElement).textContent = payload.score.percentage + '%';
   ($('score-breakdown') as HTMLElement).textContent =
     `${payload.score.correct} correct, ${payload.score.incorrect} incorrect, ${payload.score.skipped} skipped out of ${payload.score.total}`;
@@ -200,6 +212,7 @@ function showComplete(payload: SessionSummary) {
 
 function showReview(items: ReviewItem[]) {
   showQuizSection('quiz-review');
+  resetExplanationState();
 
   const list = $('review-list');
   const empty = $('review-empty');
@@ -230,6 +243,7 @@ function showReview(items: ReviewItem[]) {
 
 function showError(message: string) {
   showQuizSection('quiz-error');
+  resetExplanationState();
   ($('error-text') as HTMLElement).textContent = message;
 }
 
@@ -328,6 +342,30 @@ function escapeHtml(text: string): string {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+function updateExplanationUI() {
+  const whyBtn = $('why-btn') as HTMLButtonElement;
+  const explanationText = $('explanation-text');
+
+  explanationText.textContent = currentExplanation;
+
+  if (currentExplanation) {
+    show(whyBtn);
+  } else {
+    hide(whyBtn);
+  }
+
+  hide($('explanation-box'));
+  whyBtn.textContent = 'Why?';
+}
+
+function resetExplanationState() {
+  currentExplanation = '';
+  hide($('why-btn'));
+  hide($('explanation-box'));
+  ($('why-btn') as HTMLButtonElement).textContent = 'Why?';
+  ($('explanation-text') as HTMLElement).textContent = '';
 }
 
 // --- Restore state on panel open ---

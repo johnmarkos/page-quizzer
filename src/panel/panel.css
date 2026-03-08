@@ -185,10 +185,58 @@ nav {
   background: var(--bg-secondary);
 }
 
+#feedback .primary-btn {
+  margin-top: 12px;
+}
+
+.feedback-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 #feedback-text { font-weight: bold; }
 #feedback-text.correct { color: var(--success); }
 #feedback-text.incorrect { color: var(--error); }
-#explanation-text { margin-top: 8px; color: var(--text-muted); font-size: 13px; }
+
+.text-btn {
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.text-btn:hover {
+  color: var(--primary-hover);
+}
+
+#explanation-box {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--primary) 8%, var(--bg)) 0%, var(--bg) 100%);
+}
+
+.explanation-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+#explanation-text {
+  color: var(--text-muted);
+  font-size: 13px;
+}
 
 /* Score */
 #score-display {

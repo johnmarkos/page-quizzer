@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.1.6 — Answer Explanation Toggle (2026-03-08)
+
+### Quiz Experience
+- Added a `Why?` button to answer feedback that only appears when an explanation exists
+- Moved answer explanations into a styled callout box so the feedback state stays compact until the user chooses to expand it
+- Reset explanation visibility cleanly when moving between questions, score view, review view, and error state
+
+### Testing
+- Existing 40-test suite and production build passed after the panel update
+- No new automated tests were added because this milestone is panel-only and the repo does not yet have DOM/UI test coverage
+
 ## v0.1.5 — PDF Text Extraction (2026-03-08)
 
 ### Content Extraction

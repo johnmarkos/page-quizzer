@@ -188,6 +188,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - If a background feature keeps derived quiz state in memory (not just the engine snapshot), rebuild it from the serialized engine state after service worker restart or follow-up actions will silently break
 - For post-quiz actions like review/retry, persist the last completed quiz context separately from the in-progress engine snapshot; completion clears the snapshot but the follow-up UI still needs stable data
 - If a content script depends on a worker asset, bundle that worker explicitly and expose only that file through `web_accessible_resources`; otherwise extension CSP/URL access will break at runtime
+- For panel-only interaction polish, reset transient UI state explicitly when views/questions change; hidden DOM from a prior state will otherwise leak into later quiz steps
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable
