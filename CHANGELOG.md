@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.21 — Attach Path Version Marker (2026-03-08)
+
+### Diagnostics
+- Added an `attach-v2` marker to content-script attach errors so stale extension code is easy to distinguish from current failures during manual testing
+
+### Testing
+- Existing 65-test suite and production build passed after the diagnostic update
+
 ## v0.1.20 — Programmatic Content Script Only (2026-03-08)
 
 ### Bug Fixes

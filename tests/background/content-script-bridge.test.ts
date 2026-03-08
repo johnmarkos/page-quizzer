@@ -19,11 +19,11 @@ describe('content script bridge helpers', () => {
     expect(
       buildContentScriptAccessError(new Error('Cannot access contents of url "https://example.com/"'))
         .message,
-    ).toBe('PageQuizzer cannot access this page. Chrome blocks extension scripts here.');
+    ).toBe('[attach-v2] PageQuizzer cannot access this page. Chrome blocks extension scripts here.');
 
     expect(
       buildContentScriptAccessError(new Error('Unexpected failure')).message,
-    ).toBe('Failed to attach PageQuizzer to this tab: Unexpected failure');
+    ).toBe('[attach-v2] Failed to attach PageQuizzer to this tab: Unexpected failure');
   });
 
   it('detects host-permission injection failures', () => {

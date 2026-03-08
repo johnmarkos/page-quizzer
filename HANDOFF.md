@@ -2,14 +2,11 @@
 
 ## Completed
 
-- Removed the manifest `content_scripts` entry for `dist/content.js`
-- Changed extraction to attach the content script programmatically before messaging it, using the same module-safe attach path every time
-- Removed the now-obsolete missing-receiver helper logic and test coverage
+- Added an `attach-v2` marker to the content-script attach error messages
 
 ## Decisions
 
-- Chose one execution model for the content script instead of trying to support both classic manifest loading and module-based runtime attachment with the same bundle
-- Kept the content bundle module-oriented because `pdfjs-dist` already pushes the implementation that way, especially for PDF support
+- Chose a visible user-facing marker instead of deeper logging first so stale-extension-vs-current-code can be identified from one screenshot or copied error string
 
 ## Validation
 
@@ -18,4 +15,4 @@
 
 ## Gotchas
 
-- Fixing only the runtime recovery path was not enough while the manifest still tried to load the same file as a classic content script on page load
+- Chrome extension reload state is easy to misread during manual testing; a small explicit revision token can save multiple blind debugging cycles

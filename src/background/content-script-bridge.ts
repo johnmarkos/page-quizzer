@@ -1,6 +1,7 @@
 import { buildOriginPermissionPattern } from '../shared/site-access.js';
 
 const SUPPORTED_INJECTION_PROTOCOLS = new Set(['http:', 'https:', 'file:']);
+const CONTENT_SCRIPT_ATTACH_ERROR_TAG = '[attach-v2]';
 
 export function hasUnsupportedInjectionProtocol(url?: string | null): boolean {
   if (!url) {
@@ -23,10 +24,10 @@ export function buildContentScriptAccessError(error: unknown): Error {
     message.includes('The extensions gallery cannot be scripted') ||
     message.includes('Missing host permission for the tab')
   ) {
-    return new Error('PageQuizzer cannot access this page. Chrome blocks extension scripts here.');
+    return new Error(`${CONTENT_SCRIPT_ATTACH_ERROR_TAG} PageQuizzer cannot access this page. Chrome blocks extension scripts here.`);
   }
 
-  return new Error(`Failed to attach PageQuizzer to this tab: ${message}`);
+  return new Error(`${CONTENT_SCRIPT_ATTACH_ERROR_TAG} Failed to attach PageQuizzer to this tab: ${message}`);
 }
 
 export function isHostPermissionInjectionError(error: unknown): boolean {

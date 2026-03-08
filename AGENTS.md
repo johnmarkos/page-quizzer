@@ -205,6 +205,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - Optional host permission prompts work more reliably from a direct UI gesture than deep inside an async background recovery path; request site access as early as possible in the user action flow
 - If a runtime-injected script bundle depends on module semantics, don’t inject it as a raw file with `executeScript`; use a loader that `import()`s the extension URL instead
 - If the same bundle is also declared under `manifest.content_scripts`, it still has to be valid as a classic content script there; otherwise remove the declarative path and rely on the programmatic module attach consistently
+- When debugging Chrome extension reload/caching issues, add a short visible version marker to the user-facing error path; it’s faster than guessing which bundle Chrome is actually running
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable
