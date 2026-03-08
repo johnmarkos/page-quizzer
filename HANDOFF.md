@@ -6,6 +6,7 @@
 - Added manifest `file:///*` host coverage and a clearer fallback error when a local PDF is still unreadable
 - Hardened `Start Quiz`/`Retry`/`Retry Missed` by syncing quiz state from the service worker after the action instead of depending solely on a runtime broadcast
 - Removed the runtime `import()` from the service-worker PDF extractor and bundled `pdfjs` statically for the background path
+- Bootstrapped `pdfjs`'s fake-worker handler in the service worker so background PDF parsing no longer needs `GlobalWorkerOptions.workerSrc`
 - Added `Q6` and `Q7` to the roadmap for stronger distractors and question-quality filtering
 
 ## Decisions
@@ -14,6 +15,7 @@
 - Kept the user-facing guidance only for the actual blocked case, and separated it from the "file still unreadable" fallback so debugging is less misleading
 - Kept the state-sync fix panel-side to avoid changing the message protocol for a UI reliability bug; the service worker remains the source of truth and the panel simply asks for current state immediately after start-like actions
 - Kept the content-script PDF loader as a runtime module import, but removed that pattern from the MV3 service worker where Chrome disallows it
+- For the service-worker PDF path, supplying `WorkerMessageHandler` directly is safer than relying on `workerSrc` because it avoids another runtime module load in a context where `import()` is restricted
 
 ## Validation
 

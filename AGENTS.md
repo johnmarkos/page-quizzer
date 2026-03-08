@@ -213,6 +213,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - Don’t hard-block local `file://` PDFs based on the URL alone; check `chrome.extension.isAllowedFileSchemeAccess()` and declare the `file://` match pattern in the manifest so enabled file access can actually work
 - When a panel action changes quiz state, don’t rely only on a background broadcast to update the UI; follow the action with an explicit state sync so the first question still appears if the broadcast is missed
 - MV3 service workers cannot use runtime `import()` the same way page contexts can; if background code needs a module dependency at runtime, bundle it with a static import instead of loading it through `chrome.runtime.getURL(...)`
+- If bundled `pdfjs` runs in a service worker with `disableWorker: true`, it may still expect the fake-worker bootstrap path; preload `globalThis.pdfjsWorker.WorkerMessageHandler` to avoid a `workerSrc` requirement in the background context
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

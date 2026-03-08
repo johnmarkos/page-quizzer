@@ -1,5 +1,6 @@
 import type { ExtractedContent } from '../shared/messages.js';
 import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
+import { WorkerMessageHandler } from 'pdfjs-dist/build/pdf.worker.mjs';
 import type {
   DocumentInitParameters,
   PDFDocumentProxy,
@@ -18,6 +19,12 @@ import {
   hasAllowedFileSchemeAccess,
   isLocalFilePdfUrl,
 } from './pdf-source.js';
+
+const globalPdfjsWorker = globalThis as typeof globalThis & {
+  pdfjsWorker?: { WorkerMessageHandler: typeof WorkerMessageHandler };
+};
+
+globalPdfjsWorker.pdfjsWorker ||= { WorkerMessageHandler };
 
 export async function extractPdfContentFromTabUrl(
   tabUrl: string,

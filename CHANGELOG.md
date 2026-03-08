@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.29 — Background PDF Worker Bootstrap (2026-03-08)
+
+### Bug Fixes
+- Preloaded `pdfjs`'s `WorkerMessageHandler` in the service worker so background PDF extraction no longer depends on `GlobalWorkerOptions.workerSrc`
+- Fixed the next failure in the service-worker PDF path after removing the background runtime `import()`
+
+### Testing
+- Existing 74-test suite and production build passed after the background worker bootstrap update
+
 ## v0.1.28 — Service Worker PDF Import Fix (2026-03-08)
 
 ### Bug Fixes
