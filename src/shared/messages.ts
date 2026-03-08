@@ -169,6 +169,11 @@ export type SaveSettingsRequest = {
 
 export type TestConnectionRequest = {
   type: 'TEST_CONNECTION';
+  payload?: {
+    provider: 'anthropic' | 'openai';
+    apiKey: string;
+    model?: string;
+  };
 };
 
 export type GetSessionsRequest = {

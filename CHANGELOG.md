@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.1.12 — Connection Test Uses Current Form Values (2026-03-08)
+
+### Bug Fixes
+- Fixed `Test Connection` so it validates the provider and API key currently entered in the settings form, even before the user clicks `Save Settings`
+- Prevented provider switches during connection testing from reusing a stale model name from a different provider
+
+### Testing
+- 58 tests (was 55): added coverage for stored-vs-form connection settings resolution
+
+### Security Review
+- Message-handling review found no new outbound destinations or storage exposure changes
+- `npm audit --omit=dev` reported 0 vulnerabilities
+
 ## v0.1.11 — Extension Badge Progress (2026-03-08)
 
 ### Settings & Polish

@@ -10,6 +10,7 @@ import { cloneProblems, getMissedProblems } from './retry-missed.js';
 import { buildReviewItems } from './review-missed.js';
 import { mergeSessionRecords, parseImportedSessions } from './history-import.js';
 import { buildQuizBadgeText, shouldClearQuizBadge } from './quiz-badge.js';
+import { resolveConnectionSettings } from './connection-settings.js';
 
 type CompletedQuizData = {
   problems: Problem[];
@@ -144,7 +145,7 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
       await storage.saveSettings(message.payload);
       return { type: 'ok' };
     case 'TEST_CONNECTION':
-      return await handleTestConnection();
+      return await handleTestConnection(message.payload);
     case 'GET_SESSIONS':
       return { type: 'SESSIONS', payload: await storage.getSessions() };
     case 'IMPORT_SESSIONS':
@@ -226,11 +227,16 @@ async function handleGenerateQuiz() {
   };
 }
 
-async function handleTestConnection() {
-  const settings = await storage.getSettings();
-  if (!settings.apiKey) {
+async function handleTestConnection(
+  override?: { provider: 'anthropic' | 'openai'; apiKey: string; model?: string },
+) {
+  const stored = await storage.getSettings();
+  const settings = resolveConnectionSettings(stored, override);
+
+  if (!settings.apiKey.trim()) {
     throw new Error('No API key configured');
   }
+
   const provider = createProvider(settings.provider, {
     apiKey: settings.apiKey,
     model: settings.model,

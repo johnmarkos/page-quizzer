@@ -345,7 +345,7 @@ $('density-slider').addEventListener('input', (e) => {
 
 $('save-settings-btn').addEventListener('click', async () => {
   const settings = {
-    provider: (document.getElementById('provider-select') as HTMLSelectElement).value,
+    provider: (document.getElementById('provider-select') as HTMLSelectElement).value as 'anthropic' | 'openai',
     apiKey: (document.getElementById('api-key-input') as HTMLInputElement).value,
     density: Number((document.getElementById('density-slider') as HTMLInputElement).value),
     maxQuestions: Number((document.getElementById('max-questions-input') as HTMLInputElement).value),
@@ -360,7 +360,13 @@ $('test-connection-btn').addEventListener('click', async () => {
   status.textContent = 'Testing...';
   status.className = '';
   try {
-    const response = await chrome.runtime.sendMessage({ type: 'TEST_CONNECTION' });
+    const response = await chrome.runtime.sendMessage({
+      type: 'TEST_CONNECTION',
+      payload: {
+        provider: (document.getElementById('provider-select') as HTMLSelectElement).value as 'anthropic' | 'openai',
+        apiKey: (document.getElementById('api-key-input') as HTMLInputElement).value,
+      },
+    });
     if (response?.payload?.success) {
       status.textContent = 'Connected!';
       status.className = 'correct';
