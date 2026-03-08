@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { buildOriginPermissionPattern } from '../../src/shared/site-access.js';
 import {
-  buildOriginPermissionPattern,
   buildContentScriptAccessError,
   hasUnsupportedInjectionProtocol,
   isHostPermissionInjectionError,

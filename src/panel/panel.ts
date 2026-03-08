@@ -2,6 +2,7 @@ import type { Problem, SessionSummary } from '../engine/types.js';
 import type { SessionRecord } from '../background/StorageManager.js';
 import type { ReviewItem } from '../shared/messages.js';
 import type { ProviderName } from '../providers/index.js';
+import { buildOriginPermissionPattern } from '../shared/site-access.js';
 import { buildHistoryExportFilename, serializeHistoryRecords } from './history-export.js';
 import {
   buildShortcutHelpText,
@@ -48,6 +49,10 @@ function showQuizSection(section: string) {
 $('generate-btn').addEventListener('click', async () => {
   showQuizSection('quiz-loading');
   try {
+    ($('loading-status') as HTMLElement).textContent = 'Checking site access...';
+    await ensureSiteAccessForActiveTab();
+
+    ($('loading-status') as HTMLElement).textContent = 'Extracting content...';
     const response = await chrome.runtime.sendMessage({ type: 'GENERATE_QUIZ' });
     if (response?.type === 'QUIZ_ERROR') {
       showError(response.payload.error);
@@ -61,6 +66,26 @@ $('generate-btn').addEventListener('click', async () => {
     showError(err instanceof Error ? err.message : 'Failed to generate quiz');
   }
 });
+
+async function ensureSiteAccessForActiveTab() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const originPattern = buildOriginPermissionPattern(tab?.url);
+
+  if (!originPattern) {
+    return;
+  }
+
+  const hasAccess = await chrome.permissions.contains({ origins: [originPattern] });
+  if (hasAccess) {
+    return;
+  }
+
+  ($('loading-status') as HTMLElement).textContent = 'Requesting permission to access this site...';
+  const granted = await chrome.permissions.request({ origins: [originPattern] });
+  if (!granted) {
+    throw new Error('PageQuizzer needs site access for this page. Approve the Chrome permission prompt and try again.');
+  }
+}
 
 $('start-btn').addEventListener('click', () => {
   chrome.runtime.sendMessage({ type: 'START_QUIZ' });

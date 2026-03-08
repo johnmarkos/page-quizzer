@@ -11,8 +11,8 @@ import { buildReviewItems } from './review-missed.js';
 import { mergeSessionRecords, parseImportedSessions } from './history-import.js';
 import { buildQuizBadgeText, shouldClearQuizBadge } from './quiz-badge.js';
 import { resolveConnectionSettings } from './connection-settings.js';
+import { buildOriginPermissionPattern } from '../shared/site-access.js';
 import {
-  buildOriginPermissionPattern,
   buildContentScriptAccessError,
   hasUnsupportedInjectionProtocol,
   isHostPermissionInjectionError,

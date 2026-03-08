@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.18 — Panel-Led Site Access Prompt (2026-03-08)
+
+### Bug Fixes
+- Moved the normal-page site-access request into the `Generate Quiz` button flow so Chrome can grant optional host permission within a direct user gesture
+- Reused a shared per-origin permission helper across panel and background flows to keep runtime site-access behavior consistent
+
+### Testing
+- Existing 66-test suite and production build passed after the site-access flow update
+
 ## v0.1.17 — Runtime Site Access Request (2026-03-08)
 
 ### Bug Fixes
