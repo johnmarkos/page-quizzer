@@ -214,6 +214,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - When a panel action changes quiz state, don’t rely only on a background broadcast to update the UI; follow the action with an explicit state sync so the first question still appears if the broadcast is missed
 - MV3 service workers cannot use runtime `import()` the same way page contexts can; if background code needs a module dependency at runtime, bundle it with a static import instead of loading it through `chrome.runtime.getURL(...)`
 - If bundled `pdfjs` runs in a service worker with `disableWorker: true`, it may still expect the fake-worker bootstrap path; preload `globalThis.pdfjsWorker.WorkerMessageHandler` to avoid a `workerSrc` requirement in the background context
+- If a provider setting exposes selectable models, normalize any stored model name against the current provider on read; stale saved model strings can otherwise break generation long after the UI is updated
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

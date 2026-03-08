@@ -7,6 +7,7 @@ import {
   buildUserPrompt,
 } from '../prompts/quiz-generation.js';
 import { parseQuizQuestions } from './parseQuizQuestions.js';
+import { getDefaultProviderModel, getProviderModels } from './provider-models.js';
 
 type GeminiGenerateContentResponse = {
   candidates?: Array<{
@@ -26,7 +27,11 @@ export class GeminiProvider extends BaseProvider {
   }
 
   get defaultModel(): string {
-    return 'gemini-2.5-flash';
+    return getDefaultProviderModel('gemini');
+  }
+
+  get models(): string[] {
+    return getProviderModels('gemini');
   }
 
   async generateQuiz(params: QuizGenerationParams): Promise<Problem[]> {

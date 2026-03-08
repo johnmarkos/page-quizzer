@@ -1,6 +1,7 @@
 import { STORAGE_KEYS, DEFAULT_DENSITY, DEFAULT_MAX_QUESTIONS } from '../shared/constants.js';
 import type { ProviderName } from '../providers/index.js';
 import type { SessionSummary } from '../engine/types.js';
+import { normalizeProviderModel } from '../providers/provider-models.js';
 
 export type SessionRecord = SessionSummary & {
   id: string;
@@ -27,10 +28,13 @@ export class StorageManager {
       STORAGE_KEYS.MAX_QUESTIONS,
     ]);
     const local = await chrome.storage.local.get([STORAGE_KEYS.API_KEY]);
+    const provider = (result[STORAGE_KEYS.PROVIDER] || 'anthropic') as ProviderName;
+    const storedModel = result[STORAGE_KEYS.MODEL] as string | undefined;
+
     return {
       apiKey: local[STORAGE_KEYS.API_KEY] || '',
-      provider: (result[STORAGE_KEYS.PROVIDER] || 'anthropic') as ProviderName,
-      model: result[STORAGE_KEYS.MODEL],
+      provider,
+      model: storedModel ? normalizeProviderModel(provider, storedModel) : undefined,
       density: result[STORAGE_KEYS.DENSITY] ?? DEFAULT_DENSITY,
       maxQuestions: result[STORAGE_KEYS.MAX_QUESTIONS] ?? DEFAULT_MAX_QUESTIONS,
     };

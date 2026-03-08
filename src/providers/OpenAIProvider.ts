@@ -3,6 +3,7 @@ import type { Problem } from '../engine/types.js';
 import type { QuizGenerationParams, RawQuizQuestion, QuizGenerationSchema } from '../prompts/types.js';
 import { buildSystemPrompt, buildUserPrompt } from '../prompts/quiz-generation.js';
 import { parseQuizQuestions } from './parseQuizQuestions.js';
+import { getDefaultProviderModel, getProviderModels } from './provider-models.js';
 
 type OpenAIChatCompletionResponse = {
   choices?: Array<{
@@ -18,7 +19,11 @@ export class OpenAIProvider extends BaseProvider {
   }
 
   get defaultModel(): string {
-    return 'gpt-4o-mini';
+    return getDefaultProviderModel('openai');
+  }
+
+  get models(): string[] {
+    return getProviderModels('openai');
   }
 
   async generateQuiz(params: QuizGenerationParams): Promise<Problem[]> {

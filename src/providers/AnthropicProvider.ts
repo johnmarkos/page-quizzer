@@ -3,6 +3,7 @@ import type { Problem } from '../engine/types.js';
 import type { QuizGenerationParams, RawQuizQuestion } from '../prompts/types.js';
 import { buildSystemPrompt, buildUserPrompt, QUIZ_TOOL_SCHEMA } from '../prompts/quiz-generation.js';
 import { parseQuizQuestions } from './parseQuizQuestions.js';
+import { getDefaultProviderModel, getProviderModels } from './provider-models.js';
 
 export class AnthropicProvider extends BaseProvider {
   get name(): string {
@@ -10,7 +11,11 @@ export class AnthropicProvider extends BaseProvider {
   }
 
   get defaultModel(): string {
-    return 'claude-haiku-4-5-20251001';
+    return getDefaultProviderModel('anthropic');
+  }
+
+  get models(): string[] {
+    return getProviderModels('anthropic');
   }
 
   async generateQuiz(params: QuizGenerationParams): Promise<Problem[]> {

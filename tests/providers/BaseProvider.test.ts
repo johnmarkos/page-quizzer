@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { createProvider, getAvailableProviders } from '../../src/providers/index.js';
+import {
+  createProvider,
+  getAvailableProviders,
+  getDefaultProviderModel,
+  getProviderModels,
+  normalizeProviderModel,
+} from '../../src/providers/index.js';
 
 describe('Provider Registry', () => {
   it('lists available providers', () => {
@@ -13,12 +19,14 @@ describe('Provider Registry', () => {
     const provider = createProvider('anthropic', { apiKey: 'test-key' });
     expect(provider.name).toBe('anthropic');
     expect(provider.model).toBe('claude-haiku-4-5-20251001');
+    expect(provider.models).toEqual(getProviderModels('anthropic'));
   });
 
   it('creates an openai provider', () => {
     const provider = createProvider('openai', { apiKey: 'test-key' });
     expect(provider.name).toBe('openai');
     expect(provider.model).toBe('gpt-4o-mini');
+    expect(provider.models).toEqual(getProviderModels('openai'));
   });
 
   it('uses custom model when provided', () => {
@@ -41,6 +49,7 @@ describe('Provider Registry', () => {
     const provider = createProvider('gemini', { apiKey: 'test-key' });
     expect(provider.name).toBe('gemini');
     expect(provider.model).toBe('gemini-2.5-flash');
+    expect(provider.models).toEqual(getProviderModels('gemini'));
   });
 
   it('uses custom model for gemini when provided', () => {
@@ -53,5 +62,19 @@ describe('Provider Registry', () => {
 
   it('throws for unknown provider', () => {
     expect(() => createProvider('nonexistent' as never, { apiKey: '' })).toThrow('Unknown provider');
+  });
+
+  it('exposes non-empty model lists for every provider', () => {
+    for (const providerName of getAvailableProviders()) {
+      const models = getProviderModels(providerName);
+      expect(models.length).toBeGreaterThan(0);
+      expect(models[0]).toBe(getDefaultProviderModel(providerName));
+    }
+  });
+
+  it('normalizes invalid or missing model selections to the provider default', () => {
+    expect(normalizeProviderModel('openai')).toBe('gpt-4o-mini');
+    expect(normalizeProviderModel('openai', 'not-a-real-model')).toBe('gpt-4o-mini');
+    expect(normalizeProviderModel('openai', 'gpt-4.1')).toBe('gpt-4.1');
   });
 });

@@ -16,6 +16,7 @@ export abstract class BaseProvider {
 
   abstract get name(): string;
   abstract get defaultModel(): string;
+  abstract get models(): string[];
 
   get model(): string {
     return this.config.model ?? this.defaultModel;

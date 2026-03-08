@@ -27,3 +27,8 @@ export { BaseProvider, type ProviderConfig } from './BaseProvider.js';
 export { AnthropicProvider } from './AnthropicProvider.js';
 export { GeminiProvider } from './GeminiProvider.js';
 export { OpenAIProvider } from './OpenAIProvider.js';
+export {
+  getDefaultProviderModel,
+  getProviderModels,
+  normalizeProviderModel,
+} from './provider-models.js';

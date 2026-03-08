@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.1.30 — Model Selection Dropdown (2026-03-08)
+
+### Settings & Providers
+- Added a model dropdown to Settings that updates when the provider changes and saves the selected model alongside the provider and API key
+- Added explicit per-provider model lists in `src/providers/` and exposed them through the provider abstraction
+- Normalized stored model selections against the current provider so stale or invalid saved model names fall back to a valid default
+
+### Testing
+- 76 tests (was 74): added provider-model coverage for non-empty model lists and model normalization behavior
+
 ## v0.1.29 — Background PDF Worker Bootstrap (2026-03-08)
 
 ### Bug Fixes

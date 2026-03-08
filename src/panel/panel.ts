@@ -4,6 +4,7 @@ import type { ReviewItem } from '../shared/messages.js';
 import type { ProviderName } from '../providers/index.js';
 import { buildOriginPermissionPattern } from '../shared/site-access.js';
 import { buildHistoryExportFilename, serializeHistoryRecords } from './history-export.js';
+import { getProviderModels, normalizeProviderModel } from '../providers/provider-models.js';
 import {
   buildShortcutHelpText,
   getOptionShortcutIndex,
@@ -38,6 +39,13 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     if ((btn as HTMLElement).dataset.view === 'settings') loadSettings();
     if ((btn as HTMLElement).dataset.view === 'history') loadHistory();
   });
+});
+
+const providerSelect = document.getElementById('provider-select') as HTMLSelectElement;
+const modelSelect = document.getElementById('model-select') as HTMLSelectElement;
+renderModelOptions(providerSelect.value as ProviderName);
+providerSelect.addEventListener('change', () => {
+  renderModelOptions(providerSelect.value as ProviderName, modelSelect.value);
 });
 
 // --- Quiz Flow ---
@@ -363,7 +371,8 @@ async function loadSettings() {
   const response = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
   if (response?.payload) {
     const s = response.payload;
-    (document.getElementById('provider-select') as HTMLSelectElement).value = s.provider;
+    providerSelect.value = s.provider;
+    renderModelOptions(s.provider, s.model);
     (document.getElementById('api-key-input') as HTMLInputElement).value = s.apiKey;
     (document.getElementById('density-slider') as HTMLInputElement).value = String(s.density);
     ($('density-value') as HTMLElement).textContent = String(s.density);
@@ -377,8 +386,9 @@ $('density-slider').addEventListener('input', (e) => {
 
 $('save-settings-btn').addEventListener('click', async () => {
   const settings = {
-    provider: (document.getElementById('provider-select') as HTMLSelectElement).value as ProviderName,
+    provider: providerSelect.value as ProviderName,
     apiKey: (document.getElementById('api-key-input') as HTMLInputElement).value,
+    model: modelSelect.value,
     density: Number((document.getElementById('density-slider') as HTMLInputElement).value),
     maxQuestions: Number((document.getElementById('max-questions-input') as HTMLInputElement).value),
   };
@@ -395,8 +405,9 @@ $('test-connection-btn').addEventListener('click', async () => {
     const response = await chrome.runtime.sendMessage({
       type: 'TEST_CONNECTION',
       payload: {
-        provider: (document.getElementById('provider-select') as HTMLSelectElement).value as ProviderName,
+        provider: providerSelect.value as ProviderName,
         apiKey: (document.getElementById('api-key-input') as HTMLInputElement).value,
+        model: modelSelect.value,
       },
     });
     if (response?.type === 'CONNECTION_RESULT' && response.payload.success) {
@@ -568,4 +579,14 @@ async function startQuizFlow(message: { type: 'START_QUIZ' } | { type: 'RETRY_MI
 async function syncQuizStateFromBackground() {
   const response = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
   return getQuestionPayloadFromRestoredState(response);
+}
+
+function renderModelOptions(provider: ProviderName, requestedModel?: string) {
+  const models = getProviderModels(provider);
+  const selectedModel = normalizeProviderModel(provider, requestedModel);
+
+  modelSelect.innerHTML = models
+    .map(model => `<option value="${escapeHtml(model)}">${escapeHtml(model)}</option>`)
+    .join('');
+  modelSelect.value = selectedModel;
 }

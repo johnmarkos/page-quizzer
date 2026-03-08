@@ -163,6 +163,7 @@ export type SaveSettingsRequest = {
   payload: {
     provider: ProviderName;
     apiKey: string;
+    model: string;
     density: number;
     maxQuestions: number;
   };
