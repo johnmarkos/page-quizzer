@@ -18,7 +18,7 @@ These are well-defined, can be picked up in any order (unless noted), and each p
 
 ### Content & Extraction
 
-- [ ] **C1: Paste-your-own-text mode** — Add a textarea to the quiz-idle section in `panel.html`. "Paste text" button toggles between URL extraction and manual input. When text is pasted, skip content script extraction entirely — construct an `ExtractedContent` object directly in the panel and pass it to `GENERATE_QUIZ` (add optional `content` field to the message). Service worker uses provided content if present, otherwise extracts from tab. Test: manual — paste text, generate quiz.
+- [x] **C1: Paste-your-own-text mode** — Add a textarea to the quiz-idle section in `panel.html`. "Paste text" button toggles between URL extraction and manual input. When text is pasted, skip content script extraction entirely — construct an `ExtractedContent` object directly in the panel and pass it to `GENERATE_QUIZ` (add optional `content` field to the message). Service worker uses provided content if present, otherwise extracts from tab. Test: manual — paste text, generate quiz.
 
 - [ ] **C2: Highlight-to-quiz** — Add context menu item ("Quiz this selection") via `chrome.contextMenus` in service worker. When triggered, send message to content script to get `window.getSelection().toString()`. Use that text instead of full-page extraction. Requires adding `contextMenus` permission to manifest. Test: manual.
 

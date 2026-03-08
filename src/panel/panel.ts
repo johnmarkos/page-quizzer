@@ -4,6 +4,7 @@ import type { RestoredStateMessage, ReviewItem } from '../shared/messages.js';
 import type { ProviderName } from '../providers/index.js';
 import { buildOriginPermissionPattern } from '../shared/site-access.js';
 import { buildHistoryExportFilename, serializeHistoryRecords } from './history-export.js';
+import { buildManualGeneratePayload } from './manual-content.js';
 import { buildQuizExportFilename, buildQuizExportHtml } from './quiz-export.js';
 import { filterSessionsByTopic, getHistoryTopics } from './history-topics.js';
 import { getProviderModels, normalizeProviderModel } from '../providers/provider-models.js';
@@ -37,6 +38,7 @@ let activeHistoryTopic: string | null = null;
 let currentTimerSeconds = 0;
 let activeTimerId: number | null = null;
 let activeTimerDeadline = 0;
+let manualInputMode = false;
 
 // --- Navigation ---
 document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -59,6 +61,7 @@ providerSelect.addEventListener('change', () => {
   renderModelOptions(providerSelect.value as ProviderName, modelSelect.value);
 });
 const initialSettingsPromise = loadSettings();
+renderManualInputMode();
 
 // --- Quiz Flow ---
 function showQuizSection(section: string) {
@@ -73,11 +76,19 @@ function showQuizSection(section: string) {
 $('generate-btn').addEventListener('click', async () => {
   showQuizSection('quiz-loading');
   try {
-    ($('loading-status') as HTMLElement).textContent = 'Checking site access...';
-    await ensureSiteAccessForActiveTab();
+    const manualPayload = getManualGeneratePayload();
 
-    ($('loading-status') as HTMLElement).textContent = 'Extracting content...';
-    const response = await chrome.runtime.sendMessage({ type: 'GENERATE_QUIZ' });
+    if (!manualPayload) {
+      ($('loading-status') as HTMLElement).textContent = 'Checking site access...';
+      await ensureSiteAccessForActiveTab();
+    }
+
+    ($('loading-status') as HTMLElement).textContent =
+      manualPayload ? 'Preparing pasted text...' : 'Extracting content...';
+    const response = await chrome.runtime.sendMessage({
+      type: 'GENERATE_QUIZ',
+      payload: manualPayload,
+    });
     if (response?.type === 'QUIZ_ERROR') {
       showError(response.payload.error);
     } else if (response?.type === 'QUIZ_GENERATED') {
@@ -90,6 +101,11 @@ $('generate-btn').addEventListener('click', async () => {
   } catch (err) {
     showError(err instanceof Error ? err.message : 'Failed to generate quiz');
   }
+});
+
+$('toggle-manual-btn').addEventListener('click', () => {
+  manualInputMode = !manualInputMode;
+  renderManualInputMode();
 });
 
 async function ensureSiteAccessForActiveTab() {
@@ -396,6 +412,7 @@ function showError(message: string) {
   showQuizSection('quiz-error');
   resetExplanationState();
   hideShortcutHelp();
+  stopQuestionTimer();
   ($('error-text') as HTMLElement).textContent = message;
 }
 
@@ -718,6 +735,31 @@ function renderReadyState(title: string, count: number, warning?: string) {
   }
 
   showQuizSection('quiz-ready');
+}
+
+function renderManualInputMode() {
+  const copy = $('idle-mode-copy');
+  const toggleBtn = $('toggle-manual-btn') as HTMLButtonElement;
+  const manualPanel = $('manual-input-panel');
+  const generateBtn = $('generate-btn') as HTMLButtonElement;
+
+  if (manualInputMode) {
+    copy.textContent = 'Generate a quiz from pasted text instead of the current page.';
+    toggleBtn.textContent = 'Use Current Page';
+    show(manualPanel);
+    generateBtn.textContent = 'Generate Quiz from Text';
+  } else {
+    copy.textContent = 'Generate a quiz from the current page.';
+    toggleBtn.textContent = 'Paste Text Instead';
+    hide(manualPanel);
+    generateBtn.textContent = 'Generate Quiz';
+  }
+}
+
+function getManualGeneratePayload() {
+  const text = (document.getElementById('manual-text-input') as HTMLTextAreaElement).value;
+  const title = (document.getElementById('manual-title-input') as HTMLInputElement).value;
+  return buildManualGeneratePayload(manualInputMode, text, title);
 }
 
 function renderHistory() {

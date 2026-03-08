@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.1.42 — Paste-Your-Own-Text Mode (2026-03-08)
+
+### Content & Extraction
+- Added a toggle in the idle quiz view to switch between current-page extraction and pasted-text quiz generation
+- Added manual title/text inputs and sent prebuilt `ExtractedContent` through `GENERATE_QUIZ` so the background can generate a quiz without using the content script
+- Kept the normal extraction path unchanged when manual mode is off
+
+### Review Loop
+- The first reviewer pass flagged that the new manual mode only had helper coverage for building `ExtractedContent`, not for the actual inline-content request path. Fixed by moving manual request construction into a pure helper and adding direct tests for payload creation and empty-text rejection.
+
+### Testing
+- 117 tests (was 112): added manual-content coverage for extracted-content building, inline request payload construction, and empty-input validation
+
 ## v0.1.41 — Export Quiz as Local Web Page (2026-03-08)
 
 ### Data & Sharing

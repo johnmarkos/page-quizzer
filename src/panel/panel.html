@@ -20,7 +20,16 @@
     <!-- Quiz View -->
     <div id="quiz-view" class="view active">
       <div id="quiz-idle">
-        <p>Generate a quiz from the current page.</p>
+        <div class="idle-toggle-row">
+          <p id="idle-mode-copy">Generate a quiz from the current page.</p>
+          <button id="toggle-manual-btn" class="secondary-btn idle-toggle-btn" type="button">Paste Text Instead</button>
+        </div>
+        <div id="manual-input-panel" class="hidden">
+          <label for="manual-title-input">Title</label>
+          <input id="manual-title-input" type="text" value="Pasted Text" maxlength="120">
+          <label for="manual-text-input">Text</label>
+          <textarea id="manual-text-input" rows="10" placeholder="Paste text here"></textarea>
+        </div>
         <button id="generate-btn" class="primary-btn">Generate Quiz</button>
       </div>
 

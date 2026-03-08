@@ -111,6 +111,45 @@ nav {
   cursor: not-allowed;
 }
 
+.idle-toggle-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.idle-toggle-btn {
+  margin-top: 0;
+}
+
+#manual-input-panel {
+  margin-bottom: 12px;
+}
+
+#manual-input-panel label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+#manual-input-panel input,
+#manual-input-panel textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  margin-bottom: 10px;
+}
+
+#manual-input-panel textarea {
+  resize: vertical;
+  min-height: 180px;
+}
+
 /* Progress bar */
 #progress-bar {
   height: 4px;

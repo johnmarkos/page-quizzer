@@ -23,6 +23,9 @@ export type ExtractedContent = {
 // Panel → Background
 export type GenerateQuizRequest = {
   type: 'GENERATE_QUIZ';
+  payload?: {
+    content?: ExtractedContent;
+  };
 };
 
 export type StartQuizRequest = {

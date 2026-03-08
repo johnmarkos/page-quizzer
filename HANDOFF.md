@@ -2,6 +2,9 @@
 
 ## Completed
 
+- Added paste-your-own-text mode in the idle quiz view, with a toggle between page extraction and manual text input
+- Added panel-side construction of `ExtractedContent` for pasted text and a typed inline-content `GENERATE_QUIZ` payload so the background can skip content-script extraction entirely
+- Fixed a review-found testability gap by moving manual request construction into a pure helper and adding direct tests for the inline-content path
 - Added standalone local HTML quiz export from the ready and score views, with a self-contained offline quiz runner
 - Added a background export message so the panel can fetch current quiz data without owning quiz state itself
 - Fixed a review-found issue in the export page by sanitizing source-link schemes; unsafe URLs now render as plain text instead of clickable links
@@ -38,6 +41,7 @@
 
 ## Decisions
 
+- Kept pasted-text generation as a panel-built `ExtractedContent` object instead of adding a separate background/manual schema; that reuses the existing generator contract and keeps the background agnostic about where the text came from
 - Kept quiz export as a standalone HTML renderer instead of depending on the built engine bundle; this keeps the first version portable and avoids coupling the exported file to extension build layout
 - Kept timer mode panel-local instead of pushing countdown logic into background or engine state; the timer is a presentation/interaction concern, not quiz-core logic
 - Treated service-worker restore as a prerequisite for message handling instead of a fire-and-forget startup task; otherwise fresh actions can run against empty in-memory state before persistence finishes loading
@@ -65,12 +69,13 @@
 
 ## Validation
 
-- `npm test` passed with 112/112 tests
+- `npm test` passed with 117/117 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- If a new panel flow sends typed data to the background, test the request-construction path directly; otherwise the feature can look covered while the real message payload branch remains unverified
 - Escaping a URL for HTML is not the same thing as making it safe to click; exported pages that render source links should still restrict allowed URL schemes
 - Panel-side features that depend on saved settings need those settings loaded before restore/start flows, not just when the user opens Settings; otherwise “saved” behavior can silently fall back to defaults
 - In MV3, async startup restore should be treated as a real dependency, not best-effort background work; if messages can arrive before restore completes, newer state can be computed from stale in-memory data and then persisted incorrectly

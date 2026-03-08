@@ -200,7 +200,7 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
 
       switch (message.type) {
         case 'GENERATE_QUIZ':
-          return await handleGenerateQuiz(activeTab);
+          return await handleGenerateQuiz(activeTab, message.payload?.content);
         case 'START_QUIZ':
           engine.start();
           return { type: 'ok' };
@@ -269,29 +269,33 @@ async function handleGetState() {
   return { type: 'RESTORED_STATE', payload: { state: 'idle' } };
 }
 
-async function handleGenerateQuiz(tab: chrome.tabs.Tab) {
+async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: ExtractedContent) {
   const settings = await storage.getSettings();
   if (!settings.apiKey) {
     throw new Error('No API key configured. Open Settings to add one.');
   }
 
-  broadcastStatus('Extracting page content...');
-
-  if (tab.url && resolvePdfUrl(tab.url)) {
-    broadcastStatus('Extracting PDF text...');
-    const pdfContent = await extractPdfContentFromTabUrl(tab.url, tab.title);
-    if (!pdfContent) {
-      throw new Error('Failed to resolve the PDF URL for this tab.');
-    }
-    lastExtracted = pdfContent;
+  if (providedContent) {
+    lastExtracted = { ...providedContent };
   } else {
-    const extractResponse = await extractContentFromTab(tab);
+    broadcastStatus('Extracting page content...');
 
-    if (extractResponse?.payload?.error) {
-      throw new Error(extractResponse.payload.error);
+    if (tab.url && resolvePdfUrl(tab.url)) {
+      broadcastStatus('Extracting PDF text...');
+      const pdfContent = await extractPdfContentFromTabUrl(tab.url, tab.title);
+      if (!pdfContent) {
+        throw new Error('Failed to resolve the PDF URL for this tab.');
+      }
+      lastExtracted = pdfContent;
+    } else {
+      const extractResponse = await extractContentFromTab(tab);
+
+      if (extractResponse?.payload?.error) {
+        throw new Error(extractResponse.payload.error);
+      }
+
+      lastExtracted = extractResponse.payload as ExtractedContent;
     }
-
-    lastExtracted = extractResponse.payload as ExtractedContent;
   }
 
   if (!lastExtracted.textContent || lastExtracted.wordCount < 50) {
