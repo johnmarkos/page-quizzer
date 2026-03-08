@@ -8,7 +8,7 @@ const BANNED_OPTION_PATTERNS = [
   /^both [a-d] and [a-d]$/i,
 ];
 
-const BIBLIOGRAPHIC_QUESTION_PATTERNS = [
+const FRONT_MATTER_QUESTION_PATTERNS = [
   /\bcopyright\b/i,
   /\bedition\b/i,
   /\bpublisher\b/i,
@@ -17,6 +17,17 @@ const BIBLIOGRAPHIC_QUESTION_PATTERNS = [
   /\btable of contents\b/i,
   /\bprinted\b/i,
   /\bprinting\b/i,
+  /\ball rights reserved\b/i,
+  /\bforeword\b/i,
+  /\bpreface\b/i,
+  /\backnowledg(e)?ments?\b/i,
+  /\bdedication\b/i,
+  /\bblurb\b/i,
+  /\bpraise\b/i,
+  /\bdust jacket\b/i,
+  /\bback cover\b/i,
+  /\bcover copy\b/i,
+  /\babout the author\b/i,
 ];
 
 const VAGUE_OPTION_PATTERNS = [
@@ -44,8 +55,8 @@ export function getQuestionQualityIssues(problem: Problem): string[] {
   const normalizedOptions = optionTexts.map(normalizeOptionText);
   const questionText = problem.question.trim();
 
-  if (BIBLIOGRAPHIC_QUESTION_PATTERNS.some((pattern) => pattern.test(questionText))) {
-    issues.push('bibliographic-trivia');
+  if (isFrontMatterQuestion(questionText)) {
+    issues.push('front-matter-trivia');
   }
 
   if (normalizedOptions.some((option) => option.length === 0)) {
@@ -90,13 +101,32 @@ export function getQuestionQualityIssues(problem: Problem): string[] {
     issues.push('single-sentence-like-option');
   }
 
+  const normalizedOptionLengths = normalizedOptions.map((option) => option.length);
+  const correctNormalizedLength = normalizedOptionLengths[correctIndex];
+  const longestOptionLength = Math.max(...normalizedOptionLengths);
+  const secondLongestOptionLength = [...normalizedOptionLengths]
+    .sort((left, right) => right - left)[1] ?? 0;
+  const correctIsUniqueLongest =
+    correctNormalizedLength === longestOptionLength
+    && normalizedOptionLengths.filter((length) => length === longestOptionLength).length === 1;
+
   const correctSpecificity = countContentTokens(optionTexts[correctIndex]);
   const distractorSpecificity = optionTexts
     .filter((_, index) => index !== correctIndex)
     .map(countContentTokens);
+  const maxDistractorSpecificity = Math.max(...distractorSpecificity);
   const lowSpecificityDistractors = distractorSpecificity.filter((count) => count <= 1).length;
   if (correctSpecificity >= 3 && lowSpecificityDistractors >= 2 && median(distractorSpecificity) <= 1) {
     issues.push('correct-option-specificity-outlier');
+  }
+
+  if (
+    correctIsUniqueLongest
+    && secondLongestOptionLength >= 18
+    && correctNormalizedLength >= Math.ceil(secondLongestOptionLength * 1.45)
+    && correctSpecificity >= maxDistractorSpecificity + 2
+  ) {
+    issues.push('correct-option-detail-outlier');
   }
 
   const vagueDistractorCount = optionTexts
@@ -127,6 +157,17 @@ export function buildGenerationBuffer(remainingQuestions: number): number {
 
 function normalizeOptionText(text: string): string {
   return text.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function isFrontMatterQuestion(questionText: string): boolean {
+  if (FRONT_MATTER_QUESTION_PATTERNS.some((pattern) => pattern.test(questionText))) {
+    return true;
+  }
+
+  return (
+    /\bwho (described|praised|called|endorsed|recommended|wrote)\b/i.test(questionText)
+    && /\b(book|volume|text|work)\b/i.test(questionText)
+  );
 }
 
 function countWords(text: string): number {

@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.1.51 — Front-Matter Suppression and Harsher Easy-Question Filter (2026-03-08)
+
+### Quiz Quality
+- Expanded front-matter suppression so the prompt and structural filter now explicitly reject questions about blurbs, reviewer praise, acknowledgments, dedications, forewords, prefaces, and other book metadata noise
+- Added a new heuristic that rejects multiple-choice questions where the correct answer is uniquely the longest and most detailed option, even when it is not extreme enough to trip the older word-count outlier rule
+- Tightened the generator instructions so the correct answer should not stand out for being the longest, most technical, or only clause-heavy choice
+
+### PDF / Long-Form Handling
+- Expanded early PDF front-matter detection to skip praise pages, prefaces, acknowledgments, dedications, and similar book-opening material before page-range sections are offered
+
+### Review Loop
+- The first reviewer pass focused on overfitting risk: the new heuristics needed to stay narrow enough to reject obvious giveaway structure without deleting reasonable hard questions. The final thresholds were kept structural and backed by targeted tests instead of broad semantic guesses.
+- A second reviewer pass found no further significant issues.
+
+### Security Review
+- No new permissions, dependencies, or outbound network destinations were added
+- `npm audit --omit=dev` reported 0 vulnerabilities
+
+### Testing
+- 149 tests (was 146): added coverage for praise/blurb front-matter rejection, longest-correct-answer detail rejection, stronger prompt requirements, and expanded PDF front-matter skipping
+
 ## v0.1.50 — Quiz Export Source Fix (2026-03-08)
 
 ### Bug Fixes

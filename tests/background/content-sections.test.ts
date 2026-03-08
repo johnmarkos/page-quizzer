@@ -100,4 +100,22 @@ describe('content sections', () => {
 
     expect(sections[0].startPage).toBe(3);
   });
+
+  it('skips praise and preface pages before the PDF body starts', () => {
+    const pageTexts = [
+      'Praise for this classic work. "A masterpiece" says a reviewer on the back cover.',
+      'Preface acknowledgments dedication about the author and advance praise',
+      `Chapter 1 ${'word '.repeat(260)}`.trim(),
+      `Body ${'word '.repeat(260)}`.trim(),
+    ];
+
+    const sections = getContentSections(makeContent({
+      content: '',
+      textContent: pageTexts.join('\n\n'),
+      wordCount: pageTexts.join(' ').split(/\s+/).length,
+      pageTexts,
+    }));
+
+    expect(sections[0].startPage).toBe(3);
+  });
 });

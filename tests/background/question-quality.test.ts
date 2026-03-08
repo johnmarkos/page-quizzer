@@ -114,7 +114,21 @@ describe('question quality heuristics', () => {
       question: 'Which edition of the book was published in 1963?',
     });
 
-    expect(getQuestionQualityIssues(problem)).toContain('bibliographic-trivia');
+    expect(getQuestionQualityIssues(problem)).toContain('front-matter-trivia');
+  });
+
+  it('rejects praise-blurb questions from book front matter', () => {
+    const problem = buildProblem({
+      question: 'Who praised the book as a masterpiece on the back cover?',
+      options: [
+        { text: 'A famous reviewer', correct: true },
+        { text: 'The main narrator', correct: false },
+        { text: 'The lead scientist in the chapter', correct: false },
+        { text: 'The experiment described in the text', correct: false },
+      ],
+    });
+
+    expect(getQuestionQualityIssues(problem)).toContain('front-matter-trivia');
   });
 
   it('rejects questions where only the correct answer is domain-specific', () => {
@@ -141,6 +155,22 @@ describe('question quality heuristics', () => {
     });
 
     expect(getQuestionQualityIssues(problem)).toContain('vague-distractors');
+  });
+
+  it('rejects questions where the correct answer is uniquely the longest and most detailed option', () => {
+    const problem = buildProblem({
+      options: [
+        {
+          text: 'The tendency of matter to preserve its current state of rest or uniform motion unless an external interaction changes that state',
+          correct: true,
+        },
+        { text: 'Stored heat in an object', correct: false },
+        { text: 'The visible path of motion', correct: false },
+        { text: 'An external push or pull', correct: false },
+      ],
+    });
+
+    expect(getQuestionQualityIssues(problem)).toContain('correct-option-detail-outlier');
   });
 
   it('adds a small generation buffer without overshooting too far', () => {

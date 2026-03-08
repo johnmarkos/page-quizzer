@@ -18,6 +18,17 @@ const PDF_FRONT_MATTER_MARKERS = [
   'published by',
   'table of contents',
   'contents',
+  'foreword',
+  'preface',
+  'acknowledgments',
+  'acknowledgements',
+  'dedication',
+  'praise for',
+  'advance praise',
+  'back cover',
+  'dust jacket',
+  'cover copy',
+  'about the author',
 ];
 
 type SectionChunk = {

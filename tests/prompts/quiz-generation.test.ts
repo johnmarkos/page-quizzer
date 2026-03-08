@@ -19,6 +19,8 @@ describe('quiz-generation prompts', () => {
     expect(prompt).toContain('one option sounds noticeably more sophisticated');
     expect(prompt).toContain('date/edition/publisher trivia');
     expect(prompt).toContain('wrong conceptual category');
+    expect(prompt).toContain('blurbs, reviewer praise, acknowledgments');
+    expect(prompt).toContain('obviously longest, most qualified, most technical');
   });
 
   it('calculates target question count from density', () => {
@@ -64,6 +66,8 @@ describe('quiz-generation prompts', () => {
     expect(prompt).toContain('silly, extreme, generic, or obviously unrelated');
     expect(prompt).toContain('bibliographic/front-matter trivia');
     expect(prompt).toContain('much more precise or domain-specific');
+    expect(prompt).toContain('longest, most detailed, or only clause-heavy option');
+    expect(prompt).toContain('blurbs, praise quotes, copyright pages');
   });
 
   it('ensures minimum of 1 question', () => {
@@ -95,6 +99,6 @@ describe('quiz-generation prompts', () => {
   });
 
   it('bumps the prompt version when quiz-quality instructions change', () => {
-    expect(QUIZ_GENERATION_VERSION).toBe('1.3');
+    expect(QUIZ_GENERATION_VERSION).toBe('1.4');
   });
 });

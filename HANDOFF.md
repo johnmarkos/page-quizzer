@@ -2,6 +2,11 @@
 
 ## Completed
 
+- Completed `Q10` by expanding front-matter suppression in both the generator prompt and the structural question-quality filter
+- Added front-matter rejection for blurbs, reviewer praise, acknowledgments, dedications, forewords, prefaces, back-cover copy, and similar book metadata noise
+- Expanded early PDF front-matter scanning so praise/preface/acknowledgment pages are skipped before page-range sections are offered
+- Completed `Q11` with a harsher structural critic that rejects questions where the correct answer is uniquely the longest and most detailed option
+- Tightened the quiz-generation prompt so the correct answer should not stand out for being the longest, most technical, or only clause-heavy choice
 - Fixed a quiz export bug where the exported HTML could use the wrong in-memory problem set instead of the full completed quiz
 - Added `src/background/export-quiz-data.ts` as a pure resolver for export payloads, preferring `lastCompletedQuiz.problems` when exporting from the completed score state
 - Added focused tests for export resolution, including the exact completed-vs-current problem-set distinction and defensive cloning
@@ -74,6 +79,8 @@
 
 ## Decisions
 
+- Treated Q10/Q11 as one shared generation-quality milestone: front-matter suppression belongs in both the content-selection layer and the post-generation filter, while “too easy by vibe” belongs in both the prompt and the structural critic
+- Kept the new easy-question critic structural rather than semantic: it looks for a uniquely longest, more detailed correct answer instead of trying to judge subject-matter validity
 - Treated quiz export as its own source-of-truth problem: when the visible state is a completed score screen, export should come from the stable completed quiz snapshot, not whichever mutable problem array happens to be current in the worker
 - Keyed document progress by the full document URL and merged progress onto freshly computed sections by section index; this keeps the stored shape simple and lets updated section titles/word counts replace stale metadata on rebuild
 - Stored section progress annotations in the same `pendingSections` payload the panel already restores, instead of creating a second parallel progress message/state branch
@@ -124,12 +131,14 @@
 
 ## Validation
 
-- `npm test` passed with 146/146 tests
+- `npm test` passed with 149/149 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- If users say the answer is obvious because it is the only detailed option, word-count outlier checks alone are too weak; add a second heuristic for a uniquely longest, more specific correct answer
+- Suppressing front matter only in generation is not enough for books/PDFs; early PDF page scanning should also skip praise/preface/copyright-style pages so they do not become the first sections offered
 - If a feature exports or persists quiz data from a completed score view, prefer the stable completed quiz snapshot over mutable “current problems” state; retries, narrowed flows, or later state changes can otherwise export the wrong problem set
 - If long-form completion needs to be written back after a section quiz ends, persist the selected section index separately from the narrowed extracted content; `lastExtracted` alone is not enough to identify the parent section safely
 - If a restorable picker view shows derived progress, persist the annotated section list or rebuild it through one helper consistently; otherwise restored panel state and freshly generated picker state will drift

@@ -1,6 +1,6 @@
 import type { QuizGenerationParams } from './types.js';
 
-export const QUIZ_GENERATION_VERSION = '1.3';
+export const QUIZ_GENERATION_VERSION = '1.4';
 
 export function buildSystemPrompt(): string {
   return `You are a quiz question generator for retrieval practice. Your job is to create multiple-choice questions from the provided text content.
@@ -23,6 +23,8 @@ Rules:
 - If three options can be rejected immediately as vague, generic, or from the wrong conceptual category, rewrite or skip the question
 - Make wrong answers share domain vocabulary with the correct answer when the text supports that, so the choice requires discrimination rather than spotting the only specific option
 - Avoid publication-metadata questions (edition, publisher, copyright, ISBN, table of contents) unless that metadata is itself central to the passage
+- Also avoid front matter such as blurbs, reviewer praise, acknowledgments, dedications, forewords, prefaces, and cover-copy unless that material is itself the subject of the passage
+- Do not make the correct answer the obviously longest, most qualified, most technical, or most detailed option
 - If the source text does not support a strong question, skip it rather than inventing weak options
 - Keep questions concise and clear`;
 }
@@ -65,7 +67,9 @@ Additional quality requirements:
 - Use distractors that are close enough to tempt an attentive but imperfect reader
 - Avoid options that are silly, extreme, generic, or obviously unrelated to the passage
 - For long-form expository text, avoid bibliographic/front-matter trivia unless it is genuinely part of the argument
-- If one option is much more precise or domain-specific than the others, rewrite the question so all choices are similarly specific`;
+- If one option is much more precise or domain-specific than the others, rewrite the question so all choices are similarly specific
+- Do not let the correct answer stand out because it is the longest, most detailed, or only clause-heavy option
+- Avoid questions about blurbs, praise quotes, copyright pages, publisher names, or edition metadata unless the passage is explicitly about that material`;
 }
 
 export const QUIZ_TOOL_SCHEMA = {
