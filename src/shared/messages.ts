@@ -58,6 +58,10 @@ export type DismissSectionsRequest = {
   type: 'DISMISS_SECTIONS';
 };
 
+export type ReturnToSectionsRequest = {
+  type: 'RETURN_TO_SECTIONS';
+};
+
 export type StartQuizRequest = {
   type: 'START_QUIZ';
 };
@@ -283,6 +287,7 @@ export type Message =
   | GenerateQuizRequest
   | GenerateSectionQuizRequest
   | DismissSectionsRequest
+  | ReturnToSectionsRequest
   | StartQuizRequest
   | AnswerQuestionRequest
   | NextQuestionRequest

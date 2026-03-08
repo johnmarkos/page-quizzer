@@ -244,7 +244,17 @@ $('retry-missed-btn').addEventListener('click', async () => {
   }
 });
 
-$('new-quiz-btn').addEventListener('click', () => {
+$('new-quiz-btn').addEventListener('click', async () => {
+  const response = await chrome.runtime.sendMessage({ type: 'RETURN_TO_SECTIONS' });
+  if (response?.type === 'CONTENT_SECTIONS') {
+    renderSectionsState(
+      response.payload.title,
+      response.payload.totalWords,
+      response.payload.sections,
+    );
+    return;
+  }
+
   showQuizSection('quiz-idle');
 });
 

@@ -40,6 +40,15 @@ describe('tab quiz sessions', () => {
           url: 'https://example.com/physics',
           pageTexts: ['Atoms in motion'],
         },
+        sectionSource: {
+          title: 'Physics Book',
+          content: '<p>Atoms</p>',
+          textContent: 'Atoms in motion through matter',
+          wordCount: 1400,
+          excerpt: 'Atoms',
+          url: 'https://example.com/physics',
+          pageTexts: ['Page 1', 'Page 2'],
+        },
         pendingSections: [
           {
             index: 0,
@@ -59,11 +68,13 @@ describe('tab quiz sessions', () => {
     session.currentTopics[0] = 'Changed';
     session.pendingSections?.[0] && (session.pendingSections[0].title = 'Changed');
     session.lastExtracted?.pageTexts && (session.lastExtracted.pageTexts[0] = 'Changed');
+    session.sectionSource?.pageTexts && (session.sectionSource.pageTexts[0] = 'Changed');
 
     expect(sessions['42'].snapshot.problems[0].question).toBe('Question 1?');
     expect(sessions['42'].currentTopics[0]).toBe('Physics');
     expect(sessions['42'].pendingSections?.[0]?.title).toBe('Chapter 1');
     expect(sessions['42'].lastExtracted?.pageTexts?.[0]).toBe('Atoms in motion');
+    expect(sessions['42'].sectionSource?.pageTexts?.[0]).toBe('Page 1');
   });
 
   it('removes empty sessions from storage decisions', () => {

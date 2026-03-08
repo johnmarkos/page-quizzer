@@ -233,6 +233,9 @@ Co-Authored-By: Gemini <noreply@google.com>
 - Heading-aware segmentation is useful, but it needs a deterministic arbitrary-size fallback for flat or oversized content; books and PDFs cannot depend on clean source structure
 - If PDF page ranges will matter later, preserve per-page text during extraction instead of flattening immediately; you can always join pages later, but you can’t recover page boundaries once you throw them away
 - Once `ExtractedContent` gains nested data like PDF page arrays, review every clone/persist/restore path for shallow-copy bugs
+- If a sectioned document can spawn a narrowed section quiz and later return to the broader section picker, keep the original section source separately from the current narrowed extracted content
+- For arbitrary fallback chunk labels, assign display names after chunk rebalancing; otherwise merged chunks inherit confusing skipped numbers from their source paragraphs
+- PDF front-matter skipping should be heuristic and conservative: scan only the early pages for obvious copyright/edition/contents patterns, then stop as soon as likely body text begins
 - If a restorable intermediate state can be cancelled, give it an explicit background reset message instead of only hiding it in the panel
 - If you generate standalone export HTML, treat embedded quiz text and source URLs as separate risks: JSON/script embedding needs script-safe escaping, and clickable links still need scheme sanitization
 - If a panel feature introduces a new message payload branch, add pure tests for the payload-construction helper as well as any downstream content helper; otherwise the visible feature can work in one path while the actual request shape goes unverified

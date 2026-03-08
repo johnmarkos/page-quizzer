@@ -42,7 +42,9 @@ describe('content sections', () => {
     }));
 
     expect(sections.length).toBeGreaterThan(1);
-    expect(sections[0].title).toContain('Physics Book');
+    expect(sections.map(section => section.title)).toEqual(
+      sections.map((_, index) => `Part ${index + 1}`),
+    );
   });
 
   it('builds section-specific extracted content and long-content detection', () => {
@@ -79,5 +81,23 @@ describe('content sections', () => {
     const firstSectionContent = buildSectionExtractedContent(content, 0);
     expect(firstSectionContent?.title).toContain('Pages');
     expect(firstSectionContent?.pageTexts?.length).toBe(sections[0].endPage! - sections[0].startPage! + 1);
+  });
+
+  it('skips obvious front matter when building PDF page ranges', () => {
+    const pageTexts = [
+      'Second edition copyright 2024 all rights reserved',
+      'Table of contents chapter 1 chapter 2 chapter 3',
+      `Chapter 1 ${'word '.repeat(260)}`.trim(),
+      `Body ${'word '.repeat(260)}`.trim(),
+    ];
+
+    const sections = getContentSections(makeContent({
+      content: '',
+      textContent: pageTexts.join('\n\n'),
+      wordCount: pageTexts.join(' ').split(/\s+/).length,
+      pageTexts,
+    }));
+
+    expect(sections[0].startPage).toBe(3);
   });
 });

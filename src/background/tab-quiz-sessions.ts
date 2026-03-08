@@ -9,6 +9,7 @@ export type CompletedQuizData = {
 export type TabQuizSession = {
   snapshot: EngineSnapshot;
   lastExtracted: ExtractedContent | null;
+  sectionSource: ExtractedContent | null;
   pendingSections: ContentSection[] | null;
   currentTopics: string[];
   lastCompletedQuiz: CompletedQuizData | null;
@@ -27,6 +28,7 @@ export function createEmptySession(): TabQuizSession {
       startedAt: 0,
     },
     lastExtracted: null,
+    sectionSource: null,
     pendingSections: null,
     currentTopics: [],
     lastCompletedQuiz: null,
@@ -77,6 +79,12 @@ export function cloneTabQuizSession(session: TabQuizSession): TabQuizSession {
       ? {
           ...session.lastExtracted,
           pageTexts: session.lastExtracted.pageTexts ? [...session.lastExtracted.pageTexts] : undefined,
+        }
+      : null,
+    sectionSource: session.sectionSource
+      ? {
+          ...session.sectionSource,
+          pageTexts: session.sectionSource.pageTexts ? [...session.sectionSource.pageTexts] : undefined,
         }
       : null,
     pendingSections: session.pendingSections

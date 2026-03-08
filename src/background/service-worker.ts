@@ -53,6 +53,7 @@ const engine = new QuizEngine();
 let activeTabId: number | null = null;
 let tabSessions: TabQuizSessionMap = {};
 let lastExtracted: ExtractedContent | null = null;
+let sectionSource: ExtractedContent | null = null;
 let pendingSections: ContentSection[] | null = null;
 let currentProblems: Problem[] = [];
 let currentTopics: string[] = [];
@@ -193,6 +194,7 @@ async function persistState() {
   const session = {
     snapshot: engine.serialize(),
     lastExtracted: cloneExtractedContent(lastExtracted),
+    sectionSource: cloneExtractedContent(sectionSource),
     pendingSections: pendingSections ? pendingSections.map(section => ({ ...section })) : null,
     currentTopics: cloneTopics(currentTopics),
     lastCompletedQuiz: lastCompletedQuiz
@@ -254,9 +256,32 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
           return await handleGenerateSectionQuiz(message.payload?.sectionIndex);
         case 'DISMISS_SECTIONS':
           pendingSections = null;
+          sectionSource = null;
           currentGenerationWarning = null;
           await persistState();
           return { type: 'ok' };
+        case 'RETURN_TO_SECTIONS':
+          if (!sectionSource) {
+            throw new Error('No section list available for this content.');
+          }
+
+          lastExtracted = cloneExtractedContent(sectionSource);
+          pendingSections = getContentSections(sectionSource);
+          currentProblems = [];
+          currentTopics = [];
+          lastCompletedQuiz = null;
+          currentGenerationWarning = null;
+          engine.restore(createEmptySession().snapshot);
+          await persistState();
+
+          return {
+            type: 'CONTENT_SECTIONS',
+            payload: {
+              title: sectionSource.title,
+              totalWords: sectionSource.wordCount,
+              sections: pendingSections.map(section => ({ ...section })),
+            },
+          };
         case 'START_QUIZ':
           engine.start();
           return { type: 'ok' };
@@ -368,6 +393,7 @@ async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: Extrac
   }
 
   if (shouldOfferSectionChoice(lastExtracted)) {
+    sectionSource = cloneExtractedContent(lastExtracted);
     pendingSections = getContentSections(lastExtracted);
     currentProblems = [];
     currentTopics = [];
@@ -395,9 +421,10 @@ async function handleGenerateSectionQuiz(sectionIndex?: number) {
   }
 
   const settings = await storage.getSettings();
+  const sourceContent = sectionSource ?? lastExtracted;
   const selectedContent = sectionIndex === undefined
-    ? cloneExtractedContent(lastExtracted)
-    : buildSectionExtractedContent(lastExtracted, sectionIndex);
+    ? cloneExtractedContent(sourceContent)
+    : buildSectionExtractedContent(sourceContent, sectionIndex);
 
   if (!selectedContent) {
     throw new Error('That section is no longer available. Re-extract the page and try again.');
@@ -650,6 +677,7 @@ function applyTabSession(session: ReturnType<typeof getTabQuizSession>, tabId: n
   engine.restore(session.snapshot);
   currentProblems = cloneProblems(session.snapshot.problems);
   lastExtracted = cloneExtractedContent(session.lastExtracted);
+  sectionSource = cloneExtractedContent(session.sectionSource);
   pendingSections = session.pendingSections ? session.pendingSections.map(section => ({ ...section })) : null;
   currentTopics = cloneTopics(session.currentTopics);
   lastCompletedQuiz = session.lastCompletedQuiz

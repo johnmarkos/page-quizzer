@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.1.47 — Section Picker Follow-Up Fixes (2026-03-08)
+
+### Long-Form UX
+- Fixed section-picker fallback naming so arbitrary non-heading chunks are labeled sequentially (`Part 1`, `Part 2`, `Part 3`) instead of inheriting the first underlying paragraph index
+- Kept the full sectioned source document in tab state separately from the currently selected quiz section, so the score view can return to the section picker instead of forcing a fresh `Generate Quiz`
+- Added a conservative PDF front-matter skip heuristic so obvious title/copyright/edition/contents pages are skipped before the first real body section range
+
+### Quiz Quality
+- Added a follow-up roadmap item for harder long-form questions, since real book testing still showed some distractors that were too easy to eliminate by tone or obviousness alone
+
+### Review Loop
+- The main reviewer concern was state loss: without preserving the full sectioned source separately from the active section quiz, any “back to sections” flow would have had to re-extract or would silently restore only the narrowed section. Fixed by persisting `sectionSource` alongside the active extracted content.
+
+### Security Review
+- `npm audit --omit=dev` reported 0 vulnerabilities
+
+### Testing
+- 135 tests (was 134): added regression coverage for sequential fallback section names, PDF front-matter skipping, and defensive cloning of persisted section-source page text arrays
+
 ## v0.1.46 — PDF Page-Range Sections (2026-03-08)
 
 ### Long-Form PDFs

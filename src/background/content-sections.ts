@@ -5,6 +5,20 @@ const TARGET_SECTION_WORDS = 1200;
 const MIN_SECTION_WORDS = 500;
 const MAX_SECTION_WORDS = 1800;
 const MAX_PDF_SECTION_PAGES = 10;
+const PDF_FRONT_MATTER_SCAN_LIMIT = 8;
+const PDF_FRONT_MATTER_MARKERS = [
+  'copyright',
+  'all rights reserved',
+  'isbn',
+  'library of congress',
+  'second edition',
+  'third edition',
+  'fourth edition',
+  'printing',
+  'published by',
+  'table of contents',
+  'contents',
+];
 
 type SectionChunk = {
   title: string;
@@ -63,7 +77,9 @@ function buildSectionChunks(content: ExtractedContent): SectionChunk[] {
     return rebalanceSections(headingSections, content.title);
   }
 
-  return rebalanceSections(buildFallbackSections(content.textContent, content.title), content.title);
+  return renameSequentialParts(
+    rebalanceSections(buildFallbackSections(content.textContent, content.title), content.title),
+  );
 }
 
 function buildHeadingSections(html: string): SectionChunk[] {
@@ -113,6 +129,8 @@ function buildFallbackSections(text: string, title: string): SectionChunk[] {
 }
 
 function buildPdfPageSections(pageTexts: string[]): SectionChunk[] {
+  const startPage = findPdfBodyStartPage(pageTexts);
+  const bodyPages = pageTexts.slice(startPage - 1);
   const sections: SectionChunk[] = [];
   let bufferStartPage: number | null = null;
   let bufferEndPage: number | null = null;
@@ -147,9 +165,9 @@ function buildPdfPageSections(pageTexts: string[]): SectionChunk[] {
     bufferTexts = [];
   };
 
-  for (let pageIndex = 0; pageIndex < pageTexts.length; pageIndex++) {
-    const pageNumber = pageIndex + 1;
-    const pageText = normalizeText(pageTexts[pageIndex] || '');
+  for (let pageIndex = 0; pageIndex < bodyPages.length; pageIndex++) {
+    const pageNumber = startPage + pageIndex;
+    const pageText = normalizeText(bodyPages[pageIndex] || '');
     const pageWords = countWords(pageText);
     const pageCount = bufferStartPage === null || bufferEndPage === null
       ? 0
@@ -187,6 +205,33 @@ function buildPdfPageSections(pageTexts: string[]): SectionChunk[] {
   }
 
   return sections;
+}
+
+function findPdfBodyStartPage(pageTexts: string[]): number {
+  for (let pageIndex = 0; pageIndex < Math.min(pageTexts.length, PDF_FRONT_MATTER_SCAN_LIMIT); pageIndex++) {
+    const pageText = normalizeText(pageTexts[pageIndex] || '');
+    const lower = pageText.toLowerCase();
+    const wordCount = countWords(pageText);
+
+    if (wordCount >= 250) {
+      return pageIndex + 1;
+    }
+
+    if (wordCount >= 120 && /chapter|prologue|introduction/i.test(pageText)) {
+      return pageIndex + 1;
+    }
+
+    const markerCount = PDF_FRONT_MATTER_MARKERS.filter(marker => lower.includes(marker)).length;
+    if (markerCount >= 2 || (wordCount > 0 && wordCount < 120)) {
+      continue;
+    }
+
+    if (wordCount > 120) {
+      return pageIndex + 1;
+    }
+  }
+
+  return 1;
 }
 
 function rebalanceSections(sections: SectionChunk[], baseTitle: string): SectionChunk[] {
@@ -258,6 +303,13 @@ function splitOversizedChunk(section: SectionChunk): SectionChunk[] {
   }
 
   return chunks;
+}
+
+function renameSequentialParts(sections: SectionChunk[]): SectionChunk[] {
+  return sections.map((section, index) => ({
+    ...section,
+    title: `Part ${index + 1}`,
+  }));
 }
 
 function stripHtml(html: string): string {

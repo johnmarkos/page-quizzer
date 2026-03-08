@@ -2,6 +2,10 @@
 
 ## Completed
 
+- Fixed long-form fallback section names so arbitrary chunks are now labeled sequentially instead of skipping numbers
+- Preserved the full sectioned source document separately from the active section quiz, so the score view’s `New Quiz` flow can return to the section picker without forcing a new extraction
+- Added a conservative PDF front-matter skip heuristic so obvious copyright/edition/contents pages are not offered as the first quizable ranges in book-like PDFs
+- Added `Q9` to the roadmap for harder long-form question quality, since real book testing still surfaced easy/giveaway questions
 - Added PDF page-range sectioning on top of the long-content picker, so PDFs now segment by contiguous page ranges instead of generic heading/fallback chunks
 - Preserved per-page text during PDF extraction and carried it through extracted-content state for pending section selection
 - Fixed a review-found mutation risk by deep-cloning extracted PDF `pageTexts` arrays when persisting/restoring tab session state
@@ -60,6 +64,8 @@
 
 ## Decisions
 
+- Kept the full extracted long-form source and the currently selected section as separate state values; reusing one field for both made “back to sections” fundamentally lossy
+- Treated front-matter skipping as a conservative heuristic limited to the first few PDF pages, not as a semantic parser; the goal is to avoid the most obvious edition/copyright noise without overfitting
 - Treated PDFs as a different segmentation source from HTML: if per-page text exists, prefer page ranges outright instead of trying heading heuristics on flattened PDF text
 - Kept PDF page texts inside extracted-content/tab-session state rather than inventing a second parallel PDF-only store, but compensated by explicitly deep-cloning them anywhere `lastExtracted` is copied
 - Built page ranges dynamically from page word counts and a page-count cap, rather than using a fixed 10-page rule for every document
@@ -102,12 +108,15 @@
 
 ## Validation
 
-- `npm test` passed with 134/134 tests
+- `npm test` passed with 135/135 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- If the app needs to return from a narrowed subsection quiz back to a broader section picker, don’t overwrite the original source document with the narrowed subsection; keep both pieces of state
+- Generic fallback section labels should be assigned after rebalancing, not before; otherwise merged chunks inherit misleading source indexes like `Part 7`
+- Front-matter skipping for PDFs should stay conservative and early-page-only; over-aggressive heuristics would hide legitimate body content
 - Adding nested arrays to `ExtractedContent` changes the cloning requirements everywhere that state is persisted or restored; shallow spreads are no longer enough once PDF page texts exist
 - Flattened PDF text should not be segmented with the same heading logic as HTML; preserve page boundaries during extraction if you want meaningful page-range choices later
 - If a new intermediate UI state should survive a worker restart, it needs to be persisted explicitly; a pure panel response is not enough once the service worker becomes the source of truth for restore
