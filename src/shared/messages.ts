@@ -86,6 +86,10 @@ export type RetryMissedRequest = {
   type: 'RETRY_MISSED';
 };
 
+export type ContinueDocumentRequest = {
+  type: 'CONTINUE_DOCUMENT';
+};
+
 export type GetReviewRequest = {
   type: 'GET_REVIEW';
 };
@@ -211,6 +215,16 @@ export type RestoredStateMessage = {
   payload:
     | { state: 'idle' }
     | {
+        state: 'document-progress';
+        title: string;
+        completedCount: number;
+        totalCount: number;
+        averageScorePercentage?: number;
+        nextSectionIndex: number | null;
+        nextSectionTitle?: string;
+        allSectionsCompleted: boolean;
+      }
+    | {
         state: 'sections';
         title: string;
         totalWords: number;
@@ -300,6 +314,7 @@ export type Message =
   | NextQuestionRequest
   | SkipQuestionRequest
   | RetryMissedRequest
+  | ContinueDocumentRequest
   | GetReviewRequest
   | GetExportQuizRequest
   | QuizGeneratedMessage

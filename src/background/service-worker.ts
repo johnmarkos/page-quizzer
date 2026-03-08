@@ -43,7 +43,11 @@ import {
   getContentSections,
   shouldOfferSectionChoice,
 } from './content-sections.js';
-import { ProgressManager } from './ProgressManager.js';
+import {
+  buildDocumentResumeState,
+  type DocumentResumeState,
+  ProgressManager,
+} from './ProgressManager.js';
 import { resolveExportQuizData } from './export-quiz-data.js';
 
 const CONTENT_SCRIPT_PATH = 'dist/content.js';
@@ -325,12 +329,14 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
           return { type: 'ok' };
         case 'RETRY_MISSED':
           return handleRetryMissed();
+        case 'CONTINUE_DOCUMENT':
+          return await handleContinueDocument(activeTab);
         case 'GET_REVIEW':
           return handleGetReview();
         case 'GET_EXPORT_QUIZ':
           return handleGetExportQuiz();
         case 'GET_STATE':
-          return await handleGetState();
+          return await handleGetState(activeTab);
         default:
           return { type: 'ok' };
       }
@@ -338,7 +344,7 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
   }
 }
 
-async function handleGetState() {
+async function handleGetState(activeTab?: chrome.tabs.Tab) {
   const state = engine.state;
 
   if (state === 'idle' && pendingSections && lastExtracted) {
@@ -391,34 +397,29 @@ async function handleGetState() {
     };
   }
 
+  const resumeState = await getResumeStateForTab(activeTab);
+  if (resumeState) {
+    return {
+      type: 'RESTORED_STATE',
+      payload: {
+        state: 'document-progress',
+        title: resumeState.title,
+        completedCount: resumeState.completedCount,
+        totalCount: resumeState.totalCount,
+        averageScorePercentage: resumeState.averageScorePercentage ?? undefined,
+        nextSectionIndex: resumeState.nextSectionIndex,
+        nextSectionTitle: resumeState.nextSectionTitle,
+        allSectionsCompleted: resumeState.allSectionsCompleted,
+      },
+    };
+  }
+
   return { type: 'RESTORED_STATE', payload: { state: 'idle' } };
 }
 
 async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: ExtractedContent) {
   const settings = await storage.getSettings();
-
-  if (providedContent) {
-    lastExtracted = cloneExtractedContent(providedContent);
-  } else {
-    broadcastStatus('Extracting page content...');
-
-    if (tab.url && resolvePdfUrl(tab.url)) {
-      broadcastStatus('Extracting PDF text...');
-      const pdfContent = await extractPdfContentFromTabUrl(tab.url, tab.title);
-      if (!pdfContent) {
-        throw new Error('Failed to resolve the PDF URL for this tab.');
-      }
-      lastExtracted = cloneExtractedContent(pdfContent);
-    } else {
-      const extractResponse = await extractContentFromTab(tab);
-
-      if (extractResponse?.payload?.error) {
-        throw new Error(extractResponse.payload.error);
-      }
-
-      lastExtracted = cloneExtractedContent(extractResponse.payload as ExtractedContent);
-    }
-  }
+  lastExtracted = await resolveQuizContent(tab, providedContent);
 
   if (!lastExtracted.textContent || lastExtracted.wordCount < 50) {
     throw new Error('Not enough text content on this page (minimum 50 words)');
@@ -451,6 +452,84 @@ async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: Extrac
   sectionSource = null;
   activeSectionIndex = null;
   return await generateQuizFromExtractedContent(lastExtracted, settings);
+}
+
+async function resolveQuizContent(
+  tab: chrome.tabs.Tab,
+  providedContent?: ExtractedContent,
+): Promise<ExtractedContent> {
+  if (providedContent) {
+    return cloneExtractedContent(providedContent)!;
+  }
+
+  broadcastStatus('Extracting page content...');
+
+  if (tab.url && resolvePdfUrl(tab.url)) {
+    broadcastStatus('Extracting PDF text...');
+    const pdfContent = await extractPdfContentFromTabUrl(tab.url, tab.title);
+    if (!pdfContent) {
+      throw new Error('Failed to resolve the PDF URL for this tab.');
+    }
+    return cloneExtractedContent(pdfContent)!;
+  }
+
+  const extractResponse = await extractContentFromTab(tab);
+
+  if (extractResponse?.payload?.error) {
+    throw new Error(extractResponse.payload.error);
+  }
+
+  return cloneExtractedContent(extractResponse.payload as ExtractedContent)!;
+}
+
+async function handleContinueDocument(tab: chrome.tabs.Tab) {
+  const settings = await storage.getSettings();
+  const content = await resolveQuizContent(tab);
+  lastExtracted = cloneExtractedContent(content);
+
+  if (!content.textContent || content.wordCount < 50) {
+    throw new Error('Not enough text content on this page (minimum 50 words)');
+  }
+
+  if (!shouldOfferSectionChoice(content)) {
+    sectionSource = null;
+    activeSectionIndex = null;
+    return await generateQuizFromExtractedContent(content, settings);
+  }
+
+  sectionSource = cloneExtractedContent(content);
+  pendingSections = await getProgressAwareSections(content);
+  const sectionsSummary = buildSectionsSummary(pendingSections);
+  const nextSectionIndex = pendingSections.find((section) => !section.quizzed)?.index ?? null;
+
+  if (nextSectionIndex === null) {
+    activeSectionIndex = null;
+    currentProblems = [];
+    currentTopics = [];
+    lastCompletedQuiz = null;
+    currentGenerationWarning = null;
+    engine.restore(createEmptySession().snapshot);
+    await persistState();
+
+    return {
+      type: 'CONTENT_SECTIONS',
+      payload: {
+        title: content.title,
+        totalWords: content.wordCount,
+        sections: pendingSections.map(section => ({ ...section })),
+        completedCount: sectionsSummary.completedCount,
+        averageScorePercentage: sectionsSummary.averageScorePercentage ?? undefined,
+      },
+    };
+  }
+
+  const selectedContent = buildSectionExtractedContent(content, nextSectionIndex);
+  if (!selectedContent) {
+    throw new Error('Could not resume the next section for this document.');
+  }
+
+  activeSectionIndex = nextSectionIndex;
+  return await generateQuizFromExtractedContent(selectedContent, settings);
 }
 
 async function handleGenerateSectionQuiz(sectionIndex?: number) {
@@ -763,6 +842,21 @@ async function getProgressAwareSections(content: ExtractedContent): Promise<Cont
     getContentSections(content),
   );
   return sectionProgress.sections.map(section => ({ ...section }));
+}
+
+async function getResumeStateForTab(tab?: chrome.tabs.Tab): Promise<DocumentResumeState | null> {
+  const tabUrl = tab?.url;
+  const progressUrl = resolvePdfUrl(tabUrl ?? '') ?? tabUrl;
+  if (!progressUrl) {
+    return null;
+  }
+
+  const documentProgress = await progress.getDocumentProgress(progressUrl);
+  if (!documentProgress || documentProgress.sections.length === 0) {
+    return null;
+  }
+
+  return buildDocumentResumeState(documentProgress);
 }
 
 function applyTabSession(session: ReturnType<typeof getTabQuizSession>, tabId: number | null) {

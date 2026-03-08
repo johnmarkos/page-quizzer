@@ -36,7 +36,7 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [x] **L3: PDF page-range sections** — Extend C4 for long PDFs. Instead of heading-based splitting, split by page ranges (e.g., pages 1-10, 11-20). User picks a page range to quiz. Combine with L2 for progress tracking. The section picker shows "Pages 1-10 (~800 words)" entries. Depends on C4 and L1.
 
-- [ ] **L4: "Continue where I left off"** — When the user returns to a previously-segmented document, the panel shows their progress and highlights the next unquizzed section. "Continue" button auto-generates quiz for the next section. Uses L2 progress data. If the URL matches a tracked document, show progress view instead of the default idle view. Depends on L2.
+- [x] **L4: "Continue where I left off"** — When the user returns to a previously-segmented document, the panel shows their progress and highlights the next unquizzed section. "Continue" button auto-generates quiz for the next section. Uses L2 progress data. If the URL matches a tracked document, show progress view instead of the default idle view. Depends on L2.
 
 - [ ] **L5: Document library view** — New panel view (add "Library" tab alongside Quiz/History/Settings). Shows all tracked documents with progress bars, sorted by last activity. Click to jump to that URL and resume. Data comes from L2's ProgressManager. Test: manual.
 

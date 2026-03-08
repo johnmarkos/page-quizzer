@@ -1,5 +1,28 @@
 # Changelog
 
+## v0.1.54 — Continue Where You Left Off (2026-03-08)
+
+### Long-Form Content
+- Added a resumable document state for tracked long-form pages and PDFs, so returning to a previously sectioned document now shows progress instead of the generic idle prompt
+- Added a `Continue` action that extracts the current page again and auto-generates a quiz for the next unquizzed section
+- If all sections are already completed, the resume action falls back to the section picker instead of guessing a review target
+
+### Panel & State
+- Extended restored background state with a `document-progress` branch carrying completed-count, average score, and next-section metadata
+- Added an idle resume card that shows document progress and the next section title, while keeping the normal `Generate Quiz` action available for a fresh section list
+- Mapped PDF viewer tabs back to their underlying PDF URLs when looking up saved progress, so resume works on Chrome’s built-in PDF viewer too
+
+### Review Loop
+- The first reviewer pass focused on stale-resume leakage and PDF URL matching. The final version clears resume state when an idle tab has no tracked document and resolves resume progress against the underlying PDF URL rather than the viewer wrapper URL.
+- A second reviewer pass found no further significant issues.
+
+### Security Review
+- No new permissions, dependencies, or network destinations were added
+- `npm audit --omit=dev` reported 0 vulnerabilities
+
+### Testing
+- 152 tests (was 151): added resume-state helper coverage for next-section selection and progress summary output
+
 ## v0.1.53 — Preserve Section Preview Data in Progress Merges (2026-03-08)
 
 ### Bug Fixes

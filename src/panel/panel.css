@@ -122,6 +122,30 @@ nav {
   margin-top: 0;
 }
 
+#document-resume-card {
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+}
+
+#document-resume-title {
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+#document-resume-progress,
+#document-resume-next {
+  margin: 0 0 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.document-resume-actions {
+  margin-top: 10px;
+}
+
 #manual-input-panel {
   margin-bottom: 12px;
 }

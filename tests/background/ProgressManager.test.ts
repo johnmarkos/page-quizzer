@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContentSection } from '../../src/shared/messages.js';
 import { STORAGE_KEYS } from '../../src/shared/constants.js';
 import {
+  buildDocumentResumeState,
   ProgressManager,
   buildProgressSummary,
   mergeSectionProgress,
@@ -102,6 +103,45 @@ describe('ProgressManager', () => {
       completedCount: 2,
       totalCount: 3,
       averageScorePercentage: 70,
+    });
+  });
+
+  it('builds resume state with the next unquizzed section', () => {
+    const resumeState = buildDocumentResumeState({
+      url: 'https://example.com/book',
+      title: 'Example Book',
+      sections: [
+        {
+          index: 0,
+          title: 'Part 1',
+          wordCount: 900,
+          quizzed: true,
+          scorePercentage: 70,
+          lastQuizzed: 100,
+        },
+        {
+          index: 1,
+          title: 'Part 2',
+          wordCount: 900,
+          quizzed: false,
+        },
+        {
+          index: 2,
+          title: 'Part 3',
+          wordCount: 900,
+          quizzed: false,
+        },
+      ],
+    });
+
+    expect(resumeState).toEqual({
+      title: 'Example Book',
+      completedCount: 1,
+      totalCount: 3,
+      averageScorePercentage: 70,
+      nextSectionIndex: 1,
+      nextSectionTitle: 'Part 2',
+      allSectionsCompleted: false,
     });
   });
 

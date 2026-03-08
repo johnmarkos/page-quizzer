@@ -2,6 +2,11 @@
 
 ## Completed
 
+- Completed `L4` by adding a resumable long-form idle state for previously tracked documents
+- Added a `document-progress` restored-state branch plus an idle resume card that shows completed sections, average score, and the next unquizzed section
+- Added a `CONTINUE_DOCUMENT` background action that re-extracts the current page/PDF and auto-generates a quiz for the next unquizzed section
+- Mapped resume lookups for Chrome PDF viewer tabs back to the underlying PDF URL so saved PDF progress can be resumed correctly
+- If all sections are already completed, `Continue` now falls back to the section picker rather than making up a new target
 - Fixed a PDF/section-picker crash where progress-aware section merges were dropping `preview` and page-range fields from `ContentSection`
 - Kept `DocumentProgressRecord` storage minimal, but changed the live merge path to preserve full section display data and only strip back to storage fields when persisting
 - Added regression coverage that merged section progress keeps `preview`, `startPage`, and `endPage`
@@ -85,6 +90,9 @@
 
 ## Decisions
 
+- Kept L4 as an idle resume card rather than a whole new view: it satisfies the roadmap behavior while minimizing view churn and preserving the normal `Generate Quiz` path beside it
+- Used the current extracted page to determine the next section to continue, not just the stored progress record, so the resume target reflects current segmentation and progress annotations
+- When all sections are complete, resumed long-form content should return to the section picker instead of auto-selecting a lowest-score or first section; choosing the post-completion strategy is a later product decision
 - Split the progress model into two concerns explicitly: storage records keep only durable progress fields, while UI-facing merged sections must preserve all `ContentSection` display fields like `preview` and page ranges
 - Treated provider quiz JSON as untrusted runtime input, not as a guaranteed `RawQuizQuestion`; parser safety belongs in the normalization layer even when provider schemas already exist
 - Treated Q10/Q11 as one shared generation-quality milestone: front-matter suppression belongs in both the content-selection layer and the post-generation filter, while “too easy by vibe” belongs in both the prompt and the structural critic
@@ -139,12 +147,14 @@
 
 ## Validation
 
-- `npm test` passed with 151/151 tests
+- `npm test` passed with 152/152 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- Resume/progress lookup on PDFs should use the resolved underlying PDF URL, not the Chrome viewer wrapper URL, or saved progress will look like it disappeared
+- If an idle state is replaced by a resumable-document card, make sure untracked tabs explicitly clear that state or the previous tab’s resume UI can leak into a different page
 - If a helper merges persistent progress back into live section-picker data, do not reuse the storage shape as the UI shape; otherwise fields like `preview` and page ranges disappear and the panel crashes on perfectly valid sections
 - TypeScript types on provider response shapes do not protect runtime JSON; parser normalization still needs explicit guards before touching fields like `options.length`
 - If users say the answer is obvious because it is the only detailed option, word-count outlier checks alone are too weak; add a second heuristic for a uniquely longest, more specific correct answer

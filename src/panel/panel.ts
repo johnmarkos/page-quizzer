@@ -44,6 +44,15 @@ let currentTimerSeconds = 0;
 let activeTimerId: number | null = null;
 let activeTimerDeadline = 0;
 let manualInputMode = false;
+let currentResumeDocument: {
+  title: string;
+  completedCount: number;
+  totalCount: number;
+  averageScorePercentage?: number;
+  nextSectionIndex: number | null;
+  nextSectionTitle?: string;
+  allSectionsCompleted: boolean;
+} | null = null;
 
 // --- Navigation ---
 document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -122,6 +131,43 @@ $('generate-btn').addEventListener('click', async () => {
     }
   } catch (err) {
     showError(err instanceof Error ? err.message : 'Failed to generate quiz');
+  }
+});
+
+$('continue-document-btn').addEventListener('click', async () => {
+  try {
+    showQuizSection('quiz-loading');
+    ($('loading-status') as HTMLElement).textContent = 'Checking provider access...';
+    const savedSettings = await getSavedSettings();
+    await ensureProviderAccess(savedSettings.provider, savedSettings.baseUrl);
+    ($('loading-status') as HTMLElement).textContent = 'Checking site access...';
+    await ensureSiteAccessForActiveTab();
+    ($('loading-status') as HTMLElement).textContent = 'Resuming next section...';
+
+    const response = await chrome.runtime.sendMessage({ type: 'CONTINUE_DOCUMENT' });
+    if (response?.type === 'QUIZ_ERROR') {
+      showError(response.payload.error);
+      return;
+    }
+    if (response?.type === 'CONTENT_SECTIONS') {
+      renderSectionsState(
+        response.payload.title,
+        response.payload.totalWords,
+        response.payload.sections,
+        response.payload.completedCount,
+        response.payload.averageScorePercentage,
+      );
+      return;
+    }
+    if (response?.type === 'QUIZ_GENERATED') {
+      renderReadyState(
+        response.payload.title,
+        response.payload.problems.length,
+        response.payload.warning,
+      );
+    }
+  } catch (err) {
+    showError(err instanceof Error ? err.message : 'Failed to continue this document');
   }
 });
 
@@ -820,10 +866,14 @@ async function checkRestoredState() {
           restoredState.payload.averageScorePercentage,
         );
         break;
+      case 'document-progress':
+        renderDocumentResumeState(restoredState.payload);
+        break;
       case 'complete':
         showComplete(restoredState.payload.summary);
         break;
       case 'idle':
+        clearDocumentResumeState();
         showQuizSection('quiz-idle');
         break;
     }
@@ -989,18 +1039,62 @@ function renderManualInputMode() {
   const toggleBtn = $('toggle-manual-btn') as HTMLButtonElement;
   const manualPanel = $('manual-input-panel');
   const generateBtn = $('generate-btn') as HTMLButtonElement;
+  const resumeCard = $('document-resume-card');
 
   if (manualInputMode) {
     copy.textContent = 'Generate a quiz from pasted text instead of the current page.';
     toggleBtn.textContent = 'Use Current Page';
     show(manualPanel);
+    hide(resumeCard);
     generateBtn.textContent = 'Generate Quiz from Text';
   } else {
-    copy.textContent = 'Generate a quiz from the current page.';
+    copy.textContent = currentResumeDocument
+      ? 'Continue where you left off on this document, or generate a fresh quiz from the current page.'
+      : 'Generate a quiz from the current page.';
     toggleBtn.textContent = 'Paste Text Instead';
     hide(manualPanel);
+    if (currentResumeDocument) {
+      show(resumeCard);
+    } else {
+      hide(resumeCard);
+    }
     generateBtn.textContent = 'Generate Quiz';
   }
+}
+
+function renderDocumentResumeState(resumeState: {
+  title: string;
+  completedCount: number;
+  totalCount: number;
+  averageScorePercentage?: number;
+  nextSectionIndex: number | null;
+  nextSectionTitle?: string;
+  allSectionsCompleted: boolean;
+}) {
+  currentResumeDocument = { ...resumeState };
+  ($('document-resume-title') as HTMLElement).textContent = resumeState.title;
+
+  const averageSuffix = typeof resumeState.averageScorePercentage === 'number'
+    ? ` • Avg score ${resumeState.averageScorePercentage}%`
+    : '';
+  ($('document-resume-progress') as HTMLElement).textContent =
+    `${resumeState.completedCount}/${resumeState.totalCount} sections completed${averageSuffix}`;
+
+  ($('document-resume-next') as HTMLElement).textContent = resumeState.allSectionsCompleted
+    ? 'All saved sections are complete. Generate a fresh section list if you want to review one again.'
+    : `Next section: ${resumeState.nextSectionTitle ?? `Section ${resumeState.nextSectionIndex! + 1}`}`;
+
+  const continueBtn = $('continue-document-btn') as HTMLButtonElement;
+  continueBtn.disabled = resumeState.allSectionsCompleted;
+  continueBtn.textContent = resumeState.allSectionsCompleted ? 'All Sections Complete' : 'Continue';
+
+  renderManualInputMode();
+  showQuizSection('quiz-idle');
+}
+
+function clearDocumentResumeState() {
+  currentResumeDocument = null;
+  renderManualInputMode();
 }
 
 function getManualGeneratePayload() {

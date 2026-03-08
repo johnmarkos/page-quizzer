@@ -25,6 +25,13 @@ export type ProgressSummary = {
   averageScorePercentage: number | null;
 };
 
+export type DocumentResumeState = ProgressSummary & {
+  title: string;
+  nextSectionIndex: number | null;
+  nextSectionTitle?: string;
+  allSectionsCompleted: boolean;
+};
+
 export class ProgressManager {
   async getDocumentProgress(url: string): Promise<DocumentProgressRecord | null> {
     const allProgress = await this.#getAllProgress();
@@ -132,6 +139,21 @@ export function buildProgressSummary(sections: Array<Pick<SectionProgressRecord,
     completedCount: completedSections.length,
     totalCount: sections.length,
     averageScorePercentage,
+  };
+}
+
+export function buildDocumentResumeState(record: DocumentProgressRecord): DocumentResumeState {
+  const summary = buildProgressSummary(record.sections);
+  const nextSection = record.sections.find((section) => !section.quizzed) ?? null;
+
+  return {
+    title: record.title,
+    completedCount: summary.completedCount,
+    totalCount: summary.totalCount,
+    averageScorePercentage: summary.averageScorePercentage,
+    nextSectionIndex: nextSection?.index ?? null,
+    nextSectionTitle: nextSection?.title,
+    allSectionsCompleted: nextSection === null && summary.totalCount > 0,
   };
 }
 
