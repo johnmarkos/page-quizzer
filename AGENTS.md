@@ -61,6 +61,7 @@ All changes to `main` require a pull request. No direct commits to `main`.
 - **Before opening a PR:** run `npm test`, `npm run build`, and the self-review checklist
 - **CI runs on every PR:** checkout → Node 20 → `npm ci` → `npm test` → `npm run build` → `npm audit --omit=dev`
 - **Branch protection** is configured in the GitHub UI (require PRs, require CI status check)
+- **After opening a PR:** comment `@codex review` to trigger a Codex code review
 
 ## Testing Philosophy (Goldilocks)
 
