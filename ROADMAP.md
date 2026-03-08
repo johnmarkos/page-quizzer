@@ -54,7 +54,7 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 ### Data & History
 
-- [ ] **D1: Export history as JSON** — Add "Export" button to history view. Calls `GET_SESSIONS`, creates a Blob, triggers download via `URL.createObjectURL`. File named `pagequizzer-history-YYYY-MM-DD.json`. Test: manual.
+- [x] **D1: Export history as JSON** — Add "Export" button to history view. Calls `GET_SESSIONS`, creates a Blob, triggers download via `URL.createObjectURL`. File named `pagequizzer-history-YYYY-MM-DD.json`. Test: manual.
 
 - [ ] **D2: Import history from JSON** — Add "Import" button + hidden file input to history view. Parse uploaded JSON, validate it's an array of `SessionRecord` objects (check required fields), merge with existing sessions (deduplicate by `id`). Save to storage. Test: export → import round-trip preserves data.
 

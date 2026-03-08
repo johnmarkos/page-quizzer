@@ -332,6 +332,14 @@ nav {
 .error { color: var(--error); }
 
 /* History */
+.history-actions {
+  margin-bottom: 12px;
+}
+
+.history-actions .secondary-btn {
+  margin-top: 0;
+}
+
 .history-item {
   padding: 12px;
   border: 1px solid var(--border);

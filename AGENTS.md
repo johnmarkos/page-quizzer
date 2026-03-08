@@ -190,6 +190,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - If a content script depends on a worker asset, bundle that worker explicitly and expose only that file through `web_accessible_resources`; otherwise extension CSP/URL access will break at runtime
 - For panel-only interaction polish, reset transient UI state explicitly when views/questions change; hidden DOM from a prior state will otherwise leak into later quiz steps
 - If multiple providers parse the same LLM response shape, centralize that normalization in one helper; otherwise feature support like new question types will drift across providers
+- For panel features with browser APIs like downloads/Blob URLs, keep the side-effect thin and move filename/serialization logic into a pure helper so it stays testable without DOM harnesses
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

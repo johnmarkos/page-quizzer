@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.1.8 — History Export (2026-03-08)
+
+### Data & History
+- Added an `Export History` action to the history view that downloads all saved sessions as JSON
+- Export files are named `pagequizzer-history-YYYY-MM-DD.json`
+- Reused the existing `GET_SESSIONS` message flow instead of adding new background/export plumbing
+
+### Testing
+- 46 tests (was 44): added helper coverage for export filename generation and JSON serialization
+
 ## v0.1.7 — True/False Questions (2026-03-08)
 
 ### Quiz Experience

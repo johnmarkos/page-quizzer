@@ -1,5 +1,7 @@
 import type { Problem, SessionSummary } from '../engine/types.js';
+import type { SessionRecord } from '../background/StorageManager.js';
 import type { ReviewItem } from '../shared/messages.js';
+import { buildHistoryExportFilename, serializeHistoryRecords } from './history-export.js';
 
 // --- DOM helpers ---
 function $(id: string): HTMLElement {
@@ -12,6 +14,7 @@ function hide(el: HTMLElement) { el.classList.add('hidden'); }
 // --- State ---
 let selectedOptionIndex = -1;
 let currentExplanation = '';
+let currentSessions: SessionRecord[] = [];
 
 // --- Navigation ---
 document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -103,6 +106,25 @@ $('review-back-btn').addEventListener('click', () => {
 
 $('error-dismiss-btn').addEventListener('click', () => {
   showQuizSection('quiz-idle');
+});
+
+$('export-history-btn').addEventListener('click', async () => {
+  try {
+    const sessions = currentSessions.length > 0 ? currentSessions : await fetchSessions();
+    if (sessions.length === 0) {
+      return;
+    }
+
+    const blob = new Blob([serializeHistoryRecords(sessions)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = buildHistoryExportFilename();
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  } catch (err) {
+    showError(err instanceof Error ? err.message : 'Failed to export history');
+  }
 });
 
 $('why-btn').addEventListener('click', () => {
@@ -298,10 +320,13 @@ $('test-connection-btn').addEventListener('click', async () => {
 
 // --- History ---
 async function loadHistory() {
-  const response = await chrome.runtime.sendMessage({ type: 'GET_SESSIONS' });
-  const sessions = response?.payload || [];
+  const sessions = await fetchSessions();
   const list = $('history-list');
   const empty = $('history-empty');
+  const exportBtn = $('export-history-btn') as HTMLButtonElement;
+
+  currentSessions = sessions;
+  exportBtn.disabled = sessions.length === 0;
 
   if (sessions.length === 0) {
     show(empty);
@@ -323,6 +348,11 @@ async function loadHistory() {
       </div>
     `)
     .join('');
+}
+
+async function fetchSessions(): Promise<SessionRecord[]> {
+  const response = await chrome.runtime.sendMessage({ type: 'GET_SESSIONS' });
+  return response?.payload || [];
 }
 
 // --- Keyboard shortcuts ---
