@@ -1,0 +1,149 @@
+import { STORAGE_KEYS } from '../shared/constants.js';
+import type { ContentSection } from '../shared/messages.js';
+import type { Score } from '../engine/types.js';
+
+export type SectionProgressRecord = {
+  index: number;
+  title: string;
+  wordCount: number;
+  quizzed: boolean;
+  scorePercentage?: number;
+  lastQuizzed?: number;
+};
+
+export type DocumentProgressRecord = {
+  url: string;
+  title: string;
+  sections: SectionProgressRecord[];
+};
+
+export type DocumentProgressMap = Record<string, DocumentProgressRecord>;
+
+export type ProgressSummary = {
+  completedCount: number;
+  totalCount: number;
+  averageScorePercentage: number | null;
+};
+
+export class ProgressManager {
+  async getDocumentProgress(url: string): Promise<DocumentProgressRecord | null> {
+    const allProgress = await this.#getAllProgress();
+    return allProgress[url] ? cloneDocumentProgress(allProgress[url]) : null;
+  }
+
+  async recordSectionResult(
+    url: string,
+    title: string,
+    sections: ContentSection[],
+    sectionIndex: number,
+    score: Score,
+    completedAt: number,
+  ): Promise<DocumentProgressRecord> {
+    const allProgress = await this.#getAllProgress();
+    const updated = updateDocumentProgressRecord(
+      allProgress[url] ?? null,
+      url,
+      title,
+      sections,
+      sectionIndex,
+      score,
+      completedAt,
+    );
+    allProgress[url] = updated;
+    await chrome.storage.local.set({ [STORAGE_KEYS.DOCUMENT_PROGRESS]: allProgress });
+    return cloneDocumentProgress(updated);
+  }
+
+  async buildSectionProgress(url: string, sections: ContentSection[]): Promise<{
+    sections: ContentSection[];
+    summary: ProgressSummary;
+  }> {
+    const allProgress = await this.#getAllProgress();
+    const mergedSections = mergeSectionProgress(sections, allProgress[url] ?? null);
+    return {
+      sections: mergedSections,
+      summary: buildProgressSummary(mergedSections),
+    };
+  }
+
+  async #getAllProgress(): Promise<DocumentProgressMap> {
+    const data = await chrome.storage.local.get(STORAGE_KEYS.DOCUMENT_PROGRESS);
+    return (data[STORAGE_KEYS.DOCUMENT_PROGRESS] as DocumentProgressMap | undefined) ?? {};
+  }
+}
+
+export function updateDocumentProgressRecord(
+  existing: DocumentProgressRecord | null,
+  url: string,
+  title: string,
+  sections: ContentSection[],
+  sectionIndex: number,
+  score: Score,
+  completedAt: number,
+): DocumentProgressRecord {
+  const mergedSections = mergeSectionProgress(sections, existing).map((section) => {
+    if (section.index !== sectionIndex) {
+      return section;
+    }
+
+    return {
+      ...section,
+      quizzed: true,
+      scorePercentage: score.percentage,
+      lastQuizzed: completedAt,
+    };
+  });
+
+  return {
+    url,
+    title,
+    sections: mergedSections.map(cloneSectionProgressRecord),
+  };
+}
+
+export function mergeSectionProgress(
+  sections: ContentSection[],
+  existing: DocumentProgressRecord | null,
+): SectionProgressRecord[] {
+  return sections.map((section) => {
+    const existingSection = existing?.sections.find((candidate) => candidate.index === section.index);
+
+    return {
+      index: section.index,
+      title: section.title,
+      wordCount: section.wordCount,
+      quizzed: existingSection?.quizzed ?? false,
+      scorePercentage: existingSection?.scorePercentage,
+      lastQuizzed: existingSection?.lastQuizzed,
+    };
+  });
+}
+
+export function buildProgressSummary(sections: Array<Pick<SectionProgressRecord, 'quizzed' | 'scorePercentage'>>): ProgressSummary {
+  const completedSections = sections.filter((section) => section.quizzed);
+  const scoredSections = completedSections.filter(
+    (section): section is Pick<SectionProgressRecord, 'quizzed'> & { scorePercentage: number } =>
+      typeof section.scorePercentage === 'number',
+  );
+
+  const averageScorePercentage = scoredSections.length > 0
+    ? Math.round(scoredSections.reduce((sum, section) => sum + section.scorePercentage, 0) / scoredSections.length)
+    : null;
+
+  return {
+    completedCount: completedSections.length,
+    totalCount: sections.length,
+    averageScorePercentage,
+  };
+}
+
+function cloneDocumentProgress(record: DocumentProgressRecord): DocumentProgressRecord {
+  return {
+    ...record,
+    sections: record.sections.map(cloneSectionProgressRecord),
+  };
+}
+
+function cloneSectionProgressRecord(record: SectionProgressRecord): SectionProgressRecord {
+  return { ...record };
+}

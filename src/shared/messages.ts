@@ -37,6 +37,9 @@ export type ContentSection = {
   preview: string;
   startPage?: number;
   endPage?: number;
+  quizzed?: boolean;
+  scorePercentage?: number;
+  lastQuizzed?: number;
 };
 
 // Panel → Background
@@ -118,6 +121,8 @@ export type ContentSectionsMessage = {
     title: string;
     totalWords: number;
     sections: ContentSection[];
+    completedCount: number;
+    averageScorePercentage?: number;
   };
 };
 
@@ -210,6 +215,8 @@ export type RestoredStateMessage = {
         title: string;
         totalWords: number;
         sections: ContentSection[];
+        completedCount: number;
+        averageScorePercentage?: number;
       }
     | {
         state: 'ready';

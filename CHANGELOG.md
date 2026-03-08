@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.1.49 — Document Progress Tracking (2026-03-08)
+
+### Long-Form Content
+- Added `ProgressManager` to store per-document section progress in `chrome.storage.local`, keyed by source URL
+- Recorded completed section quizzes with `quizzed`, `scorePercentage`, and `lastQuizzed` metadata instead of treating the section picker as stateless
+- Rebuilt section-picker payloads with progress annotations so returning to a long article or book now shows which sections were already covered
+
+### Panel & State
+- Persisted the active section index in tab-scoped session state so a completed section quiz can be written back to the correct document section
+- Extended `CONTENT_SECTIONS` and restored `sections` state payloads with `completedCount` and average score metadata
+- Updated the section picker UI to show overall completion progress plus per-section completion markers and scores
+
+### Review Loop
+- The first reviewer pass focused on stale section context. The fix was to clear old `sectionSource` / `activeSectionIndex` when generation falls back to a normal non-sectioned quiz, so later completions cannot be written against the wrong document.
+- A follow-up reviewer pass found no further significant issues.
+
+### Security Review
+- No new permissions, host permissions, or outbound network destinations were added
+- Progress data stays in `chrome.storage.local` with the existing document URL/title sensitivity model
+- `npm audit --omit=dev` reported 0 vulnerabilities
+
+### Testing
+- 142 tests (was 138): added `ProgressManager` coverage for persisted section results, progress merging, and summary calculation
+
 ## v0.1.48 — Harder Long-Form Questions (2026-03-08)
 
 ### Quiz Quality

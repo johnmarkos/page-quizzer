@@ -43,18 +43,21 @@ import {
   getContentSections,
   shouldOfferSectionChoice,
 } from './content-sections.js';
+import { ProgressManager } from './ProgressManager.js';
 
 const CONTENT_SCRIPT_PATH = 'dist/content.js';
 const QUIZ_SELECTION_CONTEXT_MENU_ID = 'quiz-selection';
 
 const storage = new StorageManager();
 const engine = new QuizEngine();
+const progress = new ProgressManager();
 
 let activeTabId: number | null = null;
 let tabSessions: TabQuizSessionMap = {};
 let lastExtracted: ExtractedContent | null = null;
 let sectionSource: ExtractedContent | null = null;
 let pendingSections: ContentSection[] | null = null;
+let activeSectionIndex: number | null = null;
 let currentProblems: Problem[] = [];
 let currentTopics: string[] = [];
 let lastCompletedQuiz: CompletedQuizData | null = null;
@@ -89,6 +92,25 @@ engine.on('quizComplete', async (payload) => {
     problems: cloneProblems(currentProblems),
     summary: cloneSummary(payload),
   };
+
+  if (sectionSource && activeSectionIndex !== null) {
+    const sectionProgress = await progress.recordSectionResult(
+      sectionSource.url,
+      sectionSource.title,
+      getContentSections(sectionSource),
+      activeSectionIndex,
+      payload.score,
+      payload.completedAt,
+    );
+
+    if (pendingSections) {
+      pendingSections = mergeProgressIntoSections(
+        pendingSections,
+        sectionProgress.sections,
+      );
+    }
+  }
+
   await persistState();
   broadcast({ type: 'QUIZ_COMPLETE', payload });
 
@@ -196,6 +218,7 @@ async function persistState() {
     lastExtracted: cloneExtractedContent(lastExtracted),
     sectionSource: cloneExtractedContent(sectionSource),
     pendingSections: pendingSections ? pendingSections.map(section => ({ ...section })) : null,
+    activeSectionIndex,
     currentTopics: cloneTopics(currentTopics),
     lastCompletedQuiz: lastCompletedQuiz
       ? {
@@ -257,6 +280,7 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
         case 'DISMISS_SECTIONS':
           pendingSections = null;
           sectionSource = null;
+          activeSectionIndex = null;
           currentGenerationWarning = null;
           await persistState();
           return { type: 'ok' };
@@ -266,7 +290,9 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
           }
 
           lastExtracted = cloneExtractedContent(sectionSource);
-          pendingSections = getContentSections(sectionSource);
+          pendingSections = await getProgressAwareSections(sectionSource);
+          const sectionsSummary = buildSectionsSummary(pendingSections);
+          activeSectionIndex = null;
           currentProblems = [];
           currentTopics = [];
           lastCompletedQuiz = null;
@@ -280,6 +306,8 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
               title: sectionSource.title,
               totalWords: sectionSource.wordCount,
               sections: pendingSections.map(section => ({ ...section })),
+              completedCount: sectionsSummary.completedCount,
+              averageScorePercentage: sectionsSummary.averageScorePercentage ?? undefined,
             },
           };
         case 'START_QUIZ':
@@ -313,6 +341,7 @@ async function handleGetState() {
   const state = engine.state;
 
   if (state === 'idle' && pendingSections && lastExtracted) {
+    const sectionsSummary = buildSectionsSummary(pendingSections);
     return {
       type: 'RESTORED_STATE',
       payload: {
@@ -320,6 +349,8 @@ async function handleGetState() {
         title: lastExtracted.title,
         totalWords: lastExtracted.wordCount,
         sections: pendingSections.map(section => ({ ...section })),
+        completedCount: sectionsSummary.completedCount,
+        averageScorePercentage: sectionsSummary.averageScorePercentage ?? undefined,
       },
     };
   }
@@ -394,7 +425,9 @@ async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: Extrac
 
   if (shouldOfferSectionChoice(lastExtracted)) {
     sectionSource = cloneExtractedContent(lastExtracted);
-    pendingSections = getContentSections(lastExtracted);
+    pendingSections = await getProgressAwareSections(lastExtracted);
+    const sectionsSummary = buildSectionsSummary(pendingSections);
+    activeSectionIndex = null;
     currentProblems = [];
     currentTopics = [];
     lastCompletedQuiz = null;
@@ -408,10 +441,14 @@ async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: Extrac
         title: lastExtracted.title,
         totalWords: lastExtracted.wordCount,
         sections: pendingSections.map(section => ({ ...section })),
+        completedCount: sectionsSummary.completedCount,
+        averageScorePercentage: sectionsSummary.averageScorePercentage ?? undefined,
       },
     };
   }
 
+  sectionSource = null;
+  activeSectionIndex = null;
   return await generateQuizFromExtractedContent(lastExtracted, settings);
 }
 
@@ -430,6 +467,7 @@ async function handleGenerateSectionQuiz(sectionIndex?: number) {
     throw new Error('That section is no longer available. Re-extract the page and try again.');
   }
 
+  activeSectionIndex = sectionIndex ?? null;
   return await generateQuizFromExtractedContent(selectedContent, settings);
 }
 
@@ -672,6 +710,57 @@ function cloneExtractedContent(content: ExtractedContent | null): ExtractedConte
   };
 }
 
+function mergeProgressIntoSections(
+  sections: ContentSection[],
+  progressSections: Array<{
+    index: number;
+    quizzed: boolean;
+    scorePercentage?: number;
+    lastQuizzed?: number;
+  }>,
+): ContentSection[] {
+  return sections.map((section) => {
+    const progressSection = progressSections.find(
+      (candidate) => candidate.index === section.index,
+    );
+    if (!progressSection) {
+      return { ...section };
+    }
+
+    return {
+      ...section,
+      quizzed: progressSection.quizzed,
+      scorePercentage: progressSection.scorePercentage,
+      lastQuizzed: progressSection.lastQuizzed,
+    };
+  });
+}
+
+function buildSectionsSummary(sections: ContentSection[]) {
+  const completedSections = sections.filter((section) => section.quizzed);
+  const scoredSections = completedSections.filter(
+    (section): section is ContentSection & { scorePercentage: number } =>
+      typeof section.scorePercentage === 'number',
+  );
+
+  const averageScorePercentage = scoredSections.length > 0
+    ? Math.round(scoredSections.reduce((sum, section) => sum + section.scorePercentage, 0) / scoredSections.length)
+    : null;
+
+  return {
+    completedCount: completedSections.length,
+    averageScorePercentage,
+  };
+}
+
+async function getProgressAwareSections(content: ExtractedContent): Promise<ContentSection[]> {
+  const sectionProgress = await progress.buildSectionProgress(
+    content.url,
+    getContentSections(content),
+  );
+  return sectionProgress.sections.map(section => ({ ...section }));
+}
+
 function applyTabSession(session: ReturnType<typeof getTabQuizSession>, tabId: number | null) {
   activeTabId = tabId;
   engine.restore(session.snapshot);
@@ -679,6 +768,7 @@ function applyTabSession(session: ReturnType<typeof getTabQuizSession>, tabId: n
   lastExtracted = cloneExtractedContent(session.lastExtracted);
   sectionSource = cloneExtractedContent(session.sectionSource);
   pendingSections = session.pendingSections ? session.pendingSections.map(section => ({ ...section })) : null;
+  activeSectionIndex = session.activeSectionIndex ?? null;
   currentTopics = cloneTopics(session.currentTopics);
   lastCompletedQuiz = session.lastCompletedQuiz
     ? {

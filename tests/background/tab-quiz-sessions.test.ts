@@ -57,6 +57,7 @@ describe('tab quiz sessions', () => {
             preview: 'Atoms are moving',
           },
         ],
+        activeSectionIndex: 0,
         currentTopics: ['Physics'],
         lastCompletedQuiz: null,
         generationWarning: 'Stopped early',
@@ -69,12 +70,14 @@ describe('tab quiz sessions', () => {
     session.pendingSections?.[0] && (session.pendingSections[0].title = 'Changed');
     session.lastExtracted?.pageTexts && (session.lastExtracted.pageTexts[0] = 'Changed');
     session.sectionSource?.pageTexts && (session.sectionSource.pageTexts[0] = 'Changed');
+    session.activeSectionIndex = 2;
 
     expect(sessions['42'].snapshot.problems[0].question).toBe('Question 1?');
     expect(sessions['42'].currentTopics[0]).toBe('Physics');
     expect(sessions['42'].pendingSections?.[0]?.title).toBe('Chapter 1');
     expect(sessions['42'].lastExtracted?.pageTexts?.[0]).toBe('Atoms in motion');
     expect(sessions['42'].sectionSource?.pageTexts?.[0]).toBe('Page 1');
+    expect(sessions['42'].activeSectionIndex).toBe(0);
   });
 
   it('removes empty sessions from storage decisions', () => {

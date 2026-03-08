@@ -2,6 +2,11 @@
 
 ## Completed
 
+- Completed `L2` by adding persisted per-document section progress for long-form content
+- Added `ProgressManager` to store progress in `chrome.storage.local` keyed by document URL, with per-section `quizzed`, `scorePercentage`, and `lastQuizzed` metadata
+- Recorded section-quiz completion back onto the full document using a persisted `activeSectionIndex`, so the correct section gets credit after quiz completion
+- Extended section-picker state payloads with `completedCount` and `averageScorePercentage`, and updated the panel to show both overall document progress and per-section completion markers
+- Cleared stale section context when generating a normal non-sectioned quiz so old long-form progress state cannot bleed into unrelated completions
 - Completed `Q9` by strengthening long-form question generation and filtering
 - Updated the prompt to discourage bibliographic/front-matter trivia and to require more conceptual discrimination for long-form books, papers, and chapters
 - Tightened quality filtering to reject bibliographic questions, multiple vague distractors, and questions where the correct option is the only clearly domain-specific answer
@@ -66,6 +71,9 @@
 
 ## Decisions
 
+- Keyed document progress by the full document URL and merged progress onto freshly computed sections by section index; this keeps the stored shape simple and lets updated section titles/word counts replace stale metadata on rebuild
+- Stored section progress annotations in the same `pendingSections` payload the panel already restores, instead of creating a second parallel progress message/state branch
+- Treated "generate a normal quiz from this page" as a hard reset of prior section context so stale `sectionSource`/`activeSectionIndex` data cannot leak across flows
 - Kept the long-form difficulty improvement as a prompt-plus-filter pass instead of introducing a second LLM review stage; that raises the floor without adding more latency, cost, or provider complexity
 - Treated bibliographic/front-matter questions as low-value by default and filtered them structurally even if they are technically answerable from the text
 - Kept the full extracted long-form source and the currently selected section as separate state values; reusing one field for both made “back to sections” fundamentally lossy
@@ -112,12 +120,14 @@
 
 ## Validation
 
-- `npm test` passed with 138/138 tests
+- `npm test` passed with 142/142 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- If long-form completion needs to be written back after a section quiz ends, persist the selected section index separately from the narrowed extracted content; `lastExtracted` alone is not enough to identify the parent section safely
+- If a restorable picker view shows derived progress, persist the annotated section list or rebuild it through one helper consistently; otherwise restored panel state and freshly generated picker state will drift
 - If the real product complaint is “the answer is obvious because the other options are generic,” improving the prompt alone is not enough; add a structural filter for vague distractors and domain-specific-option outliers too
 - Front-matter/bibliographic trivia is often technically extractable from books and PDFs but still low-value for retrieval practice; filtering it explicitly gives better quiz quality than hoping segmentation alone removes it
 - If the app needs to return from a narrowed subsection quiz back to a broader section picker, don’t overwrite the original source document with the narrowed subsection; keep both pieces of state

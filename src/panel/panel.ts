@@ -110,6 +110,8 @@ $('generate-btn').addEventListener('click', async () => {
         response.payload.title,
         response.payload.totalWords,
         response.payload.sections,
+        response.payload.completedCount,
+        response.payload.averageScorePercentage,
       );
     } else if (response?.type === 'QUIZ_GENERATED') {
       renderReadyState(
@@ -251,6 +253,8 @@ $('new-quiz-btn').addEventListener('click', async () => {
       response.payload.title,
       response.payload.totalWords,
       response.payload.sections,
+      response.payload.completedCount,
+      response.payload.averageScorePercentage,
     );
     return;
   }
@@ -371,6 +375,8 @@ chrome.runtime.onMessage.addListener((message) => {
         message.payload.title,
         message.payload.totalWords,
         message.payload.sections,
+        message.payload.completedCount,
+        message.payload.averageScorePercentage,
       );
       break;
 
@@ -810,6 +816,8 @@ async function checkRestoredState() {
           restoredState.payload.title,
           restoredState.payload.totalWords,
           restoredState.payload.sections,
+          restoredState.payload.completedCount,
+          restoredState.payload.averageScorePercentage,
         );
         break;
       case 'complete':
@@ -880,15 +888,23 @@ function renderReadyState(title: string, count: number, warning?: string) {
   showQuizSection('quiz-ready');
 }
 
-function renderSectionsState(title: string, totalWords: number, sections: ContentSection[]) {
+function renderSectionsState(
+  title: string,
+  totalWords: number,
+  sections: ContentSection[],
+  completedCount = 0,
+  averageScorePercentage?: number,
+) {
   ($('sections-info') as HTMLElement).textContent =
     `"${title}" is long (${totalWords.toLocaleString()} words). Choose a section to quiz.`;
+  renderSectionsProgressSummary(sections.length, completedCount, averageScorePercentage);
 
   const list = $('sections-list');
   list.innerHTML = sections.map(section => `
     <button class="section-card" type="button" data-section-index="${section.index}">
       <span class="section-card-title">${escapeHtml(section.title)}</span>
-      <span class="section-card-meta">${section.wordCount.toLocaleString()} words</span>
+      <span class="section-card-meta">${escapeHtml(buildSectionMetaText(section))}</span>
+      ${section.quizzed ? `<span class="section-card-status">${escapeHtml(buildSectionStatusText(section))}</span>` : ''}
       <span class="section-card-preview">${escapeHtml(section.preview)}${section.preview.length >= 140 ? '...' : ''}</span>
     </button>
   `).join('');
@@ -901,6 +917,45 @@ function renderSectionsState(title: string, totalWords: number, sections: Conten
   });
 
   showQuizSection('quiz-sections');
+}
+
+function renderSectionsProgressSummary(
+  totalCount: number,
+  completedCount: number,
+  averageScorePercentage?: number,
+) {
+  const progressEl = $('sections-progress');
+  if (totalCount === 0 || completedCount === 0) {
+    progressEl.textContent = '';
+    hide(progressEl);
+    return;
+  }
+
+  const averageSuffix = typeof averageScorePercentage === 'number'
+    ? ` • Avg score ${averageScorePercentage}%`
+    : '';
+  progressEl.textContent = `Completed ${completedCount} of ${totalCount} sections${averageSuffix}`;
+  show(progressEl);
+}
+
+function buildSectionMetaText(section: ContentSection): string {
+  const parts = [`${section.wordCount.toLocaleString()} words`];
+  if (section.startPage !== undefined && section.endPage !== undefined) {
+    parts.push(
+      section.startPage === section.endPage
+        ? `Page ${section.startPage}`
+        : `Pages ${section.startPage}-${section.endPage}`,
+    );
+  }
+  return parts.join(' • ');
+}
+
+function buildSectionStatusText(section: ContentSection): string {
+  if (typeof section.scorePercentage === 'number') {
+    return `Completed • ${section.scorePercentage}%`;
+  }
+
+  return 'Completed';
 }
 
 async function generateSectionQuiz(sectionIndex: number) {

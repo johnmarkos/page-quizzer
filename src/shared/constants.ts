@@ -13,4 +13,5 @@ export const STORAGE_KEYS = {
   SESSIONS: 'sessions',
   TAB_QUIZ_SESSIONS: 'tabQuizSessions',
   QUESTION_PERFORMANCE: 'questionPerformance',
+  DOCUMENT_PROGRESS: 'documentProgress',
 } as const;
