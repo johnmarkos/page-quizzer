@@ -4,6 +4,7 @@ import type { QuizGenerationParams, RawQuizQuestion, QuizGenerationSchema } from
 import { buildSystemPrompt, buildUserPrompt } from '../prompts/quiz-generation.js';
 import { buildTopicPrompt } from '../prompts/topic-categorization.js';
 import { parseQuizQuestions } from './parseQuizQuestions.js';
+import { parseProviderJson } from './parseProviderJson.js';
 import { parseTopicResponse } from './parseTopics.js';
 import { getDefaultProviderModel, getProviderModels } from './provider-models.js';
 
@@ -57,12 +58,7 @@ export class OpenAIProvider extends BaseProvider {
       throw new Error('No quiz questions in OpenAI response');
     }
 
-    let parsed: QuizGenerationSchema;
-    try {
-      parsed = JSON.parse(content) as QuizGenerationSchema;
-    } catch {
-      throw new Error('Failed to parse OpenAI quiz response as JSON');
-    }
+    const parsed = parseProviderJson<QuizGenerationSchema>(content, 'OpenAI quiz');
 
     if (!parsed.questions) {
       throw new Error('No quiz questions in OpenAI response');

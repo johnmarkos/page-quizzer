@@ -8,6 +8,7 @@ import {
 } from '../prompts/quiz-generation.js';
 import { TOPIC_RESPONSE_JSON_SCHEMA, buildTopicPrompt } from '../prompts/topic-categorization.js';
 import { parseQuizQuestions } from './parseQuizQuestions.js';
+import { parseProviderJson } from './parseProviderJson.js';
 import { parseTopicResponse } from './parseTopics.js';
 import { getDefaultProviderModel, getProviderModels } from './provider-models.js';
 
@@ -71,12 +72,7 @@ export class GeminiProvider extends BaseProvider {
       throw new Error('No quiz questions in Gemini response');
     }
 
-    let parsed: QuizGenerationSchema;
-    try {
-      parsed = JSON.parse(content) as QuizGenerationSchema;
-    } catch {
-      throw new Error('Failed to parse Gemini quiz response as JSON');
-    }
+    const parsed = parseProviderJson<QuizGenerationSchema>(content, 'Gemini quiz');
 
     if (!parsed.questions) {
       throw new Error('No quiz questions in Gemini response');

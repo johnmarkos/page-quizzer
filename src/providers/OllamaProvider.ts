@@ -4,6 +4,7 @@ import type { QuizGenerationParams, QuizGenerationSchema, RawQuizQuestion } from
 import { QUIZ_RESPONSE_JSON_SCHEMA, buildSystemPrompt, buildUserPrompt } from '../prompts/quiz-generation.js';
 import { TOPIC_RESPONSE_JSON_SCHEMA, buildTopicPrompt } from '../prompts/topic-categorization.js';
 import { parseQuizQuestions } from './parseQuizQuestions.js';
+import { parseProviderJson } from './parseProviderJson.js';
 import { getDefaultProviderModel, getProviderModels } from './provider-models.js';
 import { normalizeProviderBaseUrl } from './provider-settings.js';
 
@@ -87,11 +88,7 @@ export class OllamaProvider extends BaseProvider {
       throw new Error('No response content from Ollama');
     }
 
-    try {
-      return JSON.parse(data.response) as T;
-    } catch {
-      throw new Error('Failed to parse Ollama response as JSON');
-    }
+    return parseProviderJson<T>(data.response, 'Ollama');
   }
 
   #buildUrl(path: string): string {
