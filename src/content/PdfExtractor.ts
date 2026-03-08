@@ -7,6 +7,7 @@ import type {
 } from 'pdfjs-dist/types/src/display/api';
 
 const PDF_CONTENT_TYPE = 'application/pdf';
+const PDF_JS_MODULE_PATH = 'dist/pdfjs.js';
 const PDF_WORKER_PATH = 'dist/pdf.worker.js';
 
 type PdfMetadata = {
@@ -114,7 +115,7 @@ export async function extractPdfContent(
   }
 
   const pdfBytes = new Uint8Array(await response.arrayBuffer());
-  const pdfjs = await import('pdfjs-dist/build/pdf.mjs');
+  const pdfjs = await import(chrome.runtime.getURL(PDF_JS_MODULE_PATH));
   pdfjs.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL(PDF_WORKER_PATH);
 
   const loadingTask = pdfjs.getDocument(buildPdfDocumentParams(pdfBytes));

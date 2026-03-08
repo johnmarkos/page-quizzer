@@ -265,17 +265,7 @@ async function extractContentFromTab(tab: chrome.tabs.Tab) {
 async function attachContentScript(tabId: number) {
   await chrome.scripting.executeScript({
     target: { tabId },
-    args: [chrome.runtime.getURL(CONTENT_SCRIPT_PATH)],
-    func: async (moduleUrl: string) => {
-      const globalKey = '__pageQuizzerContentScriptModulePromise';
-      const contentScriptGlobal = globalThis as typeof globalThis & Record<string, Promise<unknown> | undefined>;
-
-      if (!contentScriptGlobal[globalKey]) {
-        contentScriptGlobal[globalKey] = import(moduleUrl);
-      }
-
-      await contentScriptGlobal[globalKey];
-    },
+    files: [CONTENT_SCRIPT_PATH],
   });
 }
 

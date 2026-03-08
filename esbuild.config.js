@@ -21,6 +21,13 @@ const configs = [
     ...shared,
     entryPoints: ['src/content/content-script.ts'],
     outfile: 'dist/content.js',
+    format: 'iife',
+  },
+  // PDF.js module asset loaded dynamically by the content script
+  {
+    ...shared,
+    entryPoints: ['node_modules/pdfjs-dist/build/pdf.mjs'],
+    outfile: 'dist/pdfjs.js',
   },
   // PDF.js worker asset for content-script PDF parsing
   {

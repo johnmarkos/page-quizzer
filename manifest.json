@@ -15,7 +15,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["dist/pdf.worker.js"],
+      "resources": ["dist/pdfjs.js", "dist/pdf.worker.js"],
       "matches": ["<all_urls>"]
     }
   ],

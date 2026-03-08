@@ -207,6 +207,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - If the same bundle is also declared under `manifest.content_scripts`, it still has to be valid as a classic content script there; otherwise remove the declarative path and rely on the programmatic module attach consistently
 - When debugging Chrome extension reload/caching issues, add a short visible version marker to the user-facing error path; it’s faster than guessing which bundle Chrome is actually running
 - If per-site host permission requests depend on the current tab URL, make sure the extension can actually read that URL; without `tabs` or equivalent host access, the permission prompt flow can silently fail to target the right origin
+- If one dependency forces ESM-only syntax into a content script bundle, split that dependency into a separately loaded module asset instead of forcing the whole content script down the same execution model
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

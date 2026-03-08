@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.1.23 — Classic-Safe Content Bundle (2026-03-08)
+
+### Bug Fixes
+- Split `pdfjs` into a separate `dist/pdfjs.js` module asset so the main injected content script can run as a classic script again
+- Switched runtime attachment back to `executeScript({ files: ["dist/content.js"] })`, which restores a stable long-lived message receiver after permission is granted
+- Kept PDF support by loading `dist/pdfjs.js` dynamically only when the current page is actually a PDF
+
+### Build & Packaging
+- Added `dist/pdfjs.js` to the build outputs and `web_accessible_resources`
+- Built `dist/content.js` in a classic-script-safe format while leaving the PDF helper module as ESM
+
+### Testing
+- Existing 65-test suite and production build passed after the bundle split
+
 ## v0.1.22 — Active Tab URL Access for Site Prompts (2026-03-08)
 
 ### Bug Fixes
