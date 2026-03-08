@@ -5,15 +5,29 @@ export function isMissingContentScriptError(error: unknown): boolean {
   return message.includes('Receiving end does not exist');
 }
 
-export function canInjectContentScript(url?: string | null): boolean {
+export function hasUnsupportedInjectionProtocol(url?: string | null): boolean {
   if (!url) {
     return false;
   }
 
   try {
     const protocol = new URL(url).protocol;
-    return SUPPORTED_INJECTION_PROTOCOLS.has(protocol);
+    return !SUPPORTED_INJECTION_PROTOCOLS.has(protocol);
   } catch {
-    return false;
+    return true;
   }
+}
+
+export function buildContentScriptAccessError(error: unknown): Error {
+  const message = error instanceof Error ? error.message : String(error);
+
+  if (
+    message.includes('Cannot access contents of url') ||
+    message.includes('The extensions gallery cannot be scripted') ||
+    message.includes('Missing host permission for the tab')
+  ) {
+    return new Error('PageQuizzer cannot access this page. Chrome blocks extension scripts here.');
+  }
+
+  return new Error(`Failed to attach PageQuizzer to this tab: ${message}`);
 }

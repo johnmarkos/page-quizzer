@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.1.16 — Better Active-Tab Injection Recovery (2026-03-08)
+
+### Bug Fixes
+- Fixed false "PageQuizzer cannot access this page" errors on normal web pages when Chrome did not expose `tab.url` during content-script recovery
+- The recovery path now attempts script injection on ambiguous tabs and only reports an access error if Chrome actually rejects the injection
+- Improved the follow-up error text so unsupported/internal pages and unexpected injection failures are easier to distinguish
+
+### Testing
+- 64 tests (was 63): added coverage for unsupported-protocol detection and injection-failure error mapping
+
 ## v0.1.15 — Gemini Provider (2026-03-08)
 
 ### Providers

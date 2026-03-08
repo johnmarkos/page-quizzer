@@ -11,7 +11,11 @@ import { buildReviewItems } from './review-missed.js';
 import { mergeSessionRecords, parseImportedSessions } from './history-import.js';
 import { buildQuizBadgeText, shouldClearQuizBadge } from './quiz-badge.js';
 import { resolveConnectionSettings } from './connection-settings.js';
-import { canInjectContentScript, isMissingContentScriptError } from './content-script-bridge.js';
+import {
+  buildContentScriptAccessError,
+  hasUnsupportedInjectionProtocol,
+  isMissingContentScriptError,
+} from './content-script-bridge.js';
 
 type CompletedQuizData = {
   problems: Problem[];
@@ -238,14 +242,18 @@ async function extractContentFromTab(tab: chrome.tabs.Tab) {
       throw error;
     }
 
-    if (!canInjectContentScript(tab.url)) {
-      throw new Error('PageQuizzer cannot access this page. Try a normal web page or refresh the tab.');
+    if (hasUnsupportedInjectionProtocol(tab.url)) {
+      throw new Error('PageQuizzer cannot access this page. Chrome blocks extensions on this type of page.');
     }
 
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['dist/content.js'],
-    });
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ['dist/content.js'],
+      });
+    } catch (injectionError) {
+      throw buildContentScriptAccessError(injectionError);
+    }
 
     return await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CONTENT' });
   }
