@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.1.17 — Runtime Site Access Request (2026-03-08)
+
+### Bug Fixes
+- Added a runtime site-access request fallback when Chrome blocks content-script injection on a normal `http` or `https` page due to missing host permission
+- Quiz generation now asks Chrome for access to the current site and retries injection instead of failing immediately on pages like the Feynman Lectures
+
+### Security Review
+- Added `optional_host_permissions` for web origins and request access only for the current site at the moment it is needed
+- Kept host access narrow: the extension does not receive blanket persistent access to all sites unless the user grants it site by site
+- `npm audit --omit=dev` reported 0 vulnerabilities
+
+### Testing
+- 66 tests (was 64): added helper coverage for host-permission error detection and per-origin permission pattern generation
+
 ## v0.1.16 — Better Active-Tab Injection Recovery (2026-03-08)
 
 ### Bug Fixes

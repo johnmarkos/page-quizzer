@@ -2,22 +2,22 @@
 
 ## Completed
 
-- Fixed a false access error when recovering the content script on normal web pages
-- The background now treats unsupported protocols and failed injection as separate cases
-- Recovery only bails out early for clearly blocked protocols like `chrome://` and `chrome-extension://`
-- If script injection fails after that, the user now gets a more accurate Chrome-blocked or attach-failure message
+- Added runtime site-access fallback for normal web pages when Chrome blocks content-script injection for missing host permission
+- The background now detects host-permission injection failures, requests access for the current origin, and retries the bundled content-script injection
+- Added `optional_host_permissions` for `http` and `https` origins
 
 ## Decisions
 
-- Kept the protocol pre-check, but only for clearly unsupported page types
-- Stopped using missing `tab.url` as a reason to reject the page up front
-- Mapped Chrome’s script-injection errors into clearer user-facing messages instead of reusing the generic "normal web page" text
+- Kept persistent required host permissions limited to provider APIs only
+- Used optional per-site access instead of broad `<all_urls>` host access because the extension should not silently gain blanket read access to the web
+- Restricted runtime requests to `http` and `https` origins; `file:` and internal Chrome pages still follow their own browser restrictions
 
 ## Validation
 
-- `npm test` passed with 64/64 tests
+- `npm test` passed with 66/66 tests
 - `npm run build` passed
+- `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
-- `chrome.tabs.Tab.url` can be absent in cases where injection is still possible, so access checks should be conservative and defer to the actual injection attempt
+- Even if a page is already rendered in the browser, the extension service worker cannot inspect that DOM directly; it still needs host permission to inject a content script into the tab

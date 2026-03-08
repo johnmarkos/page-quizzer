@@ -12,8 +12,10 @@ import { mergeSessionRecords, parseImportedSessions } from './history-import.js'
 import { buildQuizBadgeText, shouldClearQuizBadge } from './quiz-badge.js';
 import { resolveConnectionSettings } from './connection-settings.js';
 import {
+  buildOriginPermissionPattern,
   buildContentScriptAccessError,
   hasUnsupportedInjectionProtocol,
+  isHostPermissionInjectionError,
   isMissingContentScriptError,
 } from './content-script-bridge.js';
 
@@ -252,7 +254,21 @@ async function extractContentFromTab(tab: chrome.tabs.Tab) {
         files: ['dist/content.js'],
       });
     } catch (injectionError) {
-      throw buildContentScriptAccessError(injectionError);
+      const originPattern = buildOriginPermissionPattern(tab.url);
+      if (originPattern && isHostPermissionInjectionError(injectionError)) {
+        broadcastStatus('Requesting permission to access this site...');
+        const granted = await chrome.permissions.request({ origins: [originPattern] });
+        if (!granted) {
+          throw new Error('PageQuizzer needs site access for this page. Approve the Chrome permission prompt and try again.');
+        }
+
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['dist/content.js'],
+        });
+      } else {
+        throw buildContentScriptAccessError(injectionError);
+      }
     }
 
     return await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CONTENT' });

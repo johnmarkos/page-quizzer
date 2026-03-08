@@ -31,3 +31,25 @@ export function buildContentScriptAccessError(error: unknown): Error {
 
   return new Error(`Failed to attach PageQuizzer to this tab: ${message}`);
 }
+
+export function isHostPermissionInjectionError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes('Extension manifest must request permission to access the respective host');
+}
+
+export function buildOriginPermissionPattern(url?: string | null): string | null {
+  if (!url) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return null;
+    }
+
+    return `${parsed.origin}/*`;
+  } catch {
+    return null;
+  }
+}

@@ -201,6 +201,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - After an extension reload, existing tabs may not have a live content script anymore; recover by reinjecting the bundled script on demand instead of assuming the user will refresh the page
 - Roadmap defaults for external model names can go stale quickly; verify current provider docs before implementing and prefer current stable models over deprecated ones
 - Don’t treat a missing `tab.url` as proof that a normal page is inaccessible; try the recoverable path first and only classify the page as blocked if Chrome rejects injection
+- The page being loaded in the browser is not enough by itself; the extension still needs host access to inject/read it, so normal-page recovery may require a runtime per-site permission request
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable
