@@ -2,21 +2,18 @@
 
 ## Completed
 
-- Added a dedicated background PDF extraction path for direct-PDF and Chrome PDF viewer tabs
-- Moved shared PDF URL/title/text helpers into `src/shared/pdf.ts`
-- Updated site-access origin resolution so Chrome PDF viewer tabs request access for the underlying PDF host
+- Added an explicit local-PDF guard and actionable file-access guidance
+- Added `Q6` and `Q7` to the roadmap for stronger distractors and question-quality filtering
 
 ## Decisions
 
-- Bypassed content-script injection entirely for viewer-wrapped PDFs because Chrome blocks scripting the viewer page
-- Kept normal HTML extraction in the content script, but let PDFs use a background extractor where the real document URL is already known
+- Treated local `file://` PDFs as a UX/permissions problem first and surfaced the exact Chrome setting users need instead of trying to paper over the browser-level fetch restriction
 
 ## Validation
 
-- `npm test` passed with 66/66 tests
+- `npm test` passed with 68/68 tests
 - `npm run build` passed
-- `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
-- For PDF tabs, the visible tab URL and the actual document URL may differ; permission prompts and extraction need to follow the real PDF source URL, not the viewer wrapper
+- Web PDF permissions and local-file PDF permissions are different in Chrome; working hosted PDFs do not imply that local PDFs will work without the file-URL setting

@@ -52,6 +52,10 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [ ] **Q5: Timer mode** — Optional countdown timer per question (configurable: 15/30/60 seconds, or off). Timer runs in the panel (not engine — engine stays timer-agnostic). When timer expires, auto-skip. Add timer setting to settings view and `chrome.storage.sync`. Show countdown bar in quiz view. Test: manual.
 
+- [ ] **Q6: Stronger distractor prompt** — Tighten quiz-generation instructions so wrong answers must be plausible, same category/register/length as the correct answer, and reflect meaningful misconceptions instead of obviously silly distractors. Test: manual comparison on a known page.
+
+- [ ] **Q7: Question quality filter** — Add a lightweight post-generation pass that rejects or regenerates questions with weak distractors, trivial fact recall, or obvious answer-pattern giveaways. Test: pure heuristics where feasible, manual review on sample pages.
+
 ### Data & History
 
 - [x] **D1: Export history as JSON** — Add "Export" button to history view. Calls `GET_SESSIONS`, creates a Blob, triggers download via `URL.createObjectURL`. File named `pagequizzer-history-YYYY-MM-DD.json`. Test: manual.

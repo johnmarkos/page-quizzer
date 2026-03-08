@@ -19,6 +19,7 @@ import {
   isHostPermissionInjectionError,
 } from './content-script-bridge.js';
 import { extractPdfContentFromTabUrl } from './PdfBackgroundExtractor.js';
+import { buildLocalPdfAccessError, isLocalFilePdfUrl } from './pdf-source.js';
 
 type CompletedQuizData = {
   problems: Problem[];
@@ -247,6 +248,10 @@ async function handleGenerateQuiz() {
 async function extractContentFromTab(tab: chrome.tabs.Tab) {
   if (!tab.id) {
     throw new Error('No active tab');
+  }
+
+  if (tab.url && isLocalFilePdfUrl(tab.url)) {
+    throw buildLocalPdfAccessError();
   }
 
   if (hasUnsupportedInjectionProtocol(tab.url)) {

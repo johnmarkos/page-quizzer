@@ -209,6 +209,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - If per-site host permission requests depend on the current tab URL, make sure the extension can actually read that URL; without `tabs` or equivalent host access, the permission prompt flow can silently fail to target the right origin
 - If one dependency forces ESM-only syntax into a content script bundle, split that dependency into a separately loaded module asset instead of forcing the whole content script down the same execution model
 - Chrome’s built-in PDF viewer is not a normal injectable page even when the underlying document is just a PDF; detect the viewer URL and operate on the resolved PDF source URL instead
+- Local `file://` PDFs are a separate Chrome permission path from web-hosted PDFs; detect them explicitly and show the required `Allow access to file URLs` guidance instead of surfacing a raw fetch failure
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

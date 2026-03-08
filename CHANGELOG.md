@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.25 — Local PDF Guidance (2026-03-08)
+
+### Bug Fixes
+- Added a clear error for local `file://` PDFs that explains the required Chrome setting: enable `Allow access to file URLs` for PageQuizzer, then reload the extension and reopen the PDF
+- Avoided falling through to Chrome’s low-level `Not allowed to load local resource` failure when the underlying PDF source is a local file
+
+### Testing
+- 68 tests (was 66): added focused coverage for local PDF source detection and the actionable file-access error
+
 ## v0.1.24 — Chrome PDF Viewer Bypass (2026-03-08)
 
 ### Bug Fixes

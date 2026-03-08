@@ -11,6 +11,7 @@ import {
   textContentToString,
   type PdfMetadata,
 } from '../shared/pdf.js';
+import { buildLocalPdfAccessError, isLocalFilePdfUrl } from './pdf-source.js';
 
 const PDF_JS_MODULE_PATH = 'dist/pdfjs.js';
 
@@ -21,6 +22,10 @@ export async function extractPdfContentFromTabUrl(
   const pdfUrl = resolvePdfUrl(tabUrl);
   if (!pdfUrl) {
     return null;
+  }
+
+  if (isLocalFilePdfUrl(pdfUrl)) {
+    throw buildLocalPdfAccessError();
   }
 
   const response = await fetch(pdfUrl, { credentials: 'include' });
