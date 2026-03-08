@@ -2,23 +2,24 @@
 
 ## Completed
 
-- Fixed `Could not establish connection. Receiving end does not exist.` during quiz generation on already-open tabs
-- Added `src/background/content-script-bridge.ts` to detect missing-receiver errors and gate programmatic injection by URL protocol
-- The service worker now injects `dist/content.js` into the active tab and retries extraction when the initial message fails because no content script is attached
-- Added a global guard in the content script so reinjection does not duplicate message listeners
+- Finished `P2: Gemini provider`
+- Added `src/providers/GeminiProvider.ts` using Gemini `generateContent` with JSON structured output
+- Registered `gemini` in the provider factory and added it to the settings dropdown
+- Added a Gemini-compatible quiz response schema in `src/prompts/quiz-generation.ts`
+- Extended the typed provider/message flow so Gemini works with settings persistence and connection testing
 
 ## Decisions
 
-- Used on-demand reinjection instead of asking users to refresh tabs manually after reloading the extension
-- Added the `scripting` permission because `chrome.scripting.executeScript()` is the right recovery path for the active tab in MV3
-- Limited injection recovery to `http`, `https`, and `file` URLs to avoid pretending unsupported Chrome/internal pages are accessible
+- Implemented Gemini with `gemini-2.5-flash` instead of the roadmap's original `gemini-2.0-flash` because Google's current official docs mark `2.0 Flash` deprecated
+- Reused the existing `parseQuizQuestions()` normalization path rather than creating Gemini-specific parsing rules
+- Tightened several message payloads from plain `string` provider names to `ProviderName` so the new provider stays type-safe across panel/background boundaries
 
 ## Validation
 
-- `npm test` passed with 60/60 tests
+- `npm test` passed with 63/63 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
-- This fix covers normal pages that are already open when the extension reloads; pages Chrome forbids extensions from scripting still return a clear access error instead
+- Gemini structured output uses a response JSON schema rather than Anthropic-style tools or OpenAI JSON mode, so the shared prompt module now exposes both a tool schema and a plain JSON response schema

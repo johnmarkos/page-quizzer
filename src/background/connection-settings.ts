@@ -1,5 +1,7 @@
+import type { ProviderName } from '../providers/index.js';
+
 export type ConnectionSettings = {
-  provider: 'anthropic' | 'openai';
+  provider: ProviderName;
   apiKey: string;
   model?: string;
 };

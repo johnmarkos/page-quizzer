@@ -1,7 +1,7 @@
 import { QuizEngine } from '../engine/QuizEngine.js';
 import { QuizGenerator } from './QuizGenerator.js';
 import { StorageManager, type SessionRecord } from './StorageManager.js';
-import { createProvider } from '../providers/index.js';
+import { createProvider, type ProviderName } from '../providers/index.js';
 import type { Message, ExtractedContent } from '../shared/messages.js';
 import type { EngineSnapshot, Problem, SessionSummary } from '../engine/types.js';
 import { generateId } from '../engine/utils.js';
@@ -252,7 +252,7 @@ async function extractContentFromTab(tab: chrome.tabs.Tab) {
 }
 
 async function handleTestConnection(
-  override?: { provider: 'anthropic' | 'openai'; apiKey: string; model?: string },
+  override?: { provider: ProviderName; apiKey: string; model?: string },
 ) {
   const stored = await storage.getSettings();
   const settings = resolveConnectionSettings(stored, override);

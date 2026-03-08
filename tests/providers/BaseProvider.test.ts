@@ -6,6 +6,7 @@ describe('Provider Registry', () => {
     const providers = getAvailableProviders();
     expect(providers).toContain('anthropic');
     expect(providers).toContain('openai');
+    expect(providers).toContain('gemini');
   });
 
   it('creates an anthropic provider', () => {
@@ -34,6 +35,20 @@ describe('Provider Registry', () => {
       model: 'gpt-4.1-mini',
     });
     expect(provider.model).toBe('gpt-4.1-mini');
+  });
+
+  it('creates a gemini provider', () => {
+    const provider = createProvider('gemini', { apiKey: 'test-key' });
+    expect(provider.name).toBe('gemini');
+    expect(provider.model).toBe('gemini-2.5-flash');
+  });
+
+  it('uses custom model for gemini when provided', () => {
+    const provider = createProvider('gemini', {
+      apiKey: 'test-key',
+      model: 'gemini-2.5-flash-lite',
+    });
+    expect(provider.model).toBe('gemini-2.5-flash-lite');
   });
 
   it('throws for unknown provider', () => {

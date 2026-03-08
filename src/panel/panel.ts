@@ -1,6 +1,7 @@
 import type { Problem, SessionSummary } from '../engine/types.js';
 import type { SessionRecord } from '../background/StorageManager.js';
 import type { ReviewItem } from '../shared/messages.js';
+import type { ProviderName } from '../providers/index.js';
 import { buildHistoryExportFilename, serializeHistoryRecords } from './history-export.js';
 import {
   buildShortcutHelpText,
@@ -345,7 +346,7 @@ $('density-slider').addEventListener('input', (e) => {
 
 $('save-settings-btn').addEventListener('click', async () => {
   const settings = {
-    provider: (document.getElementById('provider-select') as HTMLSelectElement).value as 'anthropic' | 'openai',
+    provider: (document.getElementById('provider-select') as HTMLSelectElement).value as ProviderName,
     apiKey: (document.getElementById('api-key-input') as HTMLInputElement).value,
     density: Number((document.getElementById('density-slider') as HTMLInputElement).value),
     maxQuestions: Number((document.getElementById('max-questions-input') as HTMLInputElement).value),
@@ -363,7 +364,7 @@ $('test-connection-btn').addEventListener('click', async () => {
     const response = await chrome.runtime.sendMessage({
       type: 'TEST_CONNECTION',
       payload: {
-        provider: (document.getElementById('provider-select') as HTMLSelectElement).value as 'anthropic' | 'openai',
+        provider: (document.getElementById('provider-select') as HTMLSelectElement).value as ProviderName,
         apiKey: (document.getElementById('api-key-input') as HTMLInputElement).value,
       },
     });

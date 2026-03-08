@@ -12,7 +12,7 @@ These are well-defined, can be picked up in any order (unless noted), and each p
 
 - [x] **P1: OpenAI provider** — `src/providers/OpenAIProvider.ts`. Extends `BaseProvider`. Uses chat completions API with `response_format: { type: "json_object" }` for structured output. Default model: `gpt-4o-mini`. Add to provider registry. Add to settings dropdown in panel HTML. Test: factory creates it, name/model getters work.
 
-- [ ] **P2: Gemini provider** — `src/providers/GeminiProvider.ts`. Extends `BaseProvider`. Uses Gemini API with JSON mode. Default model: `gemini-2.0-flash`. Add to registry and settings dropdown. Test: same pattern as P1.
+- [x] **P2: Gemini provider** — `src/providers/GeminiProvider.ts`. Extends `BaseProvider`. Uses Gemini API with JSON mode. Implemented with `gemini-2.5-flash` because Google's current docs mark `gemini-2.0-flash` deprecated. Added to registry and settings dropdown. Test: same pattern as P1.
 
 - [ ] **P3: Ollama provider** — `src/providers/OllamaProvider.ts`. Extends `BaseProvider`. No API key required. Custom `baseUrl` (default `http://localhost:11434`). `testConnection()` hits `/api/tags` endpoint. `generateQuiz()` uses `/api/generate` with JSON format. Default model: `llama3.2`. Add to registry. Settings UI: base URL input instead of API key when Ollama selected. Test: factory, defaults, URL construction.
 

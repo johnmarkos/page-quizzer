@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { buildSystemPrompt, buildUserPrompt, QUIZ_TOOL_SCHEMA } from '../../src/prompts/quiz-generation.js';
+import {
+  buildSystemPrompt,
+  buildUserPrompt,
+  QUIZ_RESPONSE_JSON_SCHEMA,
+  QUIZ_TOOL_SCHEMA,
+} from '../../src/prompts/quiz-generation.js';
 
 describe('quiz-generation prompts', () => {
   it('builds a system prompt with key instructions', () => {
@@ -58,5 +63,12 @@ describe('quiz-generation prompts', () => {
     expect(itemProps.options.anyOf).toHaveLength(2);
     expect(itemProps.options.anyOf[0].maxItems).toBe(2);
     expect(itemProps.options.anyOf[1].maxItems).toBe(4);
+  });
+
+  it('structured output schema supports 2 to 4 options', () => {
+    const questionSchema = QUIZ_RESPONSE_JSON_SCHEMA.properties.questions.items;
+    expect(questionSchema.properties.options.minItems).toBe(2);
+    expect(questionSchema.properties.options.maxItems).toBe(4);
+    expect(questionSchema.required).toContain('correctIndex');
   });
 });

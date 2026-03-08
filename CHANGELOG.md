@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.1.15 — Gemini Provider (2026-03-08)
+
+### Providers
+- Added `GeminiProvider` using the Gemini `generateContent` API with JSON structured output
+- Registered `gemini` in the provider factory and exposed it in the settings dropdown
+- Standardized the settings/test-connection message types on `ProviderName` so adding Gemini does not leave provider names as untyped strings
+
+### Prompt & Schema
+- Added a reusable JSON response schema for quiz generation so Gemini can request structured JSON directly and still share the existing question normalization path
+- Implemented Gemini with `gemini-2.5-flash` as the default model because Google's current official docs mark `gemini-2.0-flash` deprecated
+
+### Security Review
+- Added explicit host permission for `https://generativelanguage.googleapis.com/*`
+- No new dependencies were added, and `npm audit --omit=dev` reported 0 vulnerabilities
+
+### Testing
+- 63 tests (was 60): added provider registry coverage for Gemini defaults/custom models and prompt-schema coverage for the structured output schema
+
 ## v0.1.14 — Content Script Auto-Recovery (2026-03-08)
 
 ### Bug Fixes

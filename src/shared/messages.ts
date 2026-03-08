@@ -1,4 +1,5 @@
 import type { Problem, SessionSummary } from '../engine/types.js';
+import type { ProviderName } from '../providers/index.js';
 
 // Content script ↔ Background
 export type ExtractContentRequest = {
@@ -111,7 +112,7 @@ export type ReviewDataMessage = {
 export type SettingsMessage = {
   type: 'SETTINGS';
   payload: {
-    provider: string;
+    provider: ProviderName;
     apiKey: string;
     density: number;
     maxQuestions: number;
@@ -160,7 +161,7 @@ export type GetSettingsRequest = {
 export type SaveSettingsRequest = {
   type: 'SAVE_SETTINGS';
   payload: {
-    provider: string;
+    provider: ProviderName;
     apiKey: string;
     density: number;
     maxQuestions: number;
@@ -170,7 +171,7 @@ export type SaveSettingsRequest = {
 export type TestConnectionRequest = {
   type: 'TEST_CONNECTION';
   payload?: {
-    provider: 'anthropic' | 'openai';
+    provider: ProviderName;
     apiKey: string;
     model?: string;
   };

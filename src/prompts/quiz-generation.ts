@@ -89,3 +89,28 @@ export const QUIZ_TOOL_SCHEMA = {
     required: ['questions'],
   },
 };
+
+export const QUIZ_RESPONSE_JSON_SCHEMA = {
+  type: 'object' as const,
+  properties: {
+    questions: {
+      type: 'array' as const,
+      items: {
+        type: 'object' as const,
+        properties: {
+          question: { type: 'string' as const },
+          options: {
+            type: 'array' as const,
+            items: { type: 'string' as const },
+            minItems: 2,
+            maxItems: 4,
+          },
+          correctIndex: { type: 'integer' as const, minimum: 0, maximum: 3 },
+          explanation: { type: 'string' as const },
+        },
+        required: ['question', 'options', 'correctIndex'],
+      },
+    },
+  },
+  required: ['questions'],
+};
