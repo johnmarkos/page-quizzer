@@ -9,6 +9,7 @@ import {
   getOptionShortcutIndex,
   shouldIgnoreShortcutTarget,
 } from './keyboard-shortcuts.js';
+import { getQuestionPayloadFromRestoredState } from './quiz-state-sync.js';
 
 // --- DOM helpers ---
 function $(id: string): HTMLElement {
@@ -87,8 +88,12 @@ async function ensureSiteAccessForActiveTab() {
   }
 }
 
-$('start-btn').addEventListener('click', () => {
-  chrome.runtime.sendMessage({ type: 'START_QUIZ' });
+$('start-btn').addEventListener('click', async () => {
+  try {
+    await startQuizFlow({ type: 'START_QUIZ' });
+  } catch (err) {
+    showError(err instanceof Error ? err.message : 'Failed to start quiz');
+  }
 });
 
 $('next-btn').addEventListener('click', () => {
@@ -99,8 +104,12 @@ $('skip-btn').addEventListener('click', () => {
   chrome.runtime.sendMessage({ type: 'SKIP_QUESTION' });
 });
 
-$('retry-btn').addEventListener('click', () => {
-  chrome.runtime.sendMessage({ type: 'START_QUIZ' });
+$('retry-btn').addEventListener('click', async () => {
+  try {
+    await startQuizFlow({ type: 'START_QUIZ' });
+  } catch (err) {
+    showError(err instanceof Error ? err.message : 'Failed to restart quiz');
+  }
 });
 
 $('review-missed-btn').addEventListener('click', async () => {
@@ -120,10 +129,7 @@ $('review-missed-btn').addEventListener('click', async () => {
 
 $('retry-missed-btn').addEventListener('click', async () => {
   try {
-    const response = await chrome.runtime.sendMessage({ type: 'RETRY_MISSED' });
-    if (response?.type === 'QUIZ_ERROR') {
-      showError(response.payload.error);
-    }
+    await startQuizFlow({ type: 'RETRY_MISSED' });
   } catch (err) {
     showError(err instanceof Error ? err.message : 'Failed to retry missed questions');
   }
@@ -533,17 +539,9 @@ function isElementVisible(element: Element | null): boolean {
 // If the service worker was restarted mid-quiz, the panel needs to catch up
 async function checkRestoredState() {
   try {
-    const response = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
-    if (response?.type === 'RESTORED_STATE' && response.payload) {
-      const { state, problem, index, total } = response.payload;
-      if (state === 'practicing' && problem) {
-        showQuestion({ problem, index, total });
-      }
-      // If answered, we can't restore the answer highlights — show the question
-      // and let the user re-answer (minor UX tradeoff vs. complexity)
-      if (state === 'answered' && problem) {
-        showQuestion({ problem, index, total });
-      }
+    const questionPayload = await syncQuizStateFromBackground();
+    if (questionPayload) {
+      showQuestion(questionPayload);
     }
   } catch {
     // Service worker not ready yet — panel will show idle state
@@ -551,3 +549,23 @@ async function checkRestoredState() {
 }
 
 checkRestoredState();
+
+async function startQuizFlow(message: { type: 'START_QUIZ' } | { type: 'RETRY_MISSED' }) {
+  const response = await chrome.runtime.sendMessage(message);
+  if (response?.type === 'QUIZ_ERROR') {
+    throw new Error(response.payload.error);
+  }
+
+  const questionPayload = await syncQuizStateFromBackground();
+  if (questionPayload) {
+    showQuestion(questionPayload);
+    return;
+  }
+
+  throw new Error('Quiz started, but PageQuizzer could not load the first question. Try again.');
+}
+
+async function syncQuizStateFromBackground() {
+  const response = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
+  return getQuestionPayloadFromRestoredState(response);
+}

@@ -211,6 +211,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - Chrome’s built-in PDF viewer is not a normal injectable page even when the underlying document is just a PDF; detect the viewer URL and operate on the resolved PDF source URL instead
 - Local `file://` PDFs are a separate Chrome permission path from web-hosted PDFs; detect them explicitly and show the required `Allow access to file URLs` guidance instead of surfacing a raw fetch failure
 - Don’t hard-block local `file://` PDFs based on the URL alone; check `chrome.extension.isAllowedFileSchemeAccess()` and declare the `file://` match pattern in the manifest so enabled file access can actually work
+- When a panel action changes quiz state, don’t rely only on a background broadcast to update the UI; follow the action with an explicit state sync so the first question still appears if the broadcast is missed
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

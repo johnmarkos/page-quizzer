@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.27 — Start Quiz State Sync (2026-03-08)
+
+### Bug Fixes
+- Made `Start Quiz`, `Retry`, and `Retry Missed` explicitly resync quiz state from the service worker after sending their action message instead of relying only on an async background broadcast
+- Fixed cases where the panel could stay stuck on the ready/score screen even though the engine had already entered `practicing`
+
+### Testing
+- 74 tests (was 71): added panel helper coverage for extracting the active question from restored service-worker state
+
 ## v0.1.26 — Real File-Scheme Access Check (2026-03-08)
 
 ### Bug Fixes
