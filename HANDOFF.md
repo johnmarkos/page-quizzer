@@ -2,6 +2,9 @@
 
 ## Completed
 
+- Added PDF page-range sectioning on top of the long-content picker, so PDFs now segment by contiguous page ranges instead of generic heading/fallback chunks
+- Preserved per-page text during PDF extraction and carried it through extracted-content state for pending section selection
+- Fixed a review-found mutation risk by deep-cloning extracted PDF `pageTexts` arrays when persisting/restoring tab session state
 - Added long-content sectioning with a section picker for extracted content over 3000 words
 - Preferred heading-based splits when HTML headings are available, but fell back to paragraph clustering and fixed-size arbitrary chunks when the source is flat or still too large
 - Added persisted per-tab section-picker state plus `CONTENT_SECTIONS`, `GENERATE_SECTION_QUIZ`, and `DISMISS_SECTIONS` message support
@@ -57,6 +60,9 @@
 
 ## Decisions
 
+- Treated PDFs as a different segmentation source from HTML: if per-page text exists, prefer page ranges outright instead of trying heading heuristics on flattened PDF text
+- Kept PDF page texts inside extracted-content/tab-session state rather than inventing a second parallel PDF-only store, but compensated by explicitly deep-cloning them anywhere `lastExtracted` is copied
+- Built page ranges dynamically from page word counts and a page-count cap, rather than using a fixed 10-page rule for every document
 - Kept sectioning in the background layer, not the engine, because it is document-extraction/UI orchestration rather than shared quiz-core behavior
 - Made heading boundaries the first choice, but treated reasonable arbitrary chunking as an explicit last-resort strategy rather than a failure case; long flat text should still be quizzable
 - Stored only section summaries in tab-session state and recomputed section text from `lastExtracted` when the user picks a section, which keeps persistence smaller and the segmentation logic deterministic
@@ -96,12 +102,14 @@
 
 ## Validation
 
-- `npm test` passed with 133/133 tests
+- `npm test` passed with 134/134 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- Adding nested arrays to `ExtractedContent` changes the cloning requirements everywhere that state is persisted or restored; shallow spreads are no longer enough once PDF page texts exist
+- Flattened PDF text should not be segmented with the same heading logic as HTML; preserve page boundaries during extraction if you want meaningful page-range choices later
 - If a new intermediate UI state should survive a worker restart, it needs to be persisted explicitly; a pure panel response is not enough once the service worker becomes the source of truth for restore
 - Heading-based segmentation is useful when available, but long-form support still needs a deterministic no-structure fallback; otherwise books, scans, and flat exports remain effectively unquizzable
 - If an intermediate state is restorable from background state, it also needs a real dismiss/reset message; panel-only hiding just creates “sticky” restore bugs

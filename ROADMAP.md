@@ -34,7 +34,7 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [ ] **L2: Document progress tracking** — Track which sections of a document the user has quizzed and their scores. Store in `chrome.storage.local` keyed by URL: `{ [url]: { title, sections: [{ title, wordCount, quizzed: boolean, score?: Score, lastQuizzed?: number }] } }`. Create `src/background/ProgressManager.ts` for CRUD operations. Panel shows a progress bar per document: "3/8 sections completed, 78% average". Test: unit test ProgressManager with mock data.
 
-- [ ] **L3: PDF page-range sections** — Extend C4 for long PDFs. Instead of heading-based splitting, split by page ranges (e.g., pages 1-10, 11-20). User picks a page range to quiz. Combine with L2 for progress tracking. The section picker shows "Pages 1-10 (~800 words)" entries. Depends on C4 and L1.
+- [x] **L3: PDF page-range sections** — Extend C4 for long PDFs. Instead of heading-based splitting, split by page ranges (e.g., pages 1-10, 11-20). User picks a page range to quiz. Combine with L2 for progress tracking. The section picker shows "Pages 1-10 (~800 words)" entries. Depends on C4 and L1.
 
 - [ ] **L4: "Continue where I left off"** — When the user returns to a previously-segmented document, the panel shows their progress and highlights the next unquizzed section. "Continue" button auto-generates quiz for the next section. Uses L2 progress data. If the URL matches a tracked document, show progress view instead of the default idle view. Depends on L2.
 

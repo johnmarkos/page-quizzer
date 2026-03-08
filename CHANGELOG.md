@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.1.46 — PDF Page-Range Sections (2026-03-08)
+
+### Long-Form PDFs
+- Extended long-content sectioning so PDFs now use page ranges instead of generic heading/fallback chunks
+- Preserved per-page extracted text from both background and content-script PDF extraction paths, then grouped pages into contiguous quizable ranges with labels like `Pages 1-5`
+- When generating a quiz from a selected PDF range, kept only that range’s page texts in the extracted-content payload so follow-up segmentation/generation stays scoped correctly
+
+### Review Loop
+- The first review focus on this milestone was nested-data safety: adding `pageTexts` to extracted PDF content meant the old shallow copies of `lastExtracted` would have leaked mutable array references through restore/persistence. Fixed by adding explicit extracted-content cloning in the service worker and tab-session helpers.
+
+### Security Review
+- No new permissions or network destinations were added
+- `npm audit --omit=dev` reported 0 vulnerabilities
+
+### Testing
+- 134 tests (was 133): added PDF page-range section coverage and explicit defensive-copy coverage for extracted PDF page text arrays
+
 ## v0.1.45 — Long-Content Section Picker (2026-03-08)
 
 ### Long-Form Content

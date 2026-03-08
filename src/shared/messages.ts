@@ -27,6 +27,7 @@ export type ExtractedContent = {
   wordCount: number;
   excerpt: string;
   url: string;
+  pageTexts?: string[];
 };
 
 export type ContentSection = {
@@ -34,6 +35,8 @@ export type ContentSection = {
   title: string;
   wordCount: number;
   preview: string;
+  startPage?: number;
+  endPage?: number;
 };
 
 // Panel → Background

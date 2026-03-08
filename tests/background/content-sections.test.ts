@@ -60,4 +60,24 @@ describe('content sections', () => {
     expect(firstSection?.wordCount).toBeGreaterThan(0);
     expect(firstSection?.wordCount).toBeLessThan(content.wordCount);
   });
+
+  it('builds page-range sections for PDFs and preserves page slices', () => {
+    const pageTexts = Array.from({ length: 12 }, (_, index) => `Page ${index + 1} ${'word '.repeat(220)}`.trim());
+    const content = makeContent({
+      content: '',
+      textContent: pageTexts.join('\n\n'),
+      wordCount: pageTexts.join(' ').split(/\s+/).length,
+      pageTexts,
+    });
+
+    const sections = getContentSections(content);
+    expect(sections.length).toBeGreaterThan(1);
+    expect(sections[0].title).toMatch(/^Pages 1-/);
+    expect(sections[0].startPage).toBe(1);
+    expect(sections[0].endPage).toBeGreaterThan(1);
+
+    const firstSectionContent = buildSectionExtractedContent(content, 0);
+    expect(firstSectionContent?.title).toContain('Pages');
+    expect(firstSectionContent?.pageTexts?.length).toBe(sections[0].endPage! - sections[0].startPage! + 1);
+  });
 });

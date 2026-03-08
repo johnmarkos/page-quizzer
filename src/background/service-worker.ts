@@ -192,7 +192,7 @@ async function persistState() {
 
   const session = {
     snapshot: engine.serialize(),
-    lastExtracted,
+    lastExtracted: cloneExtractedContent(lastExtracted),
     pendingSections: pendingSections ? pendingSections.map(section => ({ ...section })) : null,
     currentTopics: cloneTopics(currentTopics),
     lastCompletedQuiz: lastCompletedQuiz
@@ -341,7 +341,7 @@ async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: Extrac
   const settings = await storage.getSettings();
 
   if (providedContent) {
-    lastExtracted = { ...providedContent };
+    lastExtracted = cloneExtractedContent(providedContent);
   } else {
     broadcastStatus('Extracting page content...');
 
@@ -351,7 +351,7 @@ async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: Extrac
       if (!pdfContent) {
         throw new Error('Failed to resolve the PDF URL for this tab.');
       }
-      lastExtracted = pdfContent;
+      lastExtracted = cloneExtractedContent(pdfContent);
     } else {
       const extractResponse = await extractContentFromTab(tab);
 
@@ -359,7 +359,7 @@ async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: Extrac
         throw new Error(extractResponse.payload.error);
       }
 
-      lastExtracted = extractResponse.payload as ExtractedContent;
+      lastExtracted = cloneExtractedContent(extractResponse.payload as ExtractedContent);
     }
   }
 
@@ -396,7 +396,7 @@ async function handleGenerateSectionQuiz(sectionIndex?: number) {
 
   const settings = await storage.getSettings();
   const selectedContent = sectionIndex === undefined
-    ? { ...lastExtracted }
+    ? cloneExtractedContent(lastExtracted)
     : buildSectionExtractedContent(lastExtracted, sectionIndex);
 
   if (!selectedContent) {
@@ -414,7 +414,7 @@ async function generateQuizFromExtractedContent(
     throw new Error('No API key configured. Open Settings to add one.');
   }
 
-  lastExtracted = { ...content };
+  lastExtracted = cloneExtractedContent(content);
   pendingSections = null;
 
   const provider = createProvider(settings.provider, {
@@ -634,11 +634,22 @@ function cloneTopics(topics: unknown): string[] {
   return Array.isArray(topics) ? topics.filter((topic): topic is string => typeof topic === 'string') : [];
 }
 
+function cloneExtractedContent(content: ExtractedContent | null): ExtractedContent | null {
+  if (!content) {
+    return null;
+  }
+
+  return {
+    ...content,
+    pageTexts: content.pageTexts ? [...content.pageTexts] : undefined,
+  };
+}
+
 function applyTabSession(session: ReturnType<typeof getTabQuizSession>, tabId: number | null) {
   activeTabId = tabId;
   engine.restore(session.snapshot);
   currentProblems = cloneProblems(session.snapshot.problems);
-  lastExtracted = session.lastExtracted ? { ...session.lastExtracted } : null;
+  lastExtracted = cloneExtractedContent(session.lastExtracted);
   pendingSections = session.pendingSections ? session.pendingSections.map(section => ({ ...section })) : null;
   currentTopics = cloneTopics(session.currentTopics);
   lastCompletedQuiz = session.lastCompletedQuiz

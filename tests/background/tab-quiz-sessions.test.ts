@@ -38,6 +38,7 @@ describe('tab quiz sessions', () => {
           wordCount: 120,
           excerpt: 'Atoms',
           url: 'https://example.com/physics',
+          pageTexts: ['Atoms in motion'],
         },
         pendingSections: [
           {
@@ -57,10 +58,12 @@ describe('tab quiz sessions', () => {
     session.snapshot.problems[0].question = 'Mutated';
     session.currentTopics[0] = 'Changed';
     session.pendingSections?.[0] && (session.pendingSections[0].title = 'Changed');
+    session.lastExtracted?.pageTexts && (session.lastExtracted.pageTexts[0] = 'Changed');
 
     expect(sessions['42'].snapshot.problems[0].question).toBe('Question 1?');
     expect(sessions['42'].currentTopics[0]).toBe('Physics');
     expect(sessions['42'].pendingSections?.[0]?.title).toBe('Chapter 1');
+    expect(sessions['42'].lastExtracted?.pageTexts?.[0]).toBe('Atoms in motion');
   });
 
   it('removes empty sessions from storage decisions', () => {

@@ -73,7 +73,12 @@ export function cloneTabQuizSession(session: TabQuizSession): TabQuizSession {
       })),
       answers: session.snapshot.answers.map(answer => ({ ...answer })),
     },
-    lastExtracted: session.lastExtracted ? { ...session.lastExtracted } : null,
+    lastExtracted: session.lastExtracted
+      ? {
+          ...session.lastExtracted,
+          pageTexts: session.lastExtracted.pageTexts ? [...session.lastExtracted.pageTexts] : undefined,
+        }
+      : null,
     pendingSections: session.pendingSections
       ? session.pendingSections.map(section => ({ ...section }))
       : null,

@@ -4,10 +4,13 @@ export const SECTIONING_WORD_THRESHOLD = 3000;
 const TARGET_SECTION_WORDS = 1200;
 const MIN_SECTION_WORDS = 500;
 const MAX_SECTION_WORDS = 1800;
+const MAX_PDF_SECTION_PAGES = 10;
 
 type SectionChunk = {
   title: string;
   textContent: string;
+  startPage?: number;
+  endPage?: number;
 };
 
 export function shouldOfferSectionChoice(content: ExtractedContent): boolean {
@@ -20,6 +23,8 @@ export function getContentSections(content: ExtractedContent): ContentSection[] 
     title: section.title,
     wordCount: countWords(section.textContent),
     preview: section.textContent.slice(0, 140),
+    startPage: section.startPage,
+    endPage: section.endPage,
   }));
 }
 
@@ -33,6 +38,9 @@ export function buildSectionExtractedContent(
   }
 
   const textContent = section.textContent.trim();
+  const pageTexts = section.startPage && section.endPage && content.pageTexts
+    ? content.pageTexts.slice(section.startPage - 1, section.endPage)
+    : undefined;
 
   return {
     ...content,
@@ -41,10 +49,15 @@ export function buildSectionExtractedContent(
     textContent,
     wordCount: countWords(textContent),
     excerpt: textContent.slice(0, 200),
+    pageTexts,
   };
 }
 
 function buildSectionChunks(content: ExtractedContent): SectionChunk[] {
+  if (content.pageTexts && content.pageTexts.length > 1) {
+    return buildPdfPageSections(content.pageTexts);
+  }
+
   const headingSections = buildHeadingSections(content.content);
   if (headingSections.length > 1) {
     return rebalanceSections(headingSections, content.title);
@@ -97,6 +110,83 @@ function buildFallbackSections(text: string, title: string): SectionChunk[] {
     title: title || 'Part 1',
     textContent: normalizeText(text),
   });
+}
+
+function buildPdfPageSections(pageTexts: string[]): SectionChunk[] {
+  const sections: SectionChunk[] = [];
+  let bufferStartPage: number | null = null;
+  let bufferEndPage: number | null = null;
+  let bufferWords = 0;
+  let bufferTexts: string[] = [];
+
+  const flushBuffer = () => {
+    if (bufferStartPage === null || bufferEndPage === null) {
+      return;
+    }
+
+    const textContent = normalizeText(bufferTexts.filter(Boolean).join('\n\n'));
+    if (!textContent) {
+      bufferStartPage = null;
+      bufferEndPage = null;
+      bufferWords = 0;
+      bufferTexts = [];
+      return;
+    }
+
+    sections.push({
+      title: bufferStartPage === bufferEndPage
+        ? `Page ${bufferStartPage}`
+        : `Pages ${bufferStartPage}-${bufferEndPage}`,
+      textContent,
+      startPage: bufferStartPage,
+      endPage: bufferEndPage,
+    });
+    bufferStartPage = null;
+    bufferEndPage = null;
+    bufferWords = 0;
+    bufferTexts = [];
+  };
+
+  for (let pageIndex = 0; pageIndex < pageTexts.length; pageIndex++) {
+    const pageNumber = pageIndex + 1;
+    const pageText = normalizeText(pageTexts[pageIndex] || '');
+    const pageWords = countWords(pageText);
+    const pageCount = bufferStartPage === null || bufferEndPage === null
+      ? 0
+      : bufferEndPage - bufferStartPage + 1;
+    const wouldExceedWordTarget =
+      bufferWords >= MIN_SECTION_WORDS && bufferWords + pageWords > TARGET_SECTION_WORDS;
+    const wouldExceedPageTarget = pageCount >= MAX_PDF_SECTION_PAGES;
+
+    if (bufferTexts.length > 0 && (wouldExceedWordTarget || wouldExceedPageTarget)) {
+      flushBuffer();
+    }
+
+    if (bufferStartPage === null) {
+      bufferStartPage = pageNumber;
+    }
+
+    bufferEndPage = pageNumber;
+    bufferWords += pageWords;
+    bufferTexts.push(pageText);
+  }
+
+  flushBuffer();
+
+  if (sections.length > 1) {
+    const lastSection = sections[sections.length - 1];
+    if (countWords(lastSection.textContent) < MIN_SECTION_WORDS) {
+      const previousSection = sections[sections.length - 2];
+      previousSection.textContent = normalizeText(`${previousSection.textContent}\n\n${lastSection.textContent}`);
+      previousSection.endPage = lastSection.endPage;
+      previousSection.title = previousSection.startPage === previousSection.endPage
+        ? `Page ${previousSection.startPage}`
+        : `Pages ${previousSection.startPage}-${previousSection.endPage}`;
+      sections.pop();
+    }
+  }
+
+  return sections;
 }
 
 function rebalanceSections(sections: SectionChunk[], baseTitle: string): SectionChunk[] {

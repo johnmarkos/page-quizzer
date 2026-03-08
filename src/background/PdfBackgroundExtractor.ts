@@ -72,13 +72,11 @@ export async function extractPdfContentFromTabUrl(
       const page = await pdfDocument.getPage(pageNumber);
       const textContent = await page.getTextContent();
       const pageText = textContentToString(textContent.items);
-      if (pageText) {
-        pageTexts.push(pageText);
-      }
+      pageTexts.push(pageText);
       page.cleanup();
     }
 
-    const textContent = normalizePdfText(pageTexts.join('\n\n'));
+    const textContent = normalizePdfText(pageTexts.filter(Boolean).join('\n\n'));
     if (!textContent) {
       throw new Error('PDF contains no extractable text');
     }
@@ -90,6 +88,7 @@ export async function extractPdfContentFromTabUrl(
       wordCount: countWords(textContent),
       excerpt: textContent.slice(0, 200),
       url: pdfUrl,
+      pageTexts,
     };
   } finally {
     if (pdfDocument) {
