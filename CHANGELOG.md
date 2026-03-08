@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.1.57 — Advisory Fixes from Staff Review (2026-03-08)
+
+### Cleanup
+- Removed empty `icons` key from `manifest.json`
+- Extracted `parseProviderJson<T>(content, providerName)` helper to replace 4 identical try/catch JSON.parse blocks across OpenAI, Gemini, Ollama providers and topic parsing
+
+### Testing
+- 157 tests (was 153): added `parseProviderJson` coverage for valid JSON, invalid JSON with provider name, empty input, and array parsing
+
+## v0.1.56 — Staff Review Type-Safety & Security Fixes (2026-03-07)
+
+### Type Safety
+- `AnthropicProvider.ts` — replaced `(b: any)` and untyped `response.json()` with `AnthropicContentBlock` / `AnthropicMessagesResponse` types
+- `OpenQuizzerDetector.ts` — replaced `(p: any)` on untrusted page JSON with `RawOpenQuizzerProblem` type and runtime shape validation
+- `QuizEngine.ts` — replaced `Listener<any>` in event map with `Listener<never>` and safe cast in `#emit`
+- `StorageManager.ts` — replaced `Record<string, any>` with `Record<string, string | number>` / `Record<string, string>`
+- `messages.ts` — added `OkMessage` to the `Message` union for `{ type: 'ok' }` responses
+
+### Security
+- Added explicit `content_security_policy` to `manifest.json`: `script-src 'self'; object-src 'self'`
+
 ## v0.1.55 — Document Library View (2026-03-08)
 
 ### Long-Form Content

@@ -1,7 +1,5 @@
+import { parseProviderJson } from './parseProviderJson.js';
+
 export function parseTopicResponse(content: string): unknown {
-  try {
-    return JSON.parse(content);
-  } catch {
-    throw new Error('Failed to parse topic response as JSON');
-  }
+  return parseProviderJson<unknown>(content, 'topic');
 }
