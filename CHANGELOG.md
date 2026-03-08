@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.1.22 — Active Tab URL Access for Site Prompts (2026-03-08)
+
+### Bug Fixes
+- Added the `tabs` permission so PageQuizzer can read the active tab URL and request optional host access for the correct origin before injecting the content script
+- Fixed the permission-request flow on normal pages where the extension previously could not derive the site origin reliably enough to prompt Chrome for access
+
+### Security Review
+- Added `tabs` only to support active-tab URL lookup for per-site access requests; broad `<all_urls>` required host access is still avoided
+- `npm audit --omit=dev` reported 0 vulnerabilities
+
+### Testing
+- Existing 65-test suite and production build passed after the permission update
+
 ## v0.1.21 — Attach Path Version Marker (2026-03-08)
 
 ### Diagnostics

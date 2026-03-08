@@ -3,7 +3,7 @@
   "name": "PageQuizzer",
   "version": "0.1.0",
   "description": "Generate quiz questions from any web page for retrieval practice",
-  "permissions": ["sidePanel", "activeTab", "storage", "scripting"],
+  "permissions": ["sidePanel", "activeTab", "storage", "scripting", "tabs"],
   "host_permissions": [
     "https://api.anthropic.com/*",
     "https://api.openai.com/*",

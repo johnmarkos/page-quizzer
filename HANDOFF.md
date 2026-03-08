@@ -2,17 +2,18 @@
 
 ## Completed
 
-- Added an `attach-v2` marker to the content-script attach error messages
+- Added the `tabs` permission so the extension can read the active tab URL before requesting per-site host access
 
 ## Decisions
 
-- Chose a visible user-facing marker instead of deeper logging first so stale-extension-vs-current-code can be identified from one screenshot or copied error string
+- Kept the per-site optional host permission design instead of broadening host access, and added `tabs` as the minimal supporting permission needed to make the origin lookup reliable
 
 ## Validation
 
 - `npm test` passed with 65/65 tests
 - `npm run build` passed
+- `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
-- Chrome extension reload state is easy to misread during manual testing; a small explicit revision token can save multiple blind debugging cycles
+- Runtime host permission logic that depends on `tab.url` will fail unpredictably if the extension cannot actually see that field for the active tab
