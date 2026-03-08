@@ -52,7 +52,7 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [ ] **Q5: Timer mode** — Optional countdown timer per question (configurable: 15/30/60 seconds, or off). Timer runs in the panel (not engine — engine stays timer-agnostic). When timer expires, auto-skip. Add timer setting to settings view and `chrome.storage.sync`. Show countdown bar in quiz view. Test: manual.
 
-- [ ] **Q6: Stronger distractor prompt** — Tighten quiz-generation instructions so wrong answers must be plausible, same category/register/length as the correct answer, and reflect meaningful misconceptions instead of obviously silly distractors. Test: manual comparison on a known page.
+- [x] **Q6: Stronger distractor prompt** — Tighten quiz-generation instructions so wrong answers must be plausible, same category/register/length as the correct answer, and reflect meaningful misconceptions instead of obviously silly distractors. Test: manual comparison on a known page.
 
 - [ ] **Q7: Question quality filter** — Add a lightweight post-generation pass that rejects or regenerates questions with weak distractors, trivial fact recall, or obvious answer-pattern giveaways. Test: pure heuristics where feasible, manual review on sample pages.
 
@@ -69,6 +69,8 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 - [ ] **D4: Per-question performance tracking** — Track how many times each question (by content hash) has been seen and answered correctly. Store in `chrome.storage.local` as a map: `{ [hash]: { seen: number, correct: number } }`. Update after each answer. No UI yet — this is the data layer for future spaced repetition. Test: unit test the tracking logic as a pure function.
 
 - [x] **D5: Per-tab quiz sessions** — Keep independent in-progress quizzes per browser tab or page, so switching tabs restores that tab’s quiz instead of replacing a single global session. Generating a quiz on a new tab should create a new session only for that tab. Requires tab-scoped persistence, panel restore routing, and a clear policy for tab close/navigation. Test: manual across multiple tabs plus pure session-routing helpers.
+
+- [ ] **D6: Export quiz as local web page** — Add an export path for a generated quiz that produces a self-contained local HTML page the user can open and practice later without the extension. Start simple: render the current quiz data into a lightweight standalone web page with embedded JSON and minimal quiz UI. Future follow-up could also support an OpenQuizzer-style JSON export alongside the HTML export. Test: manual export/open/run flow.
 
 ### Settings & Polish
 

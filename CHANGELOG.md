@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.1.35 — Stronger Distractor Prompt (2026-03-08)
+
+### Quiz Quality
+- Tightened the quiz-generation system prompt so wrong answers must be realistic misunderstandings instead of obviously weak distractors
+- Added explicit instructions that 4-option answers should stay parallel in category, specificity, tone, and length so the correct answer does not stand out by style alone
+- Shifted the prompt toward conceptual understanding, comparison, cause/effect, and application questions over trivial fact recall
+
+### Testing
+- 89 tests (was 87): expanded prompt coverage for the new distractor-quality instructions and bumped the quiz-generation prompt version to `1.2`
+
 ## v0.1.34 — Answer Choice Typography Polish (2026-03-08)
 
 ### Quiz Experience

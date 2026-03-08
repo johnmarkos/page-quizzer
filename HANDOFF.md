@@ -2,6 +2,9 @@
 
 ## Completed
 
+- Strengthened the quiz-generation prompt so distractors are instructed to be realistic misunderstandings, parallel in style/detail, and less obviously giveaway
+- Shifted prompt guidance toward conceptual and application questions instead of surface-level fact recall
+- Added `D6` to the roadmap for exporting a generated quiz as a local web page
 - Polished answer-choice typography by separating the numeric key badge from the wrapped option text in the quiz button layout
 - Kept the true/false layout centered while adopting the same badge/text structure
 - Added per-tab quiz session persistence so each browser tab keeps its own quiz-ready, in-progress, and completed state
@@ -21,6 +24,8 @@
 
 ## Decisions
 
+- Kept the “better quizzes” work prompt-only for this milestone instead of mixing it with post-generation heuristics; that isolates whether improved question quality comes from instruction tuning before adding more moving parts
+- Put the new export idea on the roadmap as a standalone local-HTML deliverable first, with OpenQuizzer-style JSON as a future extension rather than part of the first version
 - Kept the typography fix markup-local to the panel instead of introducing new render helpers; the problem was structural layout, not shared logic
 - Continued using `innerHTML` for option buttons, but only with escaped option text and fixed badge markup, which preserves the existing XSS boundary
 - Kept D5 tab-scoped at the background/panel boundary instead of adding tab IDs to engine events; the engine stays tab-agnostic and the service worker routes state to the active tab
@@ -37,12 +42,13 @@
 
 ## Validation
 
-- `npm test` passed with 87/87 tests
+- `npm test` passed with 89/89 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- If prompt quality is the thing being changed, bump the prompt version and add prompt-specific assertions; otherwise later question-quality comparisons are hard to attribute to a specific instruction set
 - Inline number badges next to wrapped answer text look acceptable for short options but drift noticeably on real content; using a dedicated flex row/column structure is more stable than trying to tune line-height alone
 - Tab-scoped persistence needs both sides to participate: the service worker must swap sessions when the active tab changes, and the panel must ask for fresh state on tab activation/navigation or it will keep showing the previous tab’s view
 - `GET_STATE` now represents more than “current question”; it also carries `ready` and `complete` views, so UI restore code should treat it as the source of truth for quiz state

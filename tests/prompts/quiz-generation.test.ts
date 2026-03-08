@@ -4,6 +4,7 @@ import {
   buildUserPrompt,
   QUIZ_RESPONSE_JSON_SCHEMA,
   QUIZ_TOOL_SCHEMA,
+  QUIZ_GENERATION_VERSION,
 } from '../../src/prompts/quiz-generation.js';
 
 describe('quiz-generation prompts', () => {
@@ -13,6 +14,9 @@ describe('quiz-generation prompts', () => {
     expect(prompt).toContain('4 options');
     expect(prompt).toContain('true/false');
     expect(prompt).toContain('retrieval practice');
+    expect(prompt).toContain('same kind of thing');
+    expect(prompt).toContain('realistic misunderstandings');
+    expect(prompt).toContain('one option sounds noticeably more sophisticated');
   });
 
   it('calculates target question count from density', () => {
@@ -44,6 +48,20 @@ describe('quiz-generation prompts', () => {
     expect(prompt).toContain('Test Article');
   });
 
+  it('adds distractor quality instructions to the user prompt', () => {
+    const prompt = buildUserPrompt({
+      content: 'word '.repeat(150),
+      density: 3,
+      maxQuestions: 50,
+      title: 'Test Article',
+    });
+
+    expect(prompt).toContain('Additional quality requirements');
+    expect(prompt).toContain('parallel in style and detail');
+    expect(prompt).toContain('close enough to tempt an attentive but imperfect reader');
+    expect(prompt).toContain('silly, extreme, or obviously unrelated');
+  });
+
   it('ensures minimum of 1 question', () => {
     const prompt = buildUserPrompt({
       content: 'short', // ~1 word
@@ -70,5 +88,9 @@ describe('quiz-generation prompts', () => {
     expect(questionSchema.properties.options.minItems).toBe(2);
     expect(questionSchema.properties.options.maxItems).toBe(4);
     expect(questionSchema.required).toContain('correctIndex');
+  });
+
+  it('bumps the prompt version when quiz-quality instructions change', () => {
+    expect(QUIZ_GENERATION_VERSION).toBe('1.2');
   });
 });
