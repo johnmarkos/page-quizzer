@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.1.40 — Timer Mode (2026-03-08)
+
+### Quiz Experience
+- Added an optional per-question timer in the panel with `Off`, `15`, `30`, and `60` second settings
+- Displayed a countdown label and timer bar in the quiz view, and auto-skipped the current question when the timer reached zero
+- Kept the timer entirely panel-side so the shared quiz engine remains timer-agnostic
+
+### Settings
+- Added `timerSeconds` to synced settings and loaded it before quiz restore/start so saved timer mode applies even if the user never opens the Settings tab during that session
+
+### Review Loop
+- The first reviewer pass found a real bug: the initial implementation would have left timer mode disabled until Settings had been loaded. Fixed by gating restore/start flows on the initial settings load promise.
+
+### Testing
+- 107 tests (was 104): added helper coverage for timer setting normalization, countdown formatting, and progress calculation
+
 ## v0.1.39 — Startup Restore Gate (2026-03-08)
 
 ### Reliability

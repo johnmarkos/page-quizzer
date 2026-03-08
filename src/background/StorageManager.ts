@@ -1,4 +1,9 @@
-import { STORAGE_KEYS, DEFAULT_DENSITY, DEFAULT_MAX_QUESTIONS } from '../shared/constants.js';
+import {
+  STORAGE_KEYS,
+  DEFAULT_DENSITY,
+  DEFAULT_MAX_QUESTIONS,
+  DEFAULT_TIMER_SECONDS,
+} from '../shared/constants.js';
 import type { ProviderName } from '../providers/index.js';
 import type { SessionSummary } from '../engine/types.js';
 import { normalizeProviderModel } from '../providers/provider-models.js';
@@ -17,6 +22,7 @@ export type Settings = {
   model?: string;
   density: number;
   maxQuestions: number;
+  timerSeconds: number;
 };
 
 export class StorageManager {
@@ -26,6 +32,7 @@ export class StorageManager {
       STORAGE_KEYS.MODEL,
       STORAGE_KEYS.DENSITY,
       STORAGE_KEYS.MAX_QUESTIONS,
+      STORAGE_KEYS.TIMER_SECONDS,
     ]);
     const local = await chrome.storage.local.get([STORAGE_KEYS.API_KEY]);
     const provider = (result[STORAGE_KEYS.PROVIDER] || 'anthropic') as ProviderName;
@@ -37,6 +44,7 @@ export class StorageManager {
       model: storedModel ? normalizeProviderModel(provider, storedModel) : undefined,
       density: result[STORAGE_KEYS.DENSITY] ?? DEFAULT_DENSITY,
       maxQuestions: result[STORAGE_KEYS.MAX_QUESTIONS] ?? DEFAULT_MAX_QUESTIONS,
+      timerSeconds: result[STORAGE_KEYS.TIMER_SECONDS] ?? DEFAULT_TIMER_SECONDS,
     };
   }
 
@@ -48,6 +56,7 @@ export class StorageManager {
     if (settings.model !== undefined) sync[STORAGE_KEYS.MODEL] = settings.model;
     if (settings.density !== undefined) sync[STORAGE_KEYS.DENSITY] = settings.density;
     if (settings.maxQuestions !== undefined) sync[STORAGE_KEYS.MAX_QUESTIONS] = settings.maxQuestions;
+    if (settings.timerSeconds !== undefined) sync[STORAGE_KEYS.TIMER_SECONDS] = settings.timerSeconds;
     if (settings.apiKey !== undefined) local[STORAGE_KEYS.API_KEY] = settings.apiKey;
 
     if (Object.keys(sync).length) await chrome.storage.sync.set(sync);

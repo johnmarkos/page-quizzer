@@ -225,6 +225,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - If generation can partially succeed before a later chunk fails, preserve the accepted questions and carry an explicit warning through ready-state persistence; otherwise the extension loses a recoverable quiz and the UI can’t explain why the count is short
 - If you track question performance across sessions, don’t key it by generated problem ID; build a deterministic hash from normalized question content that stays stable across option shuffles
 - Don’t leave service-worker restore as an un-awaited startup side effect if later message handlers depend on restored state; gate message handling on the restore promise or you can compute and persist fresh state against stale in-memory data
+- If a panel-only feature depends on saved settings, load those settings before restore/start flows too; wiring them only through the Settings tab can leave the runtime behavior stuck on defaults
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

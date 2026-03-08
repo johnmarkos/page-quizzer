@@ -12,6 +12,11 @@ import {
   shouldIgnoreShortcutTarget,
 } from './keyboard-shortcuts.js';
 import { getQuestionPayloadFromRestoredState } from './quiz-state-sync.js';
+import {
+  buildTimerProgressPercent,
+  formatTimerCountdown,
+  normalizeTimerSeconds,
+} from './timer-mode.js';
 
 // --- DOM helpers ---
 function $(id: string): HTMLElement {
@@ -28,6 +33,9 @@ let currentSessions: SessionRecord[] = [];
 let currentOptionCount = 4;
 let shortcutHelpVisible = false;
 let activeHistoryTopic: string | null = null;
+let currentTimerSeconds = 0;
+let activeTimerId: number | null = null;
+let activeTimerDeadline = 0;
 
 // --- Navigation ---
 document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -49,9 +57,13 @@ renderModelOptions(providerSelect.value as ProviderName);
 providerSelect.addEventListener('change', () => {
   renderModelOptions(providerSelect.value as ProviderName, modelSelect.value);
 });
+const initialSettingsPromise = loadSettings();
 
 // --- Quiz Flow ---
 function showQuizSection(section: string) {
+  if (section !== 'quiz-question') {
+    stopQuestionTimer();
+  }
   ['quiz-idle', 'quiz-loading', 'quiz-ready', 'quiz-question', 'quiz-complete', 'quiz-review', 'quiz-error']
     .forEach(id => hide($(id)));
   show($(section));
@@ -108,10 +120,12 @@ $('start-btn').addEventListener('click', async () => {
 });
 
 $('next-btn').addEventListener('click', () => {
+  stopQuestionTimer();
   chrome.runtime.sendMessage({ type: 'NEXT_QUESTION' });
 });
 
 $('skip-btn').addEventListener('click', () => {
+  stopQuestionTimer();
   chrome.runtime.sendMessage({ type: 'SKIP_QUESTION' });
 });
 
@@ -269,6 +283,7 @@ function showQuestion(payload: { problem: Problem; index: number; total: number 
   ($('progress-text') as HTMLElement).textContent = `Question ${index + 1} of ${total}`;
   ($('question-text') as HTMLElement).textContent = problem.question;
   renderShortcutHelp();
+  startQuestionTimer();
 
   const container = $('options-container');
   container.innerHTML = '';
@@ -292,6 +307,7 @@ function showQuestion(payload: { problem: Problem; index: number; total: number 
 }
 
 function showAnswerResult(payload: { correct: boolean; correctIndex: number; explanation?: string }) {
+  stopQuestionTimer();
   hide($('skip-btn'));
   show($('feedback'));
 
@@ -385,6 +401,8 @@ async function loadSettings() {
     (document.getElementById('density-slider') as HTMLInputElement).value = String(s.density);
     ($('density-value') as HTMLElement).textContent = String(s.density);
     (document.getElementById('max-questions-input') as HTMLInputElement).value = String(s.maxQuestions);
+    currentTimerSeconds = normalizeTimerSeconds(s.timerSeconds);
+    (document.getElementById('timer-select') as HTMLSelectElement).value = String(currentTimerSeconds);
   }
 }
 
@@ -399,7 +417,9 @@ $('save-settings-btn').addEventListener('click', async () => {
     model: modelSelect.value,
     density: Number((document.getElementById('density-slider') as HTMLInputElement).value),
     maxQuestions: Number((document.getElementById('max-questions-input') as HTMLInputElement).value),
+    timerSeconds: normalizeTimerSeconds((document.getElementById('timer-select') as HTMLSelectElement).value),
   };
+  currentTimerSeconds = settings.timerSeconds;
   await chrome.runtime.sendMessage({ type: 'SAVE_SETTINGS', payload: settings });
   ($('save-settings-btn') as HTMLElement).textContent = 'Saved!';
   setTimeout(() => { ($('save-settings-btn') as HTMLElement).textContent = 'Save Settings'; }, 1500);
@@ -529,6 +549,45 @@ function hideShortcutHelp() {
   renderShortcutHelp();
 }
 
+function startQuestionTimer() {
+  stopQuestionTimer();
+
+  if (currentTimerSeconds <= 0) {
+    hide($('timer-panel'));
+    return;
+  }
+
+  show($('timer-panel'));
+  activeTimerDeadline = Date.now() + currentTimerSeconds * 1000;
+  renderTimerDisplay();
+  activeTimerId = window.setInterval(() => {
+    renderTimerDisplay();
+    if (Date.now() >= activeTimerDeadline) {
+      stopQuestionTimer();
+      const skipBtn = $('skip-btn');
+      if (isElementVisible(skipBtn) && !(skipBtn as HTMLButtonElement).disabled) {
+        skipBtn.click();
+      }
+    }
+  }, 200);
+}
+
+function stopQuestionTimer() {
+  if (activeTimerId !== null) {
+    window.clearInterval(activeTimerId);
+    activeTimerId = null;
+  }
+  activeTimerDeadline = 0;
+  hide($('timer-panel'));
+}
+
+function renderTimerDisplay() {
+  const remainingMs = Math.max(0, activeTimerDeadline - Date.now());
+  ($('timer-text') as HTMLElement).textContent = formatTimerCountdown(remainingMs);
+  ($('timer-fill') as HTMLElement).style.width =
+    `${buildTimerProgressPercent(remainingMs, currentTimerSeconds)}%`;
+}
+
 function isElementVisible(element: Element | null): boolean {
   return !!element && !element.closest('.hidden');
 }
@@ -537,6 +596,7 @@ function isElementVisible(element: Element | null): boolean {
 // If the service worker was restarted mid-quiz, the panel needs to catch up
 async function checkRestoredState() {
   try {
+    await initialSettingsPromise;
     const restoredState = await getRestoredStateFromBackground();
     if (!restoredState || restoredState.type !== 'RESTORED_STATE') {
       return;
@@ -573,6 +633,7 @@ async function checkRestoredState() {
 checkRestoredState();
 
 async function startQuizFlow(message: { type: 'START_QUIZ' } | { type: 'RETRY_MISSED' }) {
+  await initialSettingsPromise;
   const response = await chrome.runtime.sendMessage(message);
   if (response?.type === 'QUIZ_ERROR') {
     throw new Error(response.payload.error);

@@ -50,7 +50,7 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [x] **Q4: Retry missed questions only** — On the score view, add "Retry Missed" button alongside the existing "Retry" button. Sends a new message `RETRY_MISSED` to service worker, which calls `engine.loadProblems()` with only the problems the user got wrong, then `engine.start()`. Test: engine — load 3 problems, answer 1 wrong, retry missed gives 1 problem.
 
-- [ ] **Q5: Timer mode** — Optional countdown timer per question (configurable: 15/30/60 seconds, or off). Timer runs in the panel (not engine — engine stays timer-agnostic). When timer expires, auto-skip. Add timer setting to settings view and `chrome.storage.sync`. Show countdown bar in quiz view. Test: manual.
+- [x] **Q5: Timer mode** — Optional countdown timer per question (configurable: 15/30/60 seconds, or off). Timer runs in the panel (not engine — engine stays timer-agnostic). When timer expires, auto-skip. Add timer setting to settings view and `chrome.storage.sync`. Show countdown bar in quiz view. Test: manual.
 
 - [x] **Q6: Stronger distractor prompt** — Tighten quiz-generation instructions so wrong answers must be plausible, same category/register/length as the correct answer, and reflect meaningful misconceptions instead of obviously silly distractors. Test: manual comparison on a known page.
 

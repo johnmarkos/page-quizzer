@@ -2,6 +2,9 @@
 
 ## Completed
 
+- Added optional per-question timer mode in the panel with saved `Off` / `15` / `30` / `60` second settings
+- Added countdown UI and auto-skip on timer expiry, while keeping timer behavior entirely out of the engine
+- Fixed a review-found bug where timer mode would have stayed at `Off` until Settings had been loaded; restore/start now wait for the initial settings load
 - Fixed a service-worker startup race by gating tab-routing and message handling on the initial restore pass before touching in-memory quiz state
 - Added per-question performance tracking in local storage using deterministic content hashes, with `seen` and `correct` counters updated after each answered question
 - Made question-performance keys stable across option shuffling by hashing normalized question text plus sorted option text/correctness markers
@@ -32,6 +35,7 @@
 
 ## Decisions
 
+- Kept timer mode panel-local instead of pushing countdown logic into background or engine state; the timer is a presentation/interaction concern, not quiz-core logic
 - Treated service-worker restore as a prerequisite for message handling instead of a fire-and-forget startup task; otherwise fresh actions can run against empty in-memory state before persistence finishes loading
 - Kept per-question performance tracking as a background-only data layer with no UI yet; that lets future spaced-repetition work build on stable stored stats without forcing premature product decisions
 - Avoided using provider/generated problem IDs for performance tracking because they are session-local; the hash is based on normalized question content instead
@@ -57,12 +61,13 @@
 
 ## Validation
 
-- `npm test` passed with 104/104 tests
+- `npm test` passed with 107/107 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- Panel-side features that depend on saved settings need those settings loaded before restore/start flows, not just when the user opens Settings; otherwise “saved” behavior can silently fall back to defaults
 - In MV3, async startup restore should be treated as a real dependency, not best-effort background work; if messages can arrive before restore completes, newer state can be computed from stale in-memory data and then persisted incorrectly
 - Question-performance keys must be independent of shuffled option order or the same question will fragment into multiple records across retries/sessions
 - Partial recovery needs to be persisted too; otherwise a service-worker restart between generation and quiz start would silently drop the warning and revert the ready screen to looking like a normal full-success run

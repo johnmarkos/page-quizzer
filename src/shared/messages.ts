@@ -116,6 +116,7 @@ export type SettingsMessage = {
     apiKey: string;
     density: number;
     maxQuestions: number;
+    timerSeconds: number;
     model?: string;
   };
 };
@@ -176,6 +177,7 @@ export type SaveSettingsRequest = {
     model: string;
     density: number;
     maxQuestions: number;
+    timerSeconds: number;
   };
 };
 
