@@ -66,7 +66,7 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [ ] **S1: Model selection dropdown** — Settings view shows available models per provider (hardcoded list per provider class — add a `models` getter to `BaseProvider`). When provider changes, model dropdown updates. Selected model saved to storage. Test: provider model lists are non-empty arrays.
 
-- [ ] **S2: Keyboard shortcut help** — Show a small "?" icon in quiz view header. Clicking it shows/hides a tooltip: "1-4: select answer, Enter: next question, S: skip". Pure panel HTML/CSS, no messages needed.
+- [x] **S2: Keyboard shortcut help** — Show a small "?" icon in quiz view header. Clicking it shows/hides a tooltip: "1-4: select answer, Enter: next question, S: skip". Pure panel HTML/CSS, no messages needed.
 
 - [ ] **S3: Quiz progress indicator in extension icon** — Use `chrome.action.setBadgeText` to show current question number (e.g., "3/10") while a quiz is active. Clear badge on complete or idle. Add to service worker's engine event handlers. Requires no new permissions.
 

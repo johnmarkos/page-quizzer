@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.1.10 — Keyboard Shortcut Help (2026-03-08)
+
+### Settings & Polish
+- Added a `?` shortcut help toggle in the quiz question view
+- Made the tooltip text match the current question shape, so true/false questions show `1-2` while four-option questions show `1-4`
+- Aligned the actual keyboard behavior with the tooltip by wiring `S` to the existing skip action and scoping shortcuts to visible quiz controls only
+
+### Testing
+- 53 tests (was 49): added pure helper coverage for tooltip text, option-key mapping, and interactive-focus guards
+
+### Security Review
+- Periodic review found no new network, permission, or storage surface in this milestone
+- `npm audit --omit=dev` reported 0 vulnerabilities
+
 ## v0.1.9 — History Import (2026-03-08)
 
 ### Data & History

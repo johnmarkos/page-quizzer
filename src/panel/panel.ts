@@ -2,6 +2,11 @@ import type { Problem, SessionSummary } from '../engine/types.js';
 import type { SessionRecord } from '../background/StorageManager.js';
 import type { ReviewItem } from '../shared/messages.js';
 import { buildHistoryExportFilename, serializeHistoryRecords } from './history-export.js';
+import {
+  buildShortcutHelpText,
+  getOptionShortcutIndex,
+  shouldIgnoreShortcutTarget,
+} from './keyboard-shortcuts.js';
 
 // --- DOM helpers ---
 function $(id: string): HTMLElement {
@@ -15,6 +20,8 @@ function hide(el: HTMLElement) { el.classList.add('hidden'); }
 let selectedOptionIndex = -1;
 let currentExplanation = '';
 let currentSessions: SessionRecord[] = [];
+let currentOptionCount = 4;
+let shortcutHelpVisible = false;
 
 // --- Navigation ---
 document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -106,6 +113,11 @@ $('review-back-btn').addEventListener('click', () => {
 
 $('error-dismiss-btn').addEventListener('click', () => {
   showQuizSection('quiz-idle');
+});
+
+$('shortcut-help-btn').addEventListener('click', () => {
+  shortcutHelpVisible = !shortcutHelpVisible;
+  renderShortcutHelp();
 });
 
 $('export-history-btn').addEventListener('click', async () => {
@@ -205,12 +217,15 @@ function showQuestion(payload: { problem: Problem; index: number; total: number 
   hide($('feedback'));
   show($('skip-btn'));
   resetExplanationState();
+  hideShortcutHelp();
 
   const { problem, index, total } = payload;
+  currentOptionCount = problem.options.length;
   const pct = ((index / total) * 100).toFixed(0);
   ($('progress-fill') as HTMLElement).style.width = pct + '%';
   ($('progress-text') as HTMLElement).textContent = `Question ${index + 1} of ${total}`;
   ($('question-text') as HTMLElement).textContent = problem.question;
+  renderShortcutHelp();
 
   const container = $('options-container');
   container.innerHTML = '';
@@ -254,6 +269,7 @@ function showAnswerResult(payload: { correct: boolean; correctIndex: number; exp
 function showComplete(payload: SessionSummary) {
   showQuizSection('quiz-complete');
   resetExplanationState();
+  hideShortcutHelp();
   ($('score-display') as HTMLElement).textContent = payload.score.percentage + '%';
   ($('score-breakdown') as HTMLElement).textContent =
     `${payload.score.correct} correct, ${payload.score.incorrect} incorrect, ${payload.score.skipped} skipped out of ${payload.score.total}`;
@@ -274,6 +290,7 @@ function showComplete(payload: SessionSummary) {
 function showReview(items: ReviewItem[]) {
   showQuizSection('quiz-review');
   resetExplanationState();
+  hideShortcutHelp();
 
   const list = $('review-list');
   const empty = $('review-empty');
@@ -305,6 +322,7 @@ function showReview(items: ReviewItem[]) {
 function showError(message: string) {
   showQuizSection('quiz-error');
   resetExplanationState();
+  hideShortcutHelp();
   ($('error-text') as HTMLElement).textContent = message;
 }
 
@@ -395,15 +413,30 @@ async function fetchSessions(): Promise<SessionRecord[]> {
 
 // --- Keyboard shortcuts ---
 document.addEventListener('keydown', (e) => {
+  if (e.target instanceof HTMLElement && shouldIgnoreShortcutTarget(e.target.tagName, e.target.isContentEditable)) {
+    return;
+  }
+
   const key = e.key;
-  if (['1', '2', '3', '4'].includes(key)) {
-    const options = document.querySelectorAll('.option-btn:not(:disabled)');
-    const idx = Number(key) - 1;
-    if (options[idx]) (options[idx] as HTMLButtonElement).click();
+  const optionIndex = getOptionShortcutIndex(key, currentOptionCount);
+  if (optionIndex !== null) {
+    const options = Array.from(document.querySelectorAll('.option-btn'))
+      .filter((option) => isElementVisible(option) && !(option as HTMLButtonElement).disabled);
+    if (options[optionIndex]) {
+      (options[optionIndex] as HTMLButtonElement).click();
+    }
   }
   if (key === 'Enter') {
     const nextBtn = $('next-btn');
-    if (!nextBtn.closest('.hidden')) nextBtn.click();
+    if (isElementVisible(nextBtn)) {
+      nextBtn.click();
+    }
+  }
+  if (key.toLowerCase() === 's') {
+    const skipBtn = $('skip-btn');
+    if (isElementVisible(skipBtn)) {
+      skipBtn.click();
+    }
   }
 });
 
@@ -435,6 +468,27 @@ function resetExplanationState() {
   hide($('explanation-box'));
   ($('why-btn') as HTMLButtonElement).textContent = 'Why?';
   ($('explanation-text') as HTMLElement).textContent = '';
+}
+
+function renderShortcutHelp() {
+  const tooltip = $('shortcut-help-tooltip');
+  const button = $('shortcut-help-btn') as HTMLButtonElement;
+  tooltip.textContent = buildShortcutHelpText(currentOptionCount);
+  if (shortcutHelpVisible) {
+    show(tooltip);
+  } else {
+    hide(tooltip);
+  }
+  button.setAttribute('aria-expanded', String(shortcutHelpVisible));
+}
+
+function hideShortcutHelp() {
+  shortcutHelpVisible = false;
+  renderShortcutHelp();
+}
+
+function isElementVisible(element: Element | null): boolean {
+  return !!element && !element.closest('.hidden');
 }
 
 // --- Restore state on panel open ---

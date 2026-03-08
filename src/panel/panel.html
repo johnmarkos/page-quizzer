@@ -36,7 +36,13 @@
 
       <div id="quiz-question" class="hidden">
         <div id="progress-bar"><div id="progress-fill"></div></div>
-        <p id="progress-text"></p>
+        <div class="quiz-meta">
+          <p id="progress-text"></p>
+          <div class="shortcut-help">
+            <button id="shortcut-help-btn" class="shortcut-help-btn" type="button" aria-expanded="false">?</button>
+            <div id="shortcut-help-tooltip" class="shortcut-help-tooltip hidden"></div>
+          </div>
+        </div>
         <h2 id="question-text"></h2>
         <div id="options-container"></div>
         <div id="feedback" class="hidden">

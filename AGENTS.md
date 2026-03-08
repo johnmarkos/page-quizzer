@@ -128,12 +128,13 @@ This project uses multiple AI models with different roles:
 ### For implementers (any model):
 
 1. Read this entire file and ROADMAP.md before starting
-2. Pick a task from the **Task Queue** section of ROADMAP.md
+2. Pick a task from the **Task Queue** section of ROADMAP.md (or read `TASK.md` if one was prepared for you)
 3. Follow all Architecture Rules — they will be checked
 4. Run `npm test` and `npm run build` — both must pass
 5. Run the self-review checklist
 6. Update CHANGELOG.md with what you did
 7. Mark the ROADMAP task as done (`[x]`)
+8. Write `HANDOFF.md` in the project root: what was completed, decisions made and why, anything unfinished, gotchas
 
 ### For staff reviews (Opus):
 
@@ -192,6 +193,8 @@ Co-Authored-By: Gemini <noreply@google.com>
 - If multiple providers parse the same LLM response shape, centralize that normalization in one helper; otherwise feature support like new question types will drift across providers
 - For panel features with browser APIs like downloads/Blob URLs, keep the side-effect thin and move filename/serialization logic into a pure helper so it stays testable without DOM harnesses
 - Imported local files are untrusted input too: validate them in the background before merging into storage, rather than trusting panel-side parsing alone
+- If UI copy documents a shortcut or interaction, verify the behavior exists in code during review; tooltip/help drift is an easy way to ship false affordances
+- Global panel shortcuts should only act on visible quiz controls and should ignore focused form/button elements; otherwise hidden views can still consume keys
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

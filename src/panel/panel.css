@@ -130,7 +130,52 @@ nav {
 #progress-text {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.quiz-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
+}
+
+.shortcut-help {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.shortcut-help-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shortcut-help-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.shortcut-help-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 210px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.4;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+  z-index: 10;
 }
 
 #question-text {
