@@ -29,12 +29,30 @@ export type ExtractedContent = {
   url: string;
 };
 
+export type ContentSection = {
+  index: number;
+  title: string;
+  wordCount: number;
+  preview: string;
+};
+
 // Panel → Background
 export type GenerateQuizRequest = {
   type: 'GENERATE_QUIZ';
   payload?: {
     content?: ExtractedContent;
   };
+};
+
+export type GenerateSectionQuizRequest = {
+  type: 'GENERATE_SECTION_QUIZ';
+  payload?: {
+    sectionIndex?: number;
+  };
+};
+
+export type DismissSectionsRequest = {
+  type: 'DISMISS_SECTIONS';
 };
 
 export type StartQuizRequest = {
@@ -85,6 +103,15 @@ export type ReviewItem = {
 export type QuizGeneratedMessage = {
   type: 'QUIZ_GENERATED';
   payload: { problems: Problem[]; title: string; warning?: string };
+};
+
+export type ContentSectionsMessage = {
+  type: 'CONTENT_SECTIONS';
+  payload: {
+    title: string;
+    totalWords: number;
+    sections: ContentSection[];
+  };
 };
 
 export type QuizErrorMessage = {
@@ -172,6 +199,12 @@ export type RestoredStateMessage = {
   payload:
     | { state: 'idle' }
     | {
+        state: 'sections';
+        title: string;
+        totalWords: number;
+        sections: ContentSection[];
+      }
+    | {
         state: 'ready';
         title: string;
         total: number;
@@ -245,6 +278,8 @@ export type Message =
   | ExtractContentResponse
   | GetSelectionTextResponse
   | GenerateQuizRequest
+  | GenerateSectionQuizRequest
+  | DismissSectionsRequest
   | StartQuizRequest
   | AnswerQuestionRequest
   | NextQuestionRequest
@@ -253,6 +288,7 @@ export type Message =
   | GetReviewRequest
   | GetExportQuizRequest
   | QuizGeneratedMessage
+  | ContentSectionsMessage
   | QuizErrorMessage
   | QuestionShowMessage
   | AnswerResultMessage

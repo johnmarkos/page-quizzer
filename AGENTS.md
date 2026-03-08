@@ -229,6 +229,9 @@ Co-Authored-By: Gemini <noreply@google.com>
 - If an action ultimately uses saved background settings, any permission preflight for that action should read the same saved settings source rather than the current form state; otherwise unsaved panel edits can request access to the wrong origin
 - If quiz generation can be triggered from outside the panel, the panel should listen for background generation/result/error messages too; otherwise external flows can succeed in the background while the UI stays on a stale screen
 - `window.getSelection()` is not always enough for context-menu selection features; keep the context-menu event’s `selectionText` as a fallback before deciding there is no usable selection
+- If long-form content needs a section picker, persist that picker state in the tab session like any other quiz state; otherwise the service worker can restart back to idle and strand the user mid-flow
+- Heading-aware segmentation is useful, but it needs a deterministic arbitrary-size fallback for flat or oversized content; books and PDFs cannot depend on clean source structure
+- If a restorable intermediate state can be cancelled, give it an explicit background reset message instead of only hiding it in the panel
 - If you generate standalone export HTML, treat embedded quiz text and source URLs as separate risks: JSON/script embedding needs script-safe escaping, and clickable links still need scheme sanitization
 - If a panel feature introduces a new message payload branch, add pure tests for the payload-construction helper as well as any downstream content helper; otherwise the visible feature can work in one path while the actual request shape goes unverified
 

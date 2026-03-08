@@ -39,6 +39,14 @@ describe('tab quiz sessions', () => {
           excerpt: 'Atoms',
           url: 'https://example.com/physics',
         },
+        pendingSections: [
+          {
+            index: 0,
+            title: 'Chapter 1',
+            wordCount: 800,
+            preview: 'Atoms are moving',
+          },
+        ],
         currentTopics: ['Physics'],
         lastCompletedQuiz: null,
         generationWarning: 'Stopped early',
@@ -48,9 +56,11 @@ describe('tab quiz sessions', () => {
     const session = getTabQuizSession(sessions, 42);
     session.snapshot.problems[0].question = 'Mutated';
     session.currentTopics[0] = 'Changed';
+    session.pendingSections?.[0] && (session.pendingSections[0].title = 'Changed');
 
     expect(sessions['42'].snapshot.problems[0].question).toBe('Question 1?');
     expect(sessions['42'].currentTopics[0]).toBe('Physics');
+    expect(sessions['42'].pendingSections?.[0]?.title).toBe('Chapter 1');
   });
 
   it('removes empty sessions from storage decisions', () => {
@@ -60,6 +70,13 @@ describe('tab quiz sessions', () => {
     readySession.snapshot.problems = [mockProblem('1')];
 
     expect(hasSessionData(readySession)).toBe(true);
+
+    const sectionSession = createEmptySession();
+    sectionSession.pendingSections = [
+      { index: 0, title: 'Part 1', wordCount: 700, preview: 'Atoms' },
+    ];
+
+    expect(hasSessionData(sectionSession)).toBe(true);
   });
 
   it('sets and removes sessions by tab id', () => {

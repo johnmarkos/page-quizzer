@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.1.45 — Long-Content Section Picker (2026-03-08)
+
+### Long-Form Content
+- Added long-content segmentation with a section picker for extracted sources over 3000 words
+- Preferred real HTML headings when available, but fell back to paragraph clustering and fixed-size arbitrary chunks when the source had no usable structure or sections were still too large
+- Added `Quiz All` plus per-section generation so long pages and documents no longer have to become one giant quiz by default
+
+### State & UI
+- Persisted pending section-picker state per tab so the picker survives service-worker restarts and tab switches like the existing ready/completed quiz states
+- Added a dismiss action that clears the pending section state instead of leaving the picker sticky on restore
+
+### Review Loop
+- The first reviewer pass found a real UX/state gap: once the section picker appeared, there was no correct way to dismiss it because the background would keep restoring it. Fixed by adding an explicit `DISMISS_SECTIONS` message and clearing the persisted pending section state.
+
+### Security Review
+- No new permissions or network destinations were added
+- `npm audit --omit=dev` reported 0 vulnerabilities
+
+### Testing
+- 133 tests (was 130): added sectioning helper coverage for heading-based splits, arbitrary fallback chunking, and section-specific extracted content construction
+
 ## v0.1.44 — Highlight-to-Quiz (2026-03-08)
 
 ### Content & Extraction

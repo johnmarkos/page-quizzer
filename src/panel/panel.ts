@@ -1,6 +1,6 @@
 import type { Problem, SessionSummary } from '../engine/types.js';
 import type { SessionRecord } from '../background/StorageManager.js';
-import type { RestoredStateMessage, ReviewItem } from '../shared/messages.js';
+import type { ContentSection, RestoredStateMessage, ReviewItem } from '../shared/messages.js';
 import type { ProviderName } from '../providers/index.js';
 import { buildOriginPermissionPattern } from '../shared/site-access.js';
 import { buildHistoryExportFilename, serializeHistoryRecords } from './history-export.js';
@@ -78,7 +78,7 @@ function showQuizSection(section: string) {
   if (section !== 'quiz-question') {
     stopQuestionTimer();
   }
-  ['quiz-idle', 'quiz-loading', 'quiz-ready', 'quiz-question', 'quiz-complete', 'quiz-review', 'quiz-error']
+  ['quiz-idle', 'quiz-loading', 'quiz-sections', 'quiz-ready', 'quiz-question', 'quiz-complete', 'quiz-review', 'quiz-error']
     .forEach(id => hide($(id)));
   show($(section));
 }
@@ -105,6 +105,12 @@ $('generate-btn').addEventListener('click', async () => {
     });
     if (response?.type === 'QUIZ_ERROR') {
       showError(response.payload.error);
+    } else if (response?.type === 'CONTENT_SECTIONS') {
+      renderSectionsState(
+        response.payload.title,
+        response.payload.totalWords,
+        response.payload.sections,
+      );
     } else if (response?.type === 'QUIZ_GENERATED') {
       renderReadyState(
         response.payload.title,
@@ -187,6 +193,32 @@ $('retry-btn').addEventListener('click', async () => {
   } catch (err) {
     showError(err instanceof Error ? err.message : 'Failed to restart quiz');
   }
+});
+
+$('generate-all-sections-btn').addEventListener('click', async () => {
+  try {
+    showQuizSection('quiz-loading');
+    ($('loading-status') as HTMLElement).textContent = 'Generating quiz from full content...';
+    const response = await chrome.runtime.sendMessage({ type: 'GENERATE_SECTION_QUIZ' });
+    if (response?.type === 'QUIZ_ERROR') {
+      showError(response.payload.error);
+      return;
+    }
+    if (response?.type === 'QUIZ_GENERATED') {
+      renderReadyState(
+        response.payload.title,
+        response.payload.problems.length,
+        response.payload.warning,
+      );
+    }
+  } catch (err) {
+    showError(err instanceof Error ? err.message : 'Failed to generate full-content quiz');
+  }
+});
+
+$('dismiss-sections-btn').addEventListener('click', async () => {
+  await chrome.runtime.sendMessage({ type: 'DISMISS_SECTIONS' });
+  showQuizSection('quiz-idle');
 });
 
 $('review-missed-btn').addEventListener('click', async () => {
@@ -321,6 +353,14 @@ chrome.runtime.onMessage.addListener((message) => {
         message.payload.title,
         message.payload.problems.length,
         message.payload.warning,
+      );
+      break;
+
+    case 'CONTENT_SECTIONS':
+      renderSectionsState(
+        message.payload.title,
+        message.payload.totalWords,
+        message.payload.sections,
       );
       break;
 
@@ -755,6 +795,13 @@ async function checkRestoredState() {
           restoredState.payload.warning,
         );
         break;
+      case 'sections':
+        renderSectionsState(
+          restoredState.payload.title,
+          restoredState.payload.totalWords,
+          restoredState.payload.sections,
+        );
+        break;
       case 'complete':
         showComplete(restoredState.payload.summary);
         break;
@@ -821,6 +868,55 @@ function renderReadyState(title: string, count: number, warning?: string) {
   }
 
   showQuizSection('quiz-ready');
+}
+
+function renderSectionsState(title: string, totalWords: number, sections: ContentSection[]) {
+  ($('sections-info') as HTMLElement).textContent =
+    `"${title}" is long (${totalWords.toLocaleString()} words). Choose a section to quiz.`;
+
+  const list = $('sections-list');
+  list.innerHTML = sections.map(section => `
+    <button class="section-card" type="button" data-section-index="${section.index}">
+      <span class="section-card-title">${escapeHtml(section.title)}</span>
+      <span class="section-card-meta">${section.wordCount.toLocaleString()} words</span>
+      <span class="section-card-preview">${escapeHtml(section.preview)}${section.preview.length >= 140 ? '...' : ''}</span>
+    </button>
+  `).join('');
+
+  list.querySelectorAll<HTMLElement>('[data-section-index]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const sectionIndex = Number(button.dataset.sectionIndex);
+      void generateSectionQuiz(sectionIndex);
+    });
+  });
+
+  showQuizSection('quiz-sections');
+}
+
+async function generateSectionQuiz(sectionIndex: number) {
+  try {
+    showQuizSection('quiz-loading');
+    ($('loading-status') as HTMLElement).textContent = `Generating quiz from section ${sectionIndex + 1}...`;
+    const response = await chrome.runtime.sendMessage({
+      type: 'GENERATE_SECTION_QUIZ',
+      payload: { sectionIndex },
+    });
+
+    if (response?.type === 'QUIZ_ERROR') {
+      showError(response.payload.error);
+      return;
+    }
+
+    if (response?.type === 'QUIZ_GENERATED') {
+      renderReadyState(
+        response.payload.title,
+        response.payload.problems.length,
+        response.payload.warning,
+      );
+    }
+  } catch (err) {
+    showError(err instanceof Error ? err.message : 'Failed to generate section quiz');
+  }
 }
 
 function renderManualInputMode() {

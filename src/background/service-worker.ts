@@ -7,7 +7,7 @@ import {
   providerRequiresApiKey,
   type ProviderName,
 } from '../providers/index.js';
-import type { Message, ExtractedContent } from '../shared/messages.js';
+import type { ContentSection, Message, ExtractedContent } from '../shared/messages.js';
 import type { Problem, SessionSummary } from '../engine/types.js';
 import { generateId } from '../engine/utils.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
@@ -38,6 +38,11 @@ import {
 } from './content-script-bridge.js';
 import { extractPdfContentFromTabUrl } from './PdfBackgroundExtractor.js';
 import { buildSelectionContent, resolveSelectedText } from './selection-content.js';
+import {
+  buildSectionExtractedContent,
+  getContentSections,
+  shouldOfferSectionChoice,
+} from './content-sections.js';
 
 const CONTENT_SCRIPT_PATH = 'dist/content.js';
 const QUIZ_SELECTION_CONTEXT_MENU_ID = 'quiz-selection';
@@ -48,6 +53,7 @@ const engine = new QuizEngine();
 let activeTabId: number | null = null;
 let tabSessions: TabQuizSessionMap = {};
 let lastExtracted: ExtractedContent | null = null;
+let pendingSections: ContentSection[] | null = null;
 let currentProblems: Problem[] = [];
 let currentTopics: string[] = [];
 let lastCompletedQuiz: CompletedQuizData | null = null;
@@ -187,6 +193,7 @@ async function persistState() {
   const session = {
     snapshot: engine.serialize(),
     lastExtracted,
+    pendingSections: pendingSections ? pendingSections.map(section => ({ ...section })) : null,
     currentTopics: cloneTopics(currentTopics),
     lastCompletedQuiz: lastCompletedQuiz
       ? {
@@ -243,6 +250,13 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
       switch (message.type) {
         case 'GENERATE_QUIZ':
           return await handleGenerateQuiz(activeTab, message.payload?.content);
+        case 'GENERATE_SECTION_QUIZ':
+          return await handleGenerateSectionQuiz(message.payload?.sectionIndex);
+        case 'DISMISS_SECTIONS':
+          pendingSections = null;
+          currentGenerationWarning = null;
+          await persistState();
+          return { type: 'ok' };
         case 'START_QUIZ':
           engine.start();
           return { type: 'ok' };
@@ -272,6 +286,18 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
 
 async function handleGetState() {
   const state = engine.state;
+
+  if (state === 'idle' && pendingSections && lastExtracted) {
+    return {
+      type: 'RESTORED_STATE',
+      payload: {
+        state: 'sections',
+        title: lastExtracted.title,
+        totalWords: lastExtracted.wordCount,
+        sections: pendingSections.map(section => ({ ...section })),
+      },
+    };
+  }
 
   if (state === 'idle' && currentProblems.length > 0 && lastExtracted) {
     return {
@@ -313,9 +339,6 @@ async function handleGetState() {
 
 async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: ExtractedContent) {
   const settings = await storage.getSettings();
-  if (providerRequiresApiKey(settings.provider) && !settings.apiKey) {
-    throw new Error('No API key configured. Open Settings to add one.');
-  }
 
   if (providedContent) {
     lastExtracted = { ...providedContent };
@@ -344,6 +367,56 @@ async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: Extrac
     throw new Error('Not enough text content on this page (minimum 50 words)');
   }
 
+  if (shouldOfferSectionChoice(lastExtracted)) {
+    pendingSections = getContentSections(lastExtracted);
+    currentProblems = [];
+    currentTopics = [];
+    lastCompletedQuiz = null;
+    currentGenerationWarning = null;
+    engine.restore(createEmptySession().snapshot);
+    await persistState();
+
+    return {
+      type: 'CONTENT_SECTIONS',
+      payload: {
+        title: lastExtracted.title,
+        totalWords: lastExtracted.wordCount,
+        sections: pendingSections.map(section => ({ ...section })),
+      },
+    };
+  }
+
+  return await generateQuizFromExtractedContent(lastExtracted, settings);
+}
+
+async function handleGenerateSectionQuiz(sectionIndex?: number) {
+  if (!lastExtracted) {
+    throw new Error('No extracted content available for section generation.');
+  }
+
+  const settings = await storage.getSettings();
+  const selectedContent = sectionIndex === undefined
+    ? { ...lastExtracted }
+    : buildSectionExtractedContent(lastExtracted, sectionIndex);
+
+  if (!selectedContent) {
+    throw new Error('That section is no longer available. Re-extract the page and try again.');
+  }
+
+  return await generateQuizFromExtractedContent(selectedContent, settings);
+}
+
+async function generateQuizFromExtractedContent(
+  content: ExtractedContent,
+  settings: Awaited<ReturnType<StorageManager['getSettings']>>,
+) {
+  if (providerRequiresApiKey(settings.provider) && !settings.apiKey) {
+    throw new Error('No API key configured. Open Settings to add one.');
+  }
+
+  lastExtracted = { ...content };
+  pendingSections = null;
+
   const provider = createProvider(settings.provider, {
     apiKey: settings.apiKey,
     model: settings.model,
@@ -370,7 +443,7 @@ async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: Extrac
 
   return {
     type: 'QUIZ_GENERATED',
-    payload: { problems, title: lastExtracted.title, warning: generatedQuiz.warning },
+    payload: { problems, title: content.title, warning: generatedQuiz.warning },
   };
 }
 
@@ -566,6 +639,7 @@ function applyTabSession(session: ReturnType<typeof getTabQuizSession>, tabId: n
   engine.restore(session.snapshot);
   currentProblems = cloneProblems(session.snapshot.problems);
   lastExtracted = session.lastExtracted ? { ...session.lastExtracted } : null;
+  pendingSections = session.pendingSections ? session.pendingSections.map(section => ({ ...section })) : null;
   currentTopics = cloneTopics(session.currentTopics);
   lastCompletedQuiz = session.lastCompletedQuiz
     ? {

@@ -1,5 +1,5 @@
 import type { EngineSnapshot, Problem, SessionSummary } from '../engine/types.js';
-import type { ExtractedContent } from '../shared/messages.js';
+import type { ContentSection, ExtractedContent } from '../shared/messages.js';
 
 export type CompletedQuizData = {
   problems: Problem[];
@@ -9,6 +9,7 @@ export type CompletedQuizData = {
 export type TabQuizSession = {
   snapshot: EngineSnapshot;
   lastExtracted: ExtractedContent | null;
+  pendingSections: ContentSection[] | null;
   currentTopics: string[];
   lastCompletedQuiz: CompletedQuizData | null;
   generationWarning: string | null;
@@ -26,6 +27,7 @@ export function createEmptySession(): TabQuizSession {
       startedAt: 0,
     },
     lastExtracted: null,
+    pendingSections: null,
     currentTopics: [],
     lastCompletedQuiz: null,
     generationWarning: null,
@@ -54,7 +56,11 @@ export function removeTabQuizSession(sessions: TabQuizSessionMap, tabId: number)
 }
 
 export function hasSessionData(session: TabQuizSession): boolean {
-  return session.snapshot.problems.length > 0 || session.lastCompletedQuiz !== null;
+  return (
+    session.snapshot.problems.length > 0 ||
+    session.lastCompletedQuiz !== null ||
+    (session.pendingSections?.length ?? 0) > 0
+  );
 }
 
 export function cloneTabQuizSession(session: TabQuizSession): TabQuizSession {
@@ -68,6 +74,9 @@ export function cloneTabQuizSession(session: TabQuizSession): TabQuizSession {
       answers: session.snapshot.answers.map(answer => ({ ...answer })),
     },
     lastExtracted: session.lastExtracted ? { ...session.lastExtracted } : null,
+    pendingSections: session.pendingSections
+      ? session.pendingSections.map(section => ({ ...section }))
+      : null,
     currentTopics: [...session.currentTopics],
     lastCompletedQuiz: session.lastCompletedQuiz
       ? {

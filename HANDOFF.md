@@ -2,6 +2,11 @@
 
 ## Completed
 
+- Added long-content sectioning with a section picker for extracted content over 3000 words
+- Preferred heading-based splits when HTML headings are available, but fell back to paragraph clustering and fixed-size arbitrary chunks when the source is flat or still too large
+- Added persisted per-tab section-picker state plus `CONTENT_SECTIONS`, `GENERATE_SECTION_QUIZ`, and `DISMISS_SECTIONS` message support
+- Added panel UI for choosing a section, generating from all content, and dismissing the picker
+- Fixed a review-found state bug by making the section picker explicitly dismissible in background state instead of only hiding it in the panel
 - Added a `Quiz this selection` context-menu action that generates a quiz from highlighted page text
 - Added a typed `GET_SELECTION_TEXT` content-script message and reused the existing content-script attachment path for selection reads
 - Added a background helper that turns selected text into `ExtractedContent`, so selection quizzes go through the normal generator path instead of special-case quiz plumbing
@@ -52,6 +57,9 @@
 
 ## Decisions
 
+- Kept sectioning in the background layer, not the engine, because it is document-extraction/UI orchestration rather than shared quiz-core behavior
+- Made heading boundaries the first choice, but treated reasonable arbitrary chunking as an explicit last-resort strategy rather than a failure case; long flat text should still be quizzable
+- Stored only section summaries in tab-session state and recomputed section text from `lastExtracted` when the user picks a section, which keeps persistence smaller and the segmentation logic deterministic
 - Kept highlight-to-quiz on the existing `ExtractedContent` pipeline instead of inventing a separate “selection quiz” request shape; the only special step is obtaining the selected text
 - Reused the existing content-script injection/access path for selection reads so host-permission behavior stays consistent with normal extraction
 - Treated `window.getSelection()` as the preferred source but used `chrome.contextMenus`’s `selectionText` as a fallback because context-menu selections can outlive or differ from page selection state
@@ -88,12 +96,15 @@
 
 ## Validation
 
-- `npm test` passed with 130/130 tests
+- `npm test` passed with 133/133 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- If a new intermediate UI state should survive a worker restart, it needs to be persisted explicitly; a pure panel response is not enough once the service worker becomes the source of truth for restore
+- Heading-based segmentation is useful when available, but long-form support still needs a deterministic no-structure fallback; otherwise books, scans, and flat exports remain effectively unquizzable
+- If an intermediate state is restorable from background state, it also needs a real dismiss/reset message; panel-only hiding just creates “sticky” restore bugs
 - If a feature can trigger quiz generation from outside the panel, the panel needs to react to background `GENERATING_STATUS` / `QUIZ_GENERATED` / `QUIZ_ERROR` messages too; otherwise external generation silently finishes off-screen
 - `window.getSelection()` is not always the same as what Chrome exposes to a context-menu click; for selection-driven features, keep a fallback to `info.selectionText`
 - If a panel action ultimately uses saved background settings, permission preflight should use that same saved settings source too; otherwise unsaved form changes can prompt for one host while the background actually fetches another

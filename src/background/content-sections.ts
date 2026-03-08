@@ -1,0 +1,194 @@
+import type { ContentSection, ExtractedContent } from '../shared/messages.js';
+
+export const SECTIONING_WORD_THRESHOLD = 3000;
+const TARGET_SECTION_WORDS = 1200;
+const MIN_SECTION_WORDS = 500;
+const MAX_SECTION_WORDS = 1800;
+
+type SectionChunk = {
+  title: string;
+  textContent: string;
+};
+
+export function shouldOfferSectionChoice(content: ExtractedContent): boolean {
+  return content.wordCount > SECTIONING_WORD_THRESHOLD && getContentSections(content).length > 1;
+}
+
+export function getContentSections(content: ExtractedContent): ContentSection[] {
+  return buildSectionChunks(content).map((section, index) => ({
+    index,
+    title: section.title,
+    wordCount: countWords(section.textContent),
+    preview: section.textContent.slice(0, 140),
+  }));
+}
+
+export function buildSectionExtractedContent(
+  content: ExtractedContent,
+  sectionIndex: number,
+): ExtractedContent | null {
+  const section = buildSectionChunks(content)[sectionIndex];
+  if (!section) {
+    return null;
+  }
+
+  const textContent = section.textContent.trim();
+
+  return {
+    ...content,
+    title: `${content.title} — ${section.title}`,
+    content: textContent,
+    textContent,
+    wordCount: countWords(textContent),
+    excerpt: textContent.slice(0, 200),
+  };
+}
+
+function buildSectionChunks(content: ExtractedContent): SectionChunk[] {
+  const headingSections = buildHeadingSections(content.content);
+  if (headingSections.length > 1) {
+    return rebalanceSections(headingSections, content.title);
+  }
+
+  return rebalanceSections(buildFallbackSections(content.textContent, content.title), content.title);
+}
+
+function buildHeadingSections(html: string): SectionChunk[] {
+  const headingRegex = /<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi;
+  const matches = [...html.matchAll(headingRegex)];
+  if (matches.length < 2) {
+    return [];
+  }
+
+  const sections: SectionChunk[] = [];
+  for (let index = 0; index < matches.length; index++) {
+    const match = matches[index];
+    const currentIndex = match.index ?? 0;
+    const nextIndex = matches[index + 1]?.index ?? html.length;
+    const headingHtml = match[2] ?? '';
+    const title = stripHtml(headingHtml) || `Section ${index + 1}`;
+    const sectionHtml = html.slice(currentIndex, nextIndex);
+    const textContent = normalizeText(stripHtml(sectionHtml));
+
+    if (!textContent) {
+      continue;
+    }
+
+    sections.push({ title, textContent });
+  }
+
+  return sections;
+}
+
+function buildFallbackSections(text: string, title: string): SectionChunk[] {
+  const paragraphs = text
+    .split(/\n\s*\n/)
+    .map(normalizeText)
+    .filter(Boolean);
+
+  if (paragraphs.length >= 2) {
+    return paragraphs.map((paragraph, index) => ({
+      title: `Part ${index + 1}`,
+      textContent: paragraph,
+    }));
+  }
+
+  return splitOversizedChunk({
+    title: title || 'Part 1',
+    textContent: normalizeText(text),
+  });
+}
+
+function rebalanceSections(sections: SectionChunk[], baseTitle: string): SectionChunk[] {
+  const output: SectionChunk[] = [];
+  let bufferTitle = '';
+  let bufferText = '';
+
+  for (const section of sections) {
+    const normalizedText = normalizeText(section.textContent);
+    if (!normalizedText) {
+      continue;
+    }
+
+    const sectionWordCount = countWords(normalizedText);
+    if (sectionWordCount > MAX_SECTION_WORDS) {
+      flushBuffer(output);
+      output.push(...splitOversizedChunk(section));
+      continue;
+    }
+
+    if (!bufferText) {
+      bufferTitle = section.title;
+      bufferText = normalizedText;
+      continue;
+    }
+
+    const bufferedWordCount = countWords(bufferText);
+    if (bufferedWordCount < MIN_SECTION_WORDS || bufferedWordCount + sectionWordCount <= TARGET_SECTION_WORDS) {
+      bufferText = `${bufferText}\n\n${normalizedText}`.trim();
+      continue;
+    }
+
+    output.push({ title: bufferTitle || baseTitle || `Part ${output.length + 1}`, textContent: bufferText });
+    bufferTitle = section.title;
+    bufferText = normalizedText;
+  }
+
+  flushBuffer(output);
+  return output.length > 0 ? output : splitOversizedChunk({ title: baseTitle || 'Part 1', textContent: '' });
+
+  function flushBuffer(target: SectionChunk[]) {
+    if (!bufferText) {
+      return;
+    }
+
+    target.push({
+      title: bufferTitle || baseTitle || `Part ${target.length + 1}`,
+      textContent: bufferText,
+    });
+    bufferTitle = '';
+    bufferText = '';
+  }
+}
+
+function splitOversizedChunk(section: SectionChunk): SectionChunk[] {
+  const words = section.textContent.split(/\s+/).filter(Boolean);
+  if (words.length === 0) {
+    return [];
+  }
+
+  const chunks: SectionChunk[] = [];
+  for (let start = 0; start < words.length; start += TARGET_SECTION_WORDS) {
+    const chunkWords = words.slice(start, start + TARGET_SECTION_WORDS);
+    const suffix = words.length > TARGET_SECTION_WORDS ? ` (Part ${chunks.length + 1})` : '';
+    chunks.push({
+      title: `${section.title}${suffix}`,
+      textContent: chunkWords.join(' '),
+    });
+  }
+
+  return chunks;
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>');
+}
+
+function normalizeText(text: string): string {
+  return text
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function countWords(text: string): number {
+  return text ? text.split(/\s+/).filter(Boolean).length : 0;
+}
