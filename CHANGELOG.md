@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.1.36 — Question Quality Filter (2026-03-08)
+
+### Quiz Quality
+- Added a lightweight post-generation quality filter that removes obviously weak multiple-choice questions before they reach the quiz engine
+- Rejected clear giveaway patterns such as duplicate options, `all/none of the above` answers, correct-answer length outliers, and cases where only one option is formatted like a full sentence
+- Added a small generation buffer so the provider can return a few extra questions per chunk and the final quiz is less likely to undershoot after filtering
+
+### Architecture
+- Kept the filter as a pure helper in the background generator layer instead of pushing provider-specific heuristics into `src/providers/`
+
+### Testing
+- 98 tests (was 89): added focused heuristic coverage plus generator tests that verify low-quality questions are dropped and buffered generation is requested
+
 ## v0.1.35 — Stronger Distractor Prompt (2026-03-08)
 
 ### Quiz Quality

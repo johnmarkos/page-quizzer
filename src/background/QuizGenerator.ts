@@ -2,6 +2,7 @@ import type { Problem } from '../engine/types.js';
 import type { BaseProvider } from '../providers/BaseProvider.js';
 import type { ExtractedContent } from '../shared/messages.js';
 import { CHUNK_SIZE } from '../shared/constants.js';
+import { buildGenerationBuffer, filterLowQualityQuestions } from './question-quality.js';
 
 export type GenerationOptions = {
   density: number;
@@ -39,13 +40,26 @@ export class QuizGenerator {
 
     for (let i = 0; i < chunks.length; i++) {
       onStatus?.(`Processing chunk ${i + 1}/${chunks.length}...`);
+      const remainingQuestions = options.maxQuestions - allProblems.length;
+      const requestedQuestions = Math.min(
+        options.maxQuestions,
+        remainingQuestions + buildGenerationBuffer(remainingQuestions),
+      );
+
       const problems = await this.#provider.generateQuiz({
         content: chunks[i],
         density: options.density,
-        maxQuestions: options.maxQuestions - allProblems.length,
+        maxQuestions: requestedQuestions,
         title: content.title,
       });
-      allProblems.push(...problems);
+      const acceptedProblems = filterLowQualityQuestions(problems);
+      if (acceptedProblems.length < problems.length) {
+        console.warn(
+          'Filtered low-quality questions',
+          `${problems.length - acceptedProblems.length}/${problems.length}`,
+        );
+      }
+      allProblems.push(...acceptedProblems);
 
       if (allProblems.length >= options.maxQuestions) break;
     }

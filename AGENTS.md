@@ -221,6 +221,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - Don’t persist empty per-tab session placeholders; they create dead storage entries and make tab-routing state harder to reason about than storing only ready/in-progress/completed tabs
 - For wrapped answer choices, line-height tweaks alone are usually not enough; separate the number badge and option text into their own layout elements so the badge does not distort multi-line text rhythm
 - When improving prompt quality, encode the new quality bar in both the system prompt and the user prompt, then bump the prompt version so later question-quality changes are traceable
+- If you add a heuristic quality filter for generated questions, keep it provider-agnostic and structural, then give the generator a small over-generation buffer so dropping weak questions does not immediately shrink the final quiz
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

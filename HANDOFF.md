@@ -2,6 +2,8 @@
 
 ## Completed
 
+- Added a lightweight post-generation question-quality filter that drops obviously weak multiple-choice questions before they reach the engine
+- Added a small over-generation buffer in `QuizGenerator` so filtering poor questions does not immediately collapse the final quiz count
 - Strengthened the quiz-generation prompt so distractors are instructed to be realistic misunderstandings, parallel in style/detail, and less obviously giveaway
 - Shifted prompt guidance toward conceptual and application questions instead of surface-level fact recall
 - Added `D6` to the roadmap for exporting a generated quiz as a local web page
@@ -24,6 +26,8 @@
 
 ## Decisions
 
+- Kept the quality filter conservative and structural: reject only patterns that are clearly low-signal or giveaway, rather than trying to “understand” subject matter correctness heuristically
+- Put the filter in the background generator layer instead of `src/providers/` so provider outputs all pass through one shared quality gate
 - Kept the “better quizzes” work prompt-only for this milestone instead of mixing it with post-generation heuristics; that isolates whether improved question quality comes from instruction tuning before adding more moving parts
 - Put the new export idea on the roadmap as a standalone local-HTML deliverable first, with OpenQuizzer-style JSON as a future extension rather than part of the first version
 - Kept the typography fix markup-local to the panel instead of introducing new render helpers; the problem was structural layout, not shared logic
@@ -42,12 +46,14 @@
 
 ## Validation
 
-- `npm test` passed with 89/89 tests
+- `npm test` passed with 98/98 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- Quality heuristics should be biased toward obviously bad structural patterns; if they get too semantic or too aggressive, they will quietly delete valid questions and make quiz counts unpredictable
+- If filtered questions reduce final counts, requesting a small buffer at generation time is simpler and safer than trying to regenerate recursively inside provider code
 - If prompt quality is the thing being changed, bump the prompt version and add prompt-specific assertions; otherwise later question-quality comparisons are hard to attribute to a specific instruction set
 - Inline number badges next to wrapped answer text look acceptable for short options but drift noticeably on real content; using a dedicated flex row/column structure is more stable than trying to tune line-height alone
 - Tab-scoped persistence needs both sides to participate: the service worker must swap sessions when the active tab changes, and the panel must ask for fresh state on tab activation/navigation or it will keep showing the previous tab’s view
