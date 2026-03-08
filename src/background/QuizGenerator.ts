@@ -8,6 +8,11 @@ export type GenerationOptions = {
   maxQuestions: number;
 };
 
+export type GeneratedQuiz = {
+  problems: Problem[];
+  topics: string[];
+};
+
 export class QuizGenerator {
   #provider: BaseProvider;
 
@@ -19,7 +24,14 @@ export class QuizGenerator {
     content: ExtractedContent,
     options: GenerationOptions,
     onStatus?: (status: string) => void,
-  ): Promise<Problem[]> {
+  ): Promise<GeneratedQuiz> {
+    const topicPromise = this.#provider
+      .categorizeTopics(content.textContent, content.title)
+      .catch((error) => {
+        console.warn('Topic categorization failed', error instanceof Error ? error.message : error);
+        return [];
+      });
+
     const chunks = this.#chunkContent(content.textContent);
     onStatus?.(`Generating questions from ${chunks.length} chunk(s)...`);
 
@@ -38,7 +50,10 @@ export class QuizGenerator {
       if (allProblems.length >= options.maxQuestions) break;
     }
 
-    return allProblems.slice(0, options.maxQuestions);
+    return {
+      problems: allProblems.slice(0, options.maxQuestions),
+      topics: await topicPromise,
+    };
   }
 
   #chunkContent(text: string): string[] {

@@ -66,6 +66,8 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [ ] **D4: Per-question performance tracking** — Track how many times each question (by content hash) has been seen and answered correctly. Store in `chrome.storage.local` as a map: `{ [hash]: { seen: number, correct: number } }`. Update after each answer. No UI yet — this is the data layer for future spaced repetition. Test: unit test the tracking logic as a pure function.
 
+- [ ] **D5: Per-tab quiz sessions** — Keep independent in-progress quizzes per browser tab or page, so switching tabs restores that tab’s quiz instead of replacing a single global session. Generating a quiz on a new tab should create a new session only for that tab. Requires tab-scoped persistence, panel restore routing, and a clear policy for tab close/navigation. Test: manual across multiple tabs plus pure session-routing helpers.
+
 ### Settings & Polish
 
 - [x] **S1: Model selection dropdown** — Settings view shows available models per provider (hardcoded list per provider class — add a `models` getter to `BaseProvider`). When provider changes, model dropdown updates. Selected model saved to storage. Test: provider model lists are non-empty arrays.

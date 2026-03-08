@@ -48,4 +48,16 @@ describe('history import helpers', () => {
     expect(merged.map(record => record.id)).toEqual(['one', 'three', 'two']);
     expect(merged[2].date).toBe(3000);
   });
+
+  it('accepts imported topic tags', () => {
+    const json = serializeHistoryRecords([
+      {
+        ...mockSession('one', 1000),
+        topics: ['physics', 'science'],
+      },
+    ]);
+
+    const [parsed] = parseImportedSessions(json);
+    expect(parsed.topics).toEqual(['physics', 'science']);
+  });
 });

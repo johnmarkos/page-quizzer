@@ -388,6 +388,29 @@ nav {
   margin-top: 0;
 }
 
+#history-topic-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.history-topic-filter {
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.history-topic-filter.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
 .history-item {
   padding: 12px;
   border: 1px solid var(--border);
@@ -399,6 +422,24 @@ nav {
 .history-item:hover { background: var(--bg-secondary); }
 .history-title { font-weight: bold; font-size: 13px; }
 .history-meta { font-size: 12px; color: var(--text-muted); }
+
+.history-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.history-topic-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--primary) 12%, var(--bg-secondary));
+  color: var(--primary);
+}
 
 /* Review */
 .review-header {

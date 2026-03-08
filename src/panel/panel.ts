@@ -4,6 +4,7 @@ import type { ReviewItem } from '../shared/messages.js';
 import type { ProviderName } from '../providers/index.js';
 import { buildOriginPermissionPattern } from '../shared/site-access.js';
 import { buildHistoryExportFilename, serializeHistoryRecords } from './history-export.js';
+import { filterSessionsByTopic, getHistoryTopics } from './history-topics.js';
 import { getProviderModels, normalizeProviderModel } from '../providers/provider-models.js';
 import {
   buildShortcutHelpText,
@@ -26,6 +27,7 @@ let currentExplanation = '';
 let currentSessions: SessionRecord[] = [];
 let currentOptionCount = 4;
 let shortcutHelpVisible = false;
+let activeHistoryTopic: string | null = null;
 
 // --- Navigation ---
 document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -432,33 +434,12 @@ $('test-connection-btn').addEventListener('click', async () => {
 // --- History ---
 async function loadHistory() {
   const sessions = await fetchSessions();
-  const list = $('history-list');
-  const empty = $('history-empty');
   const exportBtn = $('export-history-btn') as HTMLButtonElement;
 
   currentSessions = sessions;
+  activeHistoryTopic = null;
   exportBtn.disabled = sessions.length === 0;
-
-  if (sessions.length === 0) {
-    show(empty);
-    list.innerHTML = '';
-    return;
-  }
-
-  hide(empty);
-  list.innerHTML = sessions
-    .slice()
-    .reverse()
-    .map((s) => `
-      <div class="history-item">
-        <div class="history-title">${escapeHtml(s.title)}</div>
-        <div class="history-meta">
-          ${s.score.percentage}% &middot; ${s.score.correct}/${s.score.total} &middot;
-          ${new Date(s.date).toLocaleDateString()}
-        </div>
-      </div>
-    `)
-    .join('');
+  renderHistory();
 }
 
 async function fetchSessions(): Promise<SessionRecord[]> {
@@ -589,4 +570,72 @@ function renderModelOptions(provider: ProviderName, requestedModel?: string) {
     .map(model => `<option value="${escapeHtml(model)}">${escapeHtml(model)}</option>`)
     .join('');
   modelSelect.value = selectedModel;
+}
+
+function renderHistory() {
+  const list = $('history-list');
+  const empty = $('history-empty');
+  const topicFilters = $('history-topic-filters');
+  const filteredSessions = filterSessionsByTopic(currentSessions, activeHistoryTopic);
+  const availableTopics = getHistoryTopics(currentSessions);
+
+  if (availableTopics.length > 0) {
+    topicFilters.innerHTML = [
+      renderTopicFilterButton('All', null, activeHistoryTopic === null),
+      ...availableTopics.map(topic => renderTopicFilterButton(topic, topic, activeHistoryTopic === topic)),
+    ].join('');
+    show(topicFilters);
+
+    topicFilters.querySelectorAll<HTMLButtonElement>('[data-topic]').forEach(button => {
+      button.addEventListener('click', () => {
+        const selectedTopic = button.dataset.topic;
+        activeHistoryTopic = selectedTopic === '__all__' ? null : selectedTopic || null;
+        renderHistory();
+      });
+    });
+  } else {
+    topicFilters.innerHTML = '';
+    hide(topicFilters);
+  }
+
+  if (filteredSessions.length === 0) {
+    show(empty);
+    empty.textContent = activeHistoryTopic
+      ? `No quiz history yet for "${activeHistoryTopic}".`
+      : 'No quiz history yet.';
+    list.innerHTML = '';
+    return;
+  }
+
+  hide(empty);
+  list.innerHTML = filteredSessions
+    .slice()
+    .reverse()
+    .map((session) => `
+      <div class="history-item">
+        <div class="history-title">${escapeHtml(session.title)}</div>
+        <div class="history-meta">
+          ${session.score.percentage}% &middot; ${session.score.correct}/${session.score.total} &middot;
+          ${new Date(session.date).toLocaleDateString()}
+        </div>
+        ${renderHistoryTopics(session.topics)}
+      </div>
+    `)
+    .join('');
+}
+
+function renderHistoryTopics(topics?: string[]) {
+  if (!topics || topics.length === 0) {
+    return '';
+  }
+
+  return `
+    <div class="history-topics">
+      ${topics.map(topic => `<span class="history-topic-chip">${escapeHtml(topic)}</span>`).join('')}
+    </div>
+  `;
+}
+
+function renderTopicFilterButton(label: string, topic: string | null, isActive: boolean) {
+  return `<button class="history-topic-filter${isActive ? ' active' : ''}" type="button" data-topic="${escapeHtml(topic ?? '__all__')}">${escapeHtml(label)}</button>`;
 }

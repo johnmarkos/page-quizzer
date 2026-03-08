@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.1.32 — Topic Categorization (2026-03-08)
+
+### Data & History
+- Added topic categorization across Anthropic, OpenAI, and Gemini providers using the existing topic prompt and provider-specific JSON responses
+- Generated topic tags in parallel with quiz creation and stored them on session history records
+- Added topic chips to history entries plus topic filter buttons in the history view
+
+### Reliability
+- Persisted the in-progress topic list alongside the engine snapshot so service-worker restarts do not drop topic metadata before quiz completion
+- Kept topic categorization best-effort: quiz generation still succeeds if topic tagging fails, with a narrow warning log for debugging
+
+### Testing
+- 84 tests (was 76): added coverage for topic prompt/schema behavior, history topic filtering helpers, imported session topics, and the non-fatal topic-generation fallback path
+
 ## v0.1.31 — Expanded OpenAI Model Picker (2026-03-08)
 
 ### Settings & Providers

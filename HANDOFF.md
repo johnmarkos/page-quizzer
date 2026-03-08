@@ -9,7 +9,9 @@
 - Bootstrapped `pdfjs`'s fake-worker handler in the service worker so background PDF parsing no longer needs `GlobalWorkerOptions.workerSrc`
 - Added provider-specific model lists and a dynamic model dropdown in Settings, with stored-model normalization for stale selections
 - Expanded the OpenAI model list to include `gpt-5-mini` and `gpt-4.1-nano`, with `gpt-5-mini` as the current default in the picker
+- Added topic categorization as best-effort provider metadata, persisted current topics through worker restarts, and exposed topic chips/filters in history
 - Added `Q6` and `Q7` to the roadmap for stronger distractors and question-quality filtering
+- Added `D5` to the roadmap for per-tab quiz sessions
 
 ## Decisions
 
@@ -20,10 +22,11 @@
 - For the service-worker PDF path, supplying `WorkerMessageHandler` directly is safer than relying on `workerSrc` because it avoids another runtime module load in a context where `import()` is restricted
 - Kept provider model metadata in `src/providers/` so the panel can render model choices without scattering provider-specific strings through unrelated code
 - Used the current OpenAI pricing page to justify exposing cheaper OpenAI options directly instead of guessing from older model defaults
+- Kept topic generation non-fatal so a provider hiccup in metadata tagging cannot block the core quiz flow
 
 ## Validation
 
-- `npm test` passed with 76/76 tests
+- `npm test` passed with 84/84 tests
 - `npm run build` passed
 
 ## Gotchas

@@ -10,3 +10,16 @@ ${content.split(/\s+/).slice(0, 500).join(' ')}
 
 Return JSON: {"topics": ["tag1", "tag2"]}`;
 }
+
+export const TOPIC_RESPONSE_JSON_SCHEMA = {
+  type: 'object' as const,
+  properties: {
+    topics: {
+      type: 'array' as const,
+      items: { type: 'string' as const },
+      minItems: 1,
+      maxItems: 3,
+    },
+  },
+  required: ['topics'],
+};

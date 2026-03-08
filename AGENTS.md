@@ -216,6 +216,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - If bundled `pdfjs` runs in a service worker with `disableWorker: true`, it may still expect the fake-worker bootstrap path; preload `globalThis.pdfjsWorker.WorkerMessageHandler` to avoid a `workerSrc` requirement in the background context
 - If a provider setting exposes selectable models, normalize any stored model name against the current provider on read; stale saved model strings can otherwise break generation long after the UI is updated
 - Model-picker defaults are a product choice, not just a technical one; verify current pricing/docs before changing them and prefer exposing cheap fallback options explicitly so users can trade quality for cost themselves
+- If metadata like topic tags is generated before quiz completion but saved only at the end, persist it alongside the in-progress quiz snapshot; otherwise service-worker restarts silently drop it
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

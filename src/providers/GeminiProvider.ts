@@ -6,7 +6,9 @@ import {
   buildSystemPrompt,
   buildUserPrompt,
 } from '../prompts/quiz-generation.js';
+import { TOPIC_RESPONSE_JSON_SCHEMA, buildTopicPrompt } from '../prompts/topic-categorization.js';
 import { parseQuizQuestions } from './parseQuizQuestions.js';
+import { parseTopicResponse } from './parseTopics.js';
 import { getDefaultProviderModel, getProviderModels } from './provider-models.js';
 
 type GeminiGenerateContentResponse = {
@@ -111,6 +113,36 @@ export class GeminiProvider extends BaseProvider {
     }
 
     return true;
+  }
+
+  async categorizeTopics(content: string, title?: string): Promise<string[]> {
+    const response = await fetch(`${GEMINI_API_BASE_URL}/${encodeURIComponent(this.model)}:generateContent`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': this.config.apiKey,
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: buildTopicPrompt(content, title) }] }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          responseJsonSchema: TOPIC_RESPONSE_JSON_SCHEMA,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`Gemini API error (${response.status}): ${err}`);
+    }
+
+    const data = await response.json() as GeminiGenerateContentResponse;
+    const contentText = getTextResponse(data);
+    if (!contentText) {
+      throw new Error('No topic tags in Gemini response');
+    }
+
+    return this.parseTopicsResponse(parseTopicResponse(contentText));
   }
 
   #parseQuestions(raw: RawQuizQuestion[]): Problem[] {

@@ -32,6 +32,7 @@ const engine = new QuizEngine();
 
 let lastExtracted: ExtractedContent | null = null;
 let currentProblems: Problem[] = [];
+let currentTopics: string[] = [];
 let lastCompletedQuiz: CompletedQuizData | null = null;
 
 // --- Service worker persistence ---
@@ -47,6 +48,7 @@ async function persistState() {
   await chrome.storage.local.set({
     [STORAGE_KEYS.ENGINE_SNAPSHOT]: snapshot,
     [STORAGE_KEYS.LAST_EXTRACTED]: lastExtracted,
+    [STORAGE_KEYS.CURRENT_TOPICS]: currentTopics,
   });
 }
 
@@ -54,6 +56,7 @@ async function restoreState() {
   const data = await chrome.storage.local.get([
     STORAGE_KEYS.ENGINE_SNAPSHOT,
     STORAGE_KEYS.LAST_EXTRACTED,
+    STORAGE_KEYS.CURRENT_TOPICS,
     STORAGE_KEYS.LAST_COMPLETED_QUIZ,
   ]);
   const snapshot = data[STORAGE_KEYS.ENGINE_SNAPSHOT] as EngineSnapshot | undefined;
@@ -61,6 +64,7 @@ async function restoreState() {
     engine.restore(snapshot);
     currentProblems = cloneProblems(snapshot.problems);
     lastExtracted = data[STORAGE_KEYS.LAST_EXTRACTED] || null;
+    currentTopics = cloneTopics(data[STORAGE_KEYS.CURRENT_TOPICS]);
   }
 
   const completedQuiz = data[STORAGE_KEYS.LAST_COMPLETED_QUIZ] as CompletedQuizData | undefined;
@@ -75,7 +79,12 @@ async function restoreState() {
 }
 
 async function clearPersistedState() {
-  await chrome.storage.local.remove([STORAGE_KEYS.ENGINE_SNAPSHOT, STORAGE_KEYS.LAST_EXTRACTED]);
+  currentTopics = [];
+  await chrome.storage.local.remove([
+    STORAGE_KEYS.ENGINE_SNAPSHOT,
+    STORAGE_KEYS.LAST_EXTRACTED,
+    STORAGE_KEYS.CURRENT_TOPICS,
+  ]);
 }
 
 // Restore on startup
@@ -113,6 +122,7 @@ engine.on('quizComplete', async (payload) => {
       url: lastExtracted.url,
       title: lastExtracted.title,
       date: Date.now(),
+      topics: cloneTopics(currentTopics),
     };
     await storage.saveSession(record);
   }
@@ -225,17 +235,19 @@ async function handleGenerateQuiz() {
   });
 
   const generator = new QuizGenerator(provider);
-  const problems = await generator.generate(
+  const generatedQuiz = await generator.generate(
     lastExtracted,
     { density: settings.density, maxQuestions: settings.maxQuestions },
     (status) => broadcastStatus(status),
   );
 
+  const problems = generatedQuiz.problems;
   if (problems.length === 0) {
     throw new Error('Failed to generate questions from this content');
   }
 
   currentProblems = cloneProblems(problems);
+  currentTopics = cloneTopics(generatedQuiz.topics);
   engine.loadProblems(problems);
 
   return {
@@ -368,6 +380,10 @@ function cloneSummary(summary: SessionSummary): SessionSummary {
     score: { ...summary.score },
     answers: summary.answers.map(answer => ({ ...answer })),
   };
+}
+
+function cloneTopics(topics: unknown): string[] {
+  return Array.isArray(topics) ? topics.filter((topic): topic is string => typeof topic === 'string') : [];
 }
 
 function setQuizBadge(index: number, total: number) {
