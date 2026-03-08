@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.1.41 — Export Quiz as Local Web Page (2026-03-08)
+
+### Data & Sharing
+- Added `Export Quiz` actions to the ready and score views so the current quiz can be saved as a standalone local HTML file
+- Exported quizzes now open without the extension and include a minimal self-contained quiz runner with question navigation, answer feedback, and a final score view
+- Added a background export message so the panel can request the current tab’s quiz data without becoming the source of truth for quiz content
+
+### Review Loop
+- The first reviewer pass found that the exported source URL was only HTML-escaped, not scheme-sanitized. Fixed by allowing clickable links only for `http`, `https`, and `file` URLs; unsafe schemes are rendered as plain text.
+
+### Testing
+- 112 tests (was 107): added pure export-helper coverage for filename generation, HTML content, embedded JSON script safety, and unsafe source URL handling
+
 ## v0.1.40 — Timer Mode (2026-03-08)
 
 ### Quiz Experience

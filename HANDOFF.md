@@ -2,6 +2,9 @@
 
 ## Completed
 
+- Added standalone local HTML quiz export from the ready and score views, with a self-contained offline quiz runner
+- Added a background export message so the panel can fetch current quiz data without owning quiz state itself
+- Fixed a review-found issue in the export page by sanitizing source-link schemes; unsafe URLs now render as plain text instead of clickable links
 - Added optional per-question timer mode in the panel with saved `Off` / `15` / `30` / `60` second settings
 - Added countdown UI and auto-skip on timer expiry, while keeping timer behavior entirely out of the engine
 - Fixed a review-found bug where timer mode would have stayed at `Off` until Settings had been loaded; restore/start now wait for the initial settings load
@@ -35,6 +38,7 @@
 
 ## Decisions
 
+- Kept quiz export as a standalone HTML renderer instead of depending on the built engine bundle; this keeps the first version portable and avoids coupling the exported file to extension build layout
 - Kept timer mode panel-local instead of pushing countdown logic into background or engine state; the timer is a presentation/interaction concern, not quiz-core logic
 - Treated service-worker restore as a prerequisite for message handling instead of a fire-and-forget startup task; otherwise fresh actions can run against empty in-memory state before persistence finishes loading
 - Kept per-question performance tracking as a background-only data layer with no UI yet; that lets future spaced-repetition work build on stable stored stats without forcing premature product decisions
@@ -61,12 +65,13 @@
 
 ## Validation
 
-- `npm test` passed with 107/107 tests
+- `npm test` passed with 112/112 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- Escaping a URL for HTML is not the same thing as making it safe to click; exported pages that render source links should still restrict allowed URL schemes
 - Panel-side features that depend on saved settings need those settings loaded before restore/start flows, not just when the user opens Settings; otherwise “saved” behavior can silently fall back to defaults
 - In MV3, async startup restore should be treated as a real dependency, not best-effort background work; if messages can arrive before restore completes, newer state can be computed from stale in-memory data and then persisted incorrectly
 - Question-performance keys must be independent of shuffled option order or the same question will fragment into multiple records across retries/sessions

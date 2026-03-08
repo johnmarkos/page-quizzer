@@ -217,6 +217,8 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
           return handleRetryMissed();
         case 'GET_REVIEW':
           return handleGetReview();
+        case 'GET_EXPORT_QUIZ':
+          return handleGetExportQuiz();
         case 'GET_STATE':
           return await handleGetState();
         default:
@@ -441,6 +443,21 @@ function handleGetReview() {
         lastCompletedQuiz.problems,
         lastCompletedQuiz.summary.answers,
       ),
+    },
+  };
+}
+
+function handleGetExportQuiz() {
+  if (!lastExtracted || currentProblems.length === 0) {
+    throw new Error('No quiz available to export.');
+  }
+
+  return {
+    type: 'EXPORT_QUIZ_DATA',
+    payload: {
+      title: lastExtracted.title,
+      sourceUrl: lastExtracted.url,
+      problems: cloneProblems(currentProblems),
     },
   };
 }

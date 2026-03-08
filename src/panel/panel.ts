@@ -4,6 +4,7 @@ import type { RestoredStateMessage, ReviewItem } from '../shared/messages.js';
 import type { ProviderName } from '../providers/index.js';
 import { buildOriginPermissionPattern } from '../shared/site-access.js';
 import { buildHistoryExportFilename, serializeHistoryRecords } from './history-export.js';
+import { buildQuizExportFilename, buildQuizExportHtml } from './quiz-export.js';
 import { filterSessionsByTopic, getHistoryTopics } from './history-topics.js';
 import { getProviderModels, normalizeProviderModel } from '../providers/provider-models.js';
 import {
@@ -162,6 +163,14 @@ $('retry-missed-btn').addEventListener('click', async () => {
 
 $('new-quiz-btn').addEventListener('click', () => {
   showQuizSection('quiz-idle');
+});
+
+$('export-ready-quiz-btn').addEventListener('click', () => {
+  void exportCurrentQuiz();
+});
+
+$('export-complete-quiz-btn').addEventListener('click', () => {
+  void exportCurrentQuiz();
 });
 
 $('review-back-btn').addEventListener('click', () => {
@@ -471,6 +480,31 @@ async function loadHistory() {
 async function fetchSessions(): Promise<SessionRecord[]> {
   const response = await chrome.runtime.sendMessage({ type: 'GET_SESSIONS' });
   return response?.payload || [];
+}
+
+async function exportCurrentQuiz() {
+  try {
+    const response = await chrome.runtime.sendMessage({ type: 'GET_EXPORT_QUIZ' });
+    if (response?.type === 'QUIZ_ERROR') {
+      showError(response.payload.error);
+      return;
+    }
+
+    if (response?.type !== 'EXPORT_QUIZ_DATA') {
+      throw new Error('Failed to export quiz');
+    }
+
+    const html = buildQuizExportHtml(response.payload);
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = buildQuizExportFilename(response.payload.title);
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  } catch (err) {
+    showError(err instanceof Error ? err.message : 'Failed to export quiz');
+  }
 }
 
 // --- Keyboard shortcuts ---

@@ -70,7 +70,7 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [x] **D5: Per-tab quiz sessions** — Keep independent in-progress quizzes per browser tab or page, so switching tabs restores that tab’s quiz instead of replacing a single global session. Generating a quiz on a new tab should create a new session only for that tab. Requires tab-scoped persistence, panel restore routing, and a clear policy for tab close/navigation. Test: manual across multiple tabs plus pure session-routing helpers.
 
-- [ ] **D6: Export quiz as local web page** — Add an export path for a generated quiz that produces a self-contained local HTML page the user can open and practice later without the extension. Start simple: render the current quiz data into a lightweight standalone web page with embedded JSON and minimal quiz UI. Future follow-up could also support an OpenQuizzer-style JSON export alongside the HTML export. Test: manual export/open/run flow.
+- [x] **D6: Export quiz as local web page** — Add an export path for a generated quiz that produces a self-contained local HTML page the user can open and practice later without the extension. Start simple: render the current quiz data into a lightweight standalone web page with embedded JSON and minimal quiz UI. Future follow-up could also support an OpenQuizzer-style JSON export alongside the HTML export. Test: manual export/open/run flow.
 
 ### Settings & Polish
 

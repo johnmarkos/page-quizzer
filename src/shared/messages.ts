@@ -50,6 +50,10 @@ export type GetReviewRequest = {
   type: 'GET_REVIEW';
 };
 
+export type GetExportQuizRequest = {
+  type: 'GET_EXPORT_QUIZ';
+};
+
 export type ReviewItemOption = {
   text: string;
   correct: boolean;
@@ -107,6 +111,15 @@ export type GeneratingStatusMessage = {
 export type ReviewDataMessage = {
   type: 'REVIEW_DATA';
   payload: { items: ReviewItem[] };
+};
+
+export type ExportQuizDataMessage = {
+  type: 'EXPORT_QUIZ_DATA';
+  payload: {
+    title: string;
+    sourceUrl: string;
+    problems: Problem[];
+  };
 };
 
 export type SettingsMessage = {
@@ -221,6 +234,7 @@ export type Message =
   | SkipQuestionRequest
   | RetryMissedRequest
   | GetReviewRequest
+  | GetExportQuizRequest
   | QuizGeneratedMessage
   | QuizErrorMessage
   | QuestionShowMessage
@@ -228,6 +242,7 @@ export type Message =
   | QuizCompleteMessage
   | GeneratingStatusMessage
   | ReviewDataMessage
+  | ExportQuizDataMessage
   | SettingsMessage
   | ConnectionResultMessage
   | SessionsMessage
