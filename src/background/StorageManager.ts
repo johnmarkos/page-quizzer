@@ -54,8 +54,8 @@ export class StorageManager {
   }
 
   async saveSettings(settings: Partial<Settings>): Promise<void> {
-    const sync: Record<string, any> = {};
-    const local: Record<string, any> = {};
+    const sync: Record<string, string | number> = {};
+    const local: Record<string, string> = {};
 
     if (settings.provider !== undefined) sync[STORAGE_KEYS.PROVIDER] = settings.provider;
     if (settings.model !== undefined) sync[STORAGE_KEYS.MODEL] = settings.model;

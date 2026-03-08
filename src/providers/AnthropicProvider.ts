@@ -7,6 +7,17 @@ import { parseQuizQuestions } from './parseQuizQuestions.js';
 import { parseTopicResponse } from './parseTopics.js';
 import { getDefaultProviderModel, getProviderModels } from './provider-models.js';
 
+type AnthropicContentBlock = {
+  type: string;
+  name?: string;
+  text?: string;
+  input?: { questions?: RawQuizQuestion[] };
+};
+
+type AnthropicMessagesResponse = {
+  content?: AnthropicContentBlock[];
+};
+
 export class AnthropicProvider extends BaseProvider {
   get name(): string {
     return 'anthropic';
@@ -46,9 +57,9 @@ export class AnthropicProvider extends BaseProvider {
       throw new Error(`Anthropic API error (${response.status}): ${err}`);
     }
 
-    const data = await response.json();
+    const data: AnthropicMessagesResponse = await response.json();
     const toolBlock = data.content?.find(
-      (b: any) => b.type === 'tool_use' && b.name === 'generate_quiz'
+      (b: AnthropicContentBlock) => b.type === 'tool_use' && b.name === 'generate_quiz'
     );
 
     if (!toolBlock?.input?.questions) {
@@ -79,8 +90,8 @@ export class AnthropicProvider extends BaseProvider {
       throw new Error(`Anthropic API error (${response.status}): ${err}`);
     }
 
-    const data = await response.json();
-    const textBlock = data.content?.find((block: { type?: string; text?: string }) => block.type === 'text');
+    const data: AnthropicMessagesResponse = await response.json();
+    const textBlock = data.content?.find((block: AnthropicContentBlock) => block.type === 'text');
     if (!textBlock?.text) {
       throw new Error('No topic tags in Anthropic response');
     }

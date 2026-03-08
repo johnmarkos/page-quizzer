@@ -18,7 +18,9 @@ export class QuizEngine {
   #currentIndex = 0;
   #answers: Answer[] = [];
   #startedAt = 0;
-  #listeners = new Map<EngineEvent, Set<Listener<any>>>();
+  // Each Set holds listeners for a specific event type; the map is keyed by
+  // event name, so per-key type safety is enforced at the on/off/emit boundaries.
+  #listeners = new Map<EngineEvent, Set<Listener<never>>>();
 
   get state(): EngineState {
     return this.#state;
@@ -63,7 +65,9 @@ export class QuizEngine {
   }
 
   #emit<E extends EngineEvent>(event: E, payload: EngineEventPayloads[E]): void {
-    this.#listeners.get(event)?.forEach(fn => fn(payload));
+    // Safe cast: listeners stored under key E were added via on<E> with matching type
+    const listeners = this.#listeners.get(event) as Set<Listener<E>> | undefined;
+    listeners?.forEach(fn => fn(payload));
   }
 
   #transition(to: EngineState): void {

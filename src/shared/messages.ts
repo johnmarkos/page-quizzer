@@ -319,7 +319,12 @@ export type ImportSessionsResultMessage = {
   };
 };
 
+export type OkMessage = {
+  type: 'ok';
+};
+
 export type Message =
+  | OkMessage
   | ExtractContentRequest
   | GetSelectionTextRequest
   | ExtractContentResponse

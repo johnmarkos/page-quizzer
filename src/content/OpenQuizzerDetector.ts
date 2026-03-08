@@ -1,5 +1,15 @@
-import type { Problem } from '../engine/types.js';
+import type { Problem, Option } from '../engine/types.js';
 import { generateId } from '../engine/utils.js';
+
+type RawOpenQuizzerProblem = {
+  question?: string;
+  q?: string;
+  options?: unknown[];
+  choices?: unknown[];
+  answer?: number;
+  correctIndex?: number;
+  explanation?: string;
+};
 
 export type DetectionResult = {
   detected: boolean;
@@ -27,16 +37,27 @@ function parseOpenQuizzerProblems(): Problem[] {
     const match = text.match(/problems\s*[:=]\s*(\[[\s\S]*?\])\s*[,;}\n]/);
     if (match) {
       try {
-        const raw = JSON.parse(match[1]);
-        return raw.map((p: any) => ({
-          id: generateId(),
-          question: p.question || p.q,
-          options: (p.options || p.choices || []).map((text: string, i: number) => ({
-            text,
-            correct: i === (p.answer ?? p.correctIndex ?? 0),
-          })),
-          explanation: p.explanation,
-        }));
+        const raw: unknown[] = JSON.parse(match[1]);
+        if (!Array.isArray(raw)) continue;
+        return raw
+          .filter((item): item is RawOpenQuizzerProblem =>
+            typeof item === 'object' && item !== null &&
+            (typeof (item as RawOpenQuizzerProblem).question === 'string' ||
+             typeof (item as RawOpenQuizzerProblem).q === 'string'))
+          .map((p: RawOpenQuizzerProblem): Problem => {
+            const choices = (p.options || p.choices || [])
+              .filter((c): c is string => typeof c === 'string');
+            const correctIdx = p.answer ?? p.correctIndex ?? 0;
+            return {
+              id: generateId(),
+              question: (p.question || p.q) as string,
+              options: choices.map((text: string, i: number): Option => ({
+                text,
+                correct: i === correctIdx,
+              })),
+              explanation: p.explanation,
+            };
+          });
       } catch {
         // Parse failed, continue looking
       }

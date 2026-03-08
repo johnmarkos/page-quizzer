@@ -259,6 +259,13 @@ Co-Authored-By: Gemini <noreply@google.com>
 - Test through shuffling by reading `engine.currentProblem` — don't assume problem order
 - Test serialize/restore round-trips — restored engine should behave identically to the original
 
+**Staff review catches (2026-03-07):**
+- Every `response.json()` for a typed API needs a local response type; untyped `.json()` return is implicitly `any` and infects downstream code
+- Heterogeneous event emitter maps can use `Listener<never>` for storage to avoid `any`; type safety lives at the `on`/`off`/`emit` API boundary, with a safe cast only inside `#emit`
+- MV3 extensions should always have an explicit `content_security_policy` even though Chrome provides a strict default; it makes the security contract visible and prevents accidental relaxation
+- Acknowledge responses like `{ type: 'ok' }` from message handlers must be in the `Message` union or they silently bypass exhaustive type checking
+- `JSON.parse` of untrusted page data (e.g., OpenQuizzer detection) needs runtime shape validation, not just an `any` cast; pages can inject arbitrary JSON
+
 **Self-review catches (v0.1.1):**
 - Dead variables that were set but never read
 - Missing message types in union caused `as any` casts to proliferate
