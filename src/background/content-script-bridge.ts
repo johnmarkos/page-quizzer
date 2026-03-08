@@ -2,11 +2,6 @@ import { buildOriginPermissionPattern } from '../shared/site-access.js';
 
 const SUPPORTED_INJECTION_PROTOCOLS = new Set(['http:', 'https:', 'file:']);
 
-export function isMissingContentScriptError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error);
-  return message.includes('Receiving end does not exist');
-}
-
 export function hasUnsupportedInjectionProtocol(url?: string | null): boolean {
   if (!url) {
     return false;

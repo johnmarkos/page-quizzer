@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.1.20 — Programmatic Content Script Only (2026-03-08)
+
+### Bug Fixes
+- Removed the declarative `content_scripts` manifest entry for `dist/content.js`, which was still trying to load a module-oriented bundle as a classic content script
+- Switched extraction to attach the content script programmatically first, then message it, so the same module-safe path is used consistently
+- Resolved the remaining `import.meta` execution issue by eliminating the last classic-script load path for the content bundle
+
+### Testing
+- 65 tests (was 66): removed the obsolete missing-receiver helper test and kept the remaining content-script bridge coverage passing
+- `npm run build` passed
+
 ## v0.1.19 — Module-Safe Content Script Attach (2026-03-08)
 
 ### Bug Fixes

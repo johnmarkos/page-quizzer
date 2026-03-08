@@ -16,7 +16,6 @@ import {
   buildContentScriptAccessError,
   hasUnsupportedInjectionProtocol,
   isHostPermissionInjectionError,
-  isMissingContentScriptError,
 } from './content-script-bridge.js';
 
 type CompletedQuizData = {
@@ -239,36 +238,28 @@ async function extractContentFromTab(tab: chrome.tabs.Tab) {
     throw new Error('No active tab');
   }
 
-  try {
-    return await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CONTENT' });
-  } catch (error) {
-    if (!isMissingContentScriptError(error)) {
-      throw error;
-    }
-
-    if (hasUnsupportedInjectionProtocol(tab.url)) {
-      throw new Error('PageQuizzer cannot access this page. Chrome blocks extensions on this type of page.');
-    }
-
-    try {
-      await attachContentScript(tab.id);
-    } catch (injectionError) {
-      const originPattern = buildOriginPermissionPattern(tab.url);
-      if (originPattern && isHostPermissionInjectionError(injectionError)) {
-        broadcastStatus('Requesting permission to access this site...');
-        const granted = await chrome.permissions.request({ origins: [originPattern] });
-        if (!granted) {
-          throw new Error('PageQuizzer needs site access for this page. Approve the Chrome permission prompt and try again.');
-        }
-
-        await attachContentScript(tab.id);
-      } else {
-        throw buildContentScriptAccessError(injectionError);
-      }
-    }
-
-    return await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CONTENT' });
+  if (hasUnsupportedInjectionProtocol(tab.url)) {
+    throw new Error('PageQuizzer cannot access this page. Chrome blocks extensions on this type of page.');
   }
+
+  try {
+    await attachContentScript(tab.id);
+  } catch (injectionError) {
+    const originPattern = buildOriginPermissionPattern(tab.url);
+    if (originPattern && isHostPermissionInjectionError(injectionError)) {
+      broadcastStatus('Requesting permission to access this site...');
+      const granted = await chrome.permissions.request({ origins: [originPattern] });
+      if (!granted) {
+        throw new Error('PageQuizzer needs site access for this page. Approve the Chrome permission prompt and try again.');
+      }
+
+      await attachContentScript(tab.id);
+    } else {
+      throw buildContentScriptAccessError(injectionError);
+    }
+  }
+
+  return await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CONTENT' });
 }
 
 async function attachContentScript(tabId: number) {

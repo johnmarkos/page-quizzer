@@ -204,6 +204,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - The page being loaded in the browser is not enough by itself; the extension still needs host access to inject/read it, so normal-page recovery may require a runtime per-site permission request
 - Optional host permission prompts work more reliably from a direct UI gesture than deep inside an async background recovery path; request site access as early as possible in the user action flow
 - If a runtime-injected script bundle depends on module semantics, don’t inject it as a raw file with `executeScript`; use a loader that `import()`s the extension URL instead
+- If the same bundle is also declared under `manifest.content_scripts`, it still has to be valid as a classic content script there; otherwise remove the declarative path and rely on the programmatic module attach consistently
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

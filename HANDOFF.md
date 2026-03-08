@@ -2,19 +2,20 @@
 
 ## Completed
 
-- Reworked the runtime content-script attach path to load the content script via dynamic module import instead of raw file injection
-- Removed the `executeScript({ files: ["dist/content.js"] })` path that was causing `import.meta` parsing failures during recovery
+- Removed the manifest `content_scripts` entry for `dist/content.js`
+- Changed extraction to attach the content script programmatically before messaging it, using the same module-safe attach path every time
+- Removed the now-obsolete missing-receiver helper logic and test coverage
 
 ## Decisions
 
-- Kept the content-script bundle in module-oriented build output and changed the attach mechanism instead of trying to force the bundle into classic-script semantics
-- Used a small injected loader function with a per-tab global promise so repeated recovery attempts do not re-import the module unnecessarily
+- Chose one execution model for the content script instead of trying to support both classic manifest loading and module-based runtime attachment with the same bundle
+- Kept the content bundle module-oriented because `pdfjs-dist` already pushes the implementation that way, especially for PDF support
 
 ## Validation
 
-- `npm test` passed with 66/66 tests
+- `npm test` passed with 65/65 tests
 - `npm run build` passed
 
 ## Gotchas
 
-- A bundle can be fine when loaded through one extension path and still fail when injected another way if the execution context changes from module to classic script
+- Fixing only the runtime recovery path was not enough while the manifest still tried to load the same file as a classic content script on page load
