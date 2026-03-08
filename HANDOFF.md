@@ -2,6 +2,12 @@
 
 ## Completed
 
+- Added an Ollama provider with `/api/generate` JSON-schema generation, `/api/tags` connection testing, and `llama3.2` as the default model
+- Added provider-side metadata helpers for API-key requirements, base-URL support, and Ollama URL normalization
+- Added Ollama to the provider registry and settings provider picker
+- Added a Base URL field in Settings that appears for Ollama instead of the API key field
+- Added provider-origin permission preflight in the panel before Ollama `Test Connection` and `Generate Quiz`, plus a built-in localhost host permission for the default local setup
+- Fixed a review-found bug where generation-time Ollama permission prompts were initially based on current form values instead of the saved settings actually used by quiz generation
 - Added paste-your-own-text mode in the idle quiz view, with a toggle between page extraction and manual text input
 - Added panel-side construction of `ExtractedContent` for pasted text and a typed inline-content `GENERATE_QUIZ` payload so the background can skip content-script extraction entirely
 - Fixed a review-found testability gap by moving manual request construction into a pure helper and adding direct tests for the inline-content path
@@ -41,6 +47,10 @@
 
 ## Decisions
 
+- Kept provider-specific API-key/base-URL rules inside `src/providers/` helpers instead of scattering `provider === 'ollama'` checks through panel/background code
+- Kept Ollama generation on `/api/generate` with JSON schema format so it matches the roadmap and reuses the existing prompt/schema contract
+- Treated default localhost Ollama as a normal built-in permission case via manifest `host_permissions`, but kept custom Ollama hosts on runtime optional permission requests from the panel
+- Used saved background settings for generate-time provider permission preflight, because quiz generation reads persisted settings, while leaving `Test Connection` tied to current unsaved form values on purpose
 - Kept pasted-text generation as a panel-built `ExtractedContent` object instead of adding a separate background/manual schema; that reuses the existing generator contract and keeps the background agnostic about where the text came from
 - Kept quiz export as a standalone HTML renderer instead of depending on the built engine bundle; this keeps the first version portable and avoids coupling the exported file to extension build layout
 - Kept timer mode panel-local instead of pushing countdown logic into background or engine state; the timer is a presentation/interaction concern, not quiz-core logic
@@ -69,12 +79,15 @@
 
 ## Validation
 
-- `npm test` passed with 117/117 tests
+- `npm test` passed with 127/127 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- If a panel action ultimately uses saved background settings, permission preflight should use that same saved settings source too; otherwise unsaved form changes can prompt for one host while the background actually fetches another
+- Default-provider host permissions and runtime optional-host requests can coexist cleanly: give the common default endpoint a built-in permission, then use runtime prompts only for custom hosts
+- Ollama base URLs should be normalized once, including trimming trailing slashes and a user-supplied `/api` suffix, before building endpoints or permission patterns
 - If a new panel flow sends typed data to the background, test the request-construction path directly; otherwise the feature can look covered while the real message payload branch remains unverified
 - Escaping a URL for HTML is not the same thing as making it safe to click; exported pages that render source links should still restrict allowed URL schemes
 - Panel-side features that depend on saved settings need those settings loaded before restore/start flows, not just when the user opens Settings; otherwise “saved” behavior can silently fall back to defaults

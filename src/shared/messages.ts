@@ -134,6 +134,7 @@ export type SettingsMessage = {
     maxQuestions: number;
     timerSeconds: number;
     model?: string;
+    baseUrl?: string;
   };
 };
 
@@ -191,6 +192,7 @@ export type SaveSettingsRequest = {
     provider: ProviderName;
     apiKey: string;
     model: string;
+    baseUrl?: string;
     density: number;
     maxQuestions: number;
     timerSeconds: number;
@@ -203,6 +205,7 @@ export type TestConnectionRequest = {
     provider: ProviderName;
     apiKey: string;
     model?: string;
+    baseUrl?: string;
   };
 };
 

@@ -4,6 +4,7 @@ export type ConnectionSettings = {
   provider: ProviderName;
   apiKey: string;
   model?: string;
+  baseUrl?: string;
 };
 
 export function resolveConnectionSettings(
@@ -21,5 +22,10 @@ export function resolveConnectionSettings(
     provider,
     apiKey: override?.apiKey ?? stored.apiKey,
     model,
+    baseUrl: override?.baseUrl !== undefined
+      ? override.baseUrl
+      : provider === stored.provider
+        ? stored.baseUrl
+        : undefined,
   };
 }

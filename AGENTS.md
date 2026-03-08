@@ -226,6 +226,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - If you track question performance across sessions, don’t key it by generated problem ID; build a deterministic hash from normalized question content that stays stable across option shuffles
 - Don’t leave service-worker restore as an un-awaited startup side effect if later message handlers depend on restored state; gate message handling on the restore promise or you can compute and persist fresh state against stale in-memory data
 - If a panel-only feature depends on saved settings, load those settings before restore/start flows too; wiring them only through the Settings tab can leave the runtime behavior stuck on defaults
+- If an action ultimately uses saved background settings, any permission preflight for that action should read the same saved settings source rather than the current form state; otherwise unsaved panel edits can request access to the wrong origin
 - If you generate standalone export HTML, treat embedded quiz text and source URLs as separate risks: JSON/script embedding needs script-safe escaping, and clickable links still need scheme sanitization
 - If a panel feature introduces a new message payload branch, add pure tests for the payload-construction helper as well as any downstream content helper; otherwise the visible feature can work in one path while the actual request shape goes unverified
 

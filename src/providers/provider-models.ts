@@ -17,6 +17,12 @@ const PROVIDER_MODELS: Record<ProviderName, readonly string[]> = {
     'gemini-2.5-flash-lite',
     'gemini-2.5-pro',
   ],
+  ollama: [
+    'llama3.2',
+    'qwen2.5',
+    'mistral',
+    'gemma2',
+  ],
 };
 
 export function getProviderModels(provider: ProviderName): string[] {

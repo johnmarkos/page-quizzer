@@ -1,7 +1,12 @@
 import { QuizEngine } from '../engine/QuizEngine.js';
 import { QuizGenerator } from './QuizGenerator.js';
 import { StorageManager, type SessionRecord } from './StorageManager.js';
-import { createProvider, type ProviderName } from '../providers/index.js';
+import {
+  createProvider,
+  normalizeProviderBaseUrl,
+  providerRequiresApiKey,
+  type ProviderName,
+} from '../providers/index.js';
 import type { Message, ExtractedContent } from '../shared/messages.js';
 import type { Problem, SessionSummary } from '../engine/types.js';
 import { generateId } from '../engine/utils.js';
@@ -271,7 +276,7 @@ async function handleGetState() {
 
 async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: ExtractedContent) {
   const settings = await storage.getSettings();
-  if (!settings.apiKey) {
+  if (providerRequiresApiKey(settings.provider) && !settings.apiKey) {
     throw new Error('No API key configured. Open Settings to add one.');
   }
 
@@ -305,6 +310,7 @@ async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: Extrac
   const provider = createProvider(settings.provider, {
     apiKey: settings.apiKey,
     model: settings.model,
+    baseUrl: normalizeProviderBaseUrl(settings.provider, settings.baseUrl),
   });
 
   const generator = new QuizGenerator(provider);
@@ -368,18 +374,19 @@ async function attachContentScript(tabId: number) {
 }
 
 async function handleTestConnection(
-  override?: { provider: ProviderName; apiKey: string; model?: string },
+  override?: { provider: ProviderName; apiKey: string; model?: string; baseUrl?: string },
 ) {
   const stored = await storage.getSettings();
   const settings = resolveConnectionSettings(stored, override);
 
-  if (!settings.apiKey.trim()) {
+  if (providerRequiresApiKey(settings.provider) && !settings.apiKey.trim()) {
     throw new Error('No API key configured');
   }
 
   const provider = createProvider(settings.provider, {
     apiKey: settings.apiKey,
     model: settings.model,
+    baseUrl: normalizeProviderBaseUrl(settings.provider, settings.baseUrl),
   });
 
   try {
@@ -390,6 +397,7 @@ async function handleTestConnection(
     console.error('Provider connection test failed', {
       provider: settings.provider,
       model: settings.model ?? null,
+      baseUrl: normalizeProviderBaseUrl(settings.provider, settings.baseUrl) ?? null,
       error: message,
     });
     return {

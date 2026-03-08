@@ -13,6 +13,7 @@ describe('Provider Registry', () => {
     expect(providers).toContain('anthropic');
     expect(providers).toContain('openai');
     expect(providers).toContain('gemini');
+    expect(providers).toContain('ollama');
   });
 
   it('creates an anthropic provider', () => {
@@ -52,6 +53,13 @@ describe('Provider Registry', () => {
     expect(provider.models).toEqual(getProviderModels('gemini'));
   });
 
+  it('creates an ollama provider', () => {
+    const provider = createProvider('ollama', { apiKey: '' });
+    expect(provider.name).toBe('ollama');
+    expect(provider.model).toBe('llama3.2');
+    expect(provider.models).toEqual(getProviderModels('ollama'));
+  });
+
   it('uses custom model for gemini when provided', () => {
     const provider = createProvider('gemini', {
       apiKey: 'test-key',
@@ -76,5 +84,6 @@ describe('Provider Registry', () => {
     expect(normalizeProviderModel('openai')).toBe('gpt-5-mini');
     expect(normalizeProviderModel('openai', 'not-a-real-model')).toBe('gpt-5-mini');
     expect(normalizeProviderModel('openai', 'gpt-4.1')).toBe('gpt-4.1');
+    expect(normalizeProviderModel('ollama')).toBe('llama3.2');
   });
 });

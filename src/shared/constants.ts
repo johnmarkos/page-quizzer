@@ -6,6 +6,7 @@ export const STORAGE_KEYS = {
   API_KEY: 'apiKey',
   PROVIDER: 'provider',
   MODEL: 'model',
+  BASE_URL: 'baseUrl',
   DENSITY: 'density',
   MAX_QUESTIONS: 'maxQuestions',
   TIMER_SECONDS: 'timerSeconds',

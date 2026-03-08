@@ -7,12 +7,14 @@ describe('resolveConnectionSettings', () => {
       provider: 'anthropic',
       apiKey: 'stored-key',
       model: 'claude-haiku-4-5-20251001',
+      baseUrl: undefined,
     });
 
     expect(resolved).toEqual({
       provider: 'anthropic',
       apiKey: 'stored-key',
       model: 'claude-haiku-4-5-20251001',
+      baseUrl: undefined,
     });
   });
 
@@ -22,6 +24,7 @@ describe('resolveConnectionSettings', () => {
         provider: 'anthropic',
         apiKey: 'old-key',
         model: 'claude-haiku-4-5-20251001',
+        baseUrl: undefined,
       },
       {
         provider: 'openai',
@@ -33,6 +36,7 @@ describe('resolveConnectionSettings', () => {
       provider: 'openai',
       apiKey: 'new-key',
       model: undefined,
+      baseUrl: undefined,
     });
   });
 
@@ -42,6 +46,7 @@ describe('resolveConnectionSettings', () => {
         provider: 'openai',
         apiKey: 'old-key',
         model: 'gpt-4o-mini',
+        baseUrl: undefined,
       },
       {
         provider: 'openai',
@@ -53,6 +58,51 @@ describe('resolveConnectionSettings', () => {
       provider: 'openai',
       apiKey: 'new-key',
       model: 'gpt-4o-mini',
+      baseUrl: undefined,
+    });
+  });
+
+  it('keeps the stored base URL when the provider stays the same', () => {
+    const resolved = resolveConnectionSettings(
+      {
+        provider: 'ollama',
+        apiKey: '',
+        model: 'llama3.2',
+        baseUrl: 'http://localhost:11434',
+      },
+      {
+        provider: 'ollama',
+        model: 'qwen2.5',
+      },
+    );
+
+    expect(resolved).toEqual({
+      provider: 'ollama',
+      apiKey: '',
+      model: 'qwen2.5',
+      baseUrl: 'http://localhost:11434',
+    });
+  });
+
+  it('drops the stored base URL when switching away from ollama', () => {
+    const resolved = resolveConnectionSettings(
+      {
+        provider: 'ollama',
+        apiKey: '',
+        model: 'llama3.2',
+        baseUrl: 'http://localhost:11434',
+      },
+      {
+        provider: 'openai',
+        apiKey: 'next-key',
+      },
+    );
+
+    expect(resolved).toEqual({
+      provider: 'openai',
+      apiKey: 'next-key',
+      model: undefined,
+      baseUrl: undefined,
     });
   });
 });

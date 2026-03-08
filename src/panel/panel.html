@@ -123,15 +123,20 @@
           <option value="anthropic">Anthropic (Claude)</option>
           <option value="openai">OpenAI (GPT)</option>
           <option value="gemini">Google Gemini</option>
+          <option value="ollama">Ollama (Local)</option>
         </select>
       </div>
       <div class="setting-group">
         <label for="model-select">Model</label>
         <select id="model-select"></select>
       </div>
-      <div class="setting-group">
+      <div id="api-key-setting" class="setting-group">
         <label for="api-key-input">API Key</label>
         <input type="password" id="api-key-input" placeholder="Enter API key">
+      </div>
+      <div id="base-url-setting" class="setting-group hidden">
+        <label for="base-url-input">Base URL</label>
+        <input type="text" id="base-url-input" placeholder="http://localhost:11434">
       </div>
       <div class="setting-group">
         <button id="test-connection-btn" class="secondary-btn">Test Connection</button>

@@ -9,6 +9,11 @@ import { buildQuizExportFilename, buildQuizExportHtml } from './quiz-export.js';
 import { filterSessionsByTopic, getHistoryTopics } from './history-topics.js';
 import { getProviderModels, normalizeProviderModel } from '../providers/provider-models.js';
 import {
+  DEFAULT_OLLAMA_BASE_URL,
+  normalizeProviderBaseUrl,
+  providerSupportsBaseUrl,
+} from '../providers/provider-settings.js';
+import {
   buildShortcutHelpText,
   getOptionShortcutIndex,
   shouldIgnoreShortcutTarget,
@@ -56,9 +61,14 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 
 const providerSelect = document.getElementById('provider-select') as HTMLSelectElement;
 const modelSelect = document.getElementById('model-select') as HTMLSelectElement;
+const apiKeyInput = document.getElementById('api-key-input') as HTMLInputElement;
+const baseUrlInput = document.getElementById('base-url-input') as HTMLInputElement;
 renderModelOptions(providerSelect.value as ProviderName);
 providerSelect.addEventListener('change', () => {
-  renderModelOptions(providerSelect.value as ProviderName, modelSelect.value);
+  const provider = providerSelect.value as ProviderName;
+  renderModelOptions(provider, modelSelect.value);
+  renderProviderSettingsFields(provider);
+  clearConnectionStatus();
 });
 const initialSettingsPromise = loadSettings();
 renderManualInputMode();
@@ -77,6 +87,10 @@ $('generate-btn').addEventListener('click', async () => {
   showQuizSection('quiz-loading');
   try {
     const manualPayload = getManualGeneratePayload();
+
+    ($('loading-status') as HTMLElement).textContent = 'Checking provider access...';
+    const savedSettings = await getSavedSettings();
+    await ensureProviderAccess(savedSettings.provider, savedSettings.baseUrl);
 
     if (!manualPayload) {
       ($('loading-status') as HTMLElement).textContent = 'Checking site access...';
@@ -125,6 +139,27 @@ async function ensureSiteAccessForActiveTab() {
   const granted = await chrome.permissions.request({ origins: [originPattern] });
   if (!granted) {
     throw new Error('PageQuizzer needs site access for this page. Approve the Chrome permission prompt and try again.');
+  }
+}
+
+async function ensureProviderAccess(provider: ProviderName, baseUrl?: string) {
+  if (!providerSupportsBaseUrl(provider)) {
+    return;
+  }
+
+  const originPattern = buildOriginPermissionPattern(normalizeProviderBaseUrl(provider, baseUrl));
+  if (!originPattern) {
+    throw new Error('Ollama base URL must be a valid http:// or https:// URL.');
+  }
+
+  const hasAccess = await chrome.permissions.contains({ origins: [originPattern] });
+  if (hasAccess) {
+    return;
+  }
+
+  const granted = await chrome.permissions.request({ origins: [originPattern] });
+  if (!granted) {
+    throw new Error('PageQuizzer needs permission to contact this Ollama host. Approve the Chrome permission prompt and try again.');
   }
 }
 
@@ -423,7 +458,9 @@ async function loadSettings() {
     const s = response.payload;
     providerSelect.value = s.provider;
     renderModelOptions(s.provider, s.model);
-    (document.getElementById('api-key-input') as HTMLInputElement).value = s.apiKey;
+    apiKeyInput.value = s.apiKey;
+    baseUrlInput.value = s.baseUrl || DEFAULT_OLLAMA_BASE_URL;
+    renderProviderSettingsFields(s.provider, s.baseUrl);
     (document.getElementById('density-slider') as HTMLInputElement).value = String(s.density);
     ($('density-value') as HTMLElement).textContent = String(s.density);
     (document.getElementById('max-questions-input') as HTMLInputElement).value = String(s.maxQuestions);
@@ -439,8 +476,9 @@ $('density-slider').addEventListener('input', (e) => {
 $('save-settings-btn').addEventListener('click', async () => {
   const settings = {
     provider: providerSelect.value as ProviderName,
-    apiKey: (document.getElementById('api-key-input') as HTMLInputElement).value,
+    apiKey: apiKeyInput.value,
     model: modelSelect.value,
+    baseUrl: getCurrentBaseUrl(),
     density: Number((document.getElementById('density-slider') as HTMLInputElement).value),
     maxQuestions: Number((document.getElementById('max-questions-input') as HTMLInputElement).value),
     timerSeconds: normalizeTimerSeconds((document.getElementById('timer-select') as HTMLSelectElement).value),
@@ -456,12 +494,14 @@ $('test-connection-btn').addEventListener('click', async () => {
   status.textContent = 'Testing...';
   status.className = '';
   try {
+    await ensureProviderAccess(providerSelect.value as ProviderName, getCurrentBaseUrl());
     const response = await chrome.runtime.sendMessage({
       type: 'TEST_CONNECTION',
       payload: {
         provider: providerSelect.value as ProviderName,
-        apiKey: (document.getElementById('api-key-input') as HTMLInputElement).value,
+        apiKey: apiKeyInput.value,
         model: modelSelect.value,
+        baseUrl: getCurrentBaseUrl(),
       },
     });
     if (response?.type === 'CONNECTION_RESULT' && response.payload.success) {
@@ -482,6 +522,39 @@ $('test-connection-btn').addEventListener('click', async () => {
     status.className = 'error';
   }
 });
+
+function renderProviderSettingsFields(provider: ProviderName, baseUrl?: string) {
+  const apiKeySetting = $('api-key-setting');
+  const baseUrlSetting = $('base-url-setting');
+
+  if (providerSupportsBaseUrl(provider)) {
+    hide(apiKeySetting);
+    show(baseUrlSetting);
+    baseUrlInput.value = normalizeProviderBaseUrl(provider, baseUrl ?? baseUrlInput.value) || DEFAULT_OLLAMA_BASE_URL;
+  } else {
+    show(apiKeySetting);
+    hide(baseUrlSetting);
+  }
+}
+
+function getCurrentBaseUrl(): string | undefined {
+  return normalizeProviderBaseUrl(providerSelect.value as ProviderName, baseUrlInput.value);
+}
+
+function clearConnectionStatus() {
+  const status = $('connection-status');
+  status.textContent = '';
+  status.className = '';
+}
+
+async function getSavedSettings() {
+  const response = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
+  if (!response?.payload) {
+    throw new Error('Failed to load saved settings');
+  }
+
+  return response.payload;
+}
 
 // --- History ---
 async function loadHistory() {

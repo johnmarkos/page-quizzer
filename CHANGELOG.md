@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.1.43 — Ollama Provider (2026-03-08)
+
+### Providers
+- Added an `OllamaProvider` that uses `/api/generate` for structured quiz/topic generation and `/api/tags` for connection testing
+- Added Ollama to the provider registry and model picker, with `llama3.2` as the default model
+- Added normalized Ollama base-URL handling so `http://localhost:11434` and `.../api` variants resolve consistently
+
+### Settings & Permissions
+- Added a Base URL field in Settings that appears for Ollama instead of the API key field
+- Added provider-specific settings helpers so API-key vs base-URL behavior stays inside `src/providers/`
+- Added localhost host permission plus panel-side provider-origin permission preflight for custom Ollama hosts before test/generate actions
+
+### Review Loop
+- The first reviewer pass found a real mismatch: generation-time Ollama permission preflight initially read the current form state, while quiz generation itself uses saved background settings. Fixed by checking saved settings before `Generate Quiz`, and kept `Test Connection` on current unsaved form values.
+
+### Security Review
+- Kept API keys in `chrome.storage.local` only; Ollama base URLs stay in sync settings and logs include provider/model/base URL only, never credentials
+- Scoped new network access to the configured Ollama origin and verified `npm audit --omit=dev` reports 0 vulnerabilities
+
+### Testing
+- 127 tests (was 117): added Ollama provider coverage for defaults/URL construction, provider-settings normalization tests, and connection-settings coverage for base-URL overrides
+
 ## v0.1.42 — Paste-Your-Own-Text Mode (2026-03-08)
 
 ### Content & Extraction
