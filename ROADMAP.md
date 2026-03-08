@@ -68,7 +68,7 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [x] **S2: Keyboard shortcut help** — Show a small "?" icon in quiz view header. Clicking it shows/hides a tooltip: "1-4: select answer, Enter: next question, S: skip". Pure panel HTML/CSS, no messages needed.
 
-- [ ] **S3: Quiz progress indicator in extension icon** — Use `chrome.action.setBadgeText` to show current question number (e.g., "3/10") while a quiz is active. Clear badge on complete or idle. Add to service worker's engine event handlers. Requires no new permissions.
+- [x] **S3: Quiz progress indicator in extension icon** — Use `chrome.action.setBadgeText` to show current question number (e.g., "3/10") while a quiz is active. Clear badge on complete or idle. Add to service worker's engine event handlers. Requires no new permissions.
 
 - [ ] **S4: Error recovery for failed generation** — If quiz generation fails mid-chunk (e.g., API rate limit), keep the questions generated so far and offer "Start with N questions" instead of showing an error. Only show error if zero questions were generated. Modify `QuizGenerator` and service worker error handling.
 

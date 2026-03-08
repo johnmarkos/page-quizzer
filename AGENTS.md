@@ -195,6 +195,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - Imported local files are untrusted input too: validate them in the background before merging into storage, rather than trusting panel-side parsing alone
 - If UI copy documents a shortcut or interaction, verify the behavior exists in code during review; tooltip/help drift is an easy way to ship false affordances
 - Global panel shortcuts should only act on visible quiz controls and should ignore focused form/button elements; otherwise hidden views can still consume keys
+- Engine restore does not replay events, so extension-level UI derived from engine state (like action badges) needs an explicit resync step on service worker startup
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

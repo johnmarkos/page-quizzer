@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.1.11 — Extension Badge Progress (2026-03-08)
+
+### Settings & Polish
+- Added a quiz progress badge on the extension action icon while a quiz is active
+- The badge shows the current question number and total, and clears automatically when the engine returns to `idle` or reaches `complete`
+- Restored quiz sessions now resync the badge on service worker startup so progress survives worker restarts cleanly
+
+### Testing
+- 55 tests (was 53): added pure helper coverage for badge text formatting and clear/show state rules
+
 ## v0.1.10 — Keyboard Shortcut Help (2026-03-08)
 
 ### Settings & Polish

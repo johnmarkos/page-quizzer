@@ -2,24 +2,23 @@
 
 ## Completed
 
-- Finished `S2: Keyboard shortcut help`
-- Added a `?` tooltip in the quiz question header
-- Added `S` as a skip shortcut
-- Scoped keyboard shortcuts to visible quiz controls so hidden History/Settings views cannot trigger quiz actions
-- Made the tooltip text reflect the active question shape (`1-2` for true/false, `1-4` for four-option questions)
+- Finished `S3: Quiz progress indicator in extension icon`
+- Added badge formatting helpers in `src/background/quiz-badge.ts`
+- Wired the service worker to show question progress on `questionShow`
+- Cleared the badge when the engine returns to `idle` or `complete`
+- Resynced the badge during service worker restore so active quizzes keep their progress indicator after restart
 
 ## Decisions
 
-- Moved shortcut copy and key-mapping rules into `src/panel/keyboard-shortcuts.ts` so the tooltip text and keyboard behavior share one source of truth
-- Kept DOM side effects in `panel.ts` and tested the new shortcut logic through pure helper tests instead of introducing a DOM test harness
-- Ignored shortcuts when focus is inside interactive controls to avoid hijacking Enter or character keys from buttons and form fields
+- Kept all badge logic in the background so the engine remains Chrome-free and the panel does not own extension action UI state
+- Used a tiny pure helper module for badge text and clear/show rules so the behavior is testable without mocking `chrome.action`
+- Cleared the badge immediately on startup before restore, then reapplied it only if the restored engine state is still active
 
 ## Validation
 
-- `npm test` passed with 53/53 tests
+- `npm test` passed with 55/55 tests
 - `npm run build` passed
-- `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
-- The panel keeps quiz DOM mounted when switching nav tabs, so global keyboard handlers must check visibility instead of assuming hidden views are inert
+- `QuizEngine.restore()` does not emit `questionShow` or `stateChange`, so badge state must be synchronized explicitly after reading the stored snapshot

@@ -9,6 +9,7 @@ import { STORAGE_KEYS } from '../shared/constants.js';
 import { cloneProblems, getMissedProblems } from './retry-missed.js';
 import { buildReviewItems } from './review-missed.js';
 import { mergeSessionRecords, parseImportedSessions } from './history-import.js';
+import { buildQuizBadgeText, shouldClearQuizBadge } from './quiz-badge.js';
 
 type CompletedQuizData = {
   problems: Problem[];
@@ -27,6 +28,7 @@ let lastCompletedQuiz: CompletedQuizData | null = null;
 
 engine.on('stateChange', async () => {
   await persistState();
+  await syncBadgeFromEngineState();
 });
 
 async function persistState() {
@@ -57,6 +59,8 @@ async function restoreState() {
       summary: cloneSummary(completedQuiz.summary),
     };
   }
+
+  await syncBadgeFromEngineState();
 }
 
 async function clearPersistedState() {
@@ -64,6 +68,7 @@ async function clearPersistedState() {
 }
 
 // Restore on startup
+clearQuizBadge();
 restoreState();
 
 // --- Side panel setup ---
@@ -71,6 +76,7 @@ chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 
 // --- Wire engine events to panel messages ---
 engine.on('questionShow', (payload) => {
+  setQuizBadge(payload.index, payload.total);
   broadcast({ type: 'QUESTION_SHOW', payload });
 });
 
@@ -289,6 +295,24 @@ function cloneSummary(summary: SessionSummary): SessionSummary {
     score: { ...summary.score },
     answers: summary.answers.map(answer => ({ ...answer })),
   };
+}
+
+function setQuizBadge(index: number, total: number) {
+  chrome.action.setBadgeText({ text: buildQuizBadgeText(index, total) });
+  chrome.action.setBadgeBackgroundColor({ color: '#5b4cd4' });
+}
+
+function clearQuizBadge() {
+  chrome.action.setBadgeText({ text: '' });
+}
+
+async function syncBadgeFromEngineState() {
+  if (shouldClearQuizBadge(engine.state) || engine.totalProblems === 0) {
+    clearQuizBadge();
+    return;
+  }
+
+  setQuizBadge(engine.currentIndex, engine.totalProblems);
 }
 
 function broadcast(message: any) {
