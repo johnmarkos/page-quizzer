@@ -2,15 +2,13 @@
 
 ## Completed
 
-- Moved the normal-page host-permission request into the panel's `Generate Quiz` click flow
-- Added `src/shared/site-access.ts` so panel and background permission logic use the same per-origin pattern builder
-- Kept the background runtime-access fallback in place, but the panel now requests access earlier when Chrome is most likely to honor the prompt
+- Reworked the runtime content-script attach path to load the content script via dynamic module import instead of raw file injection
+- Removed the `executeScript({ files: ["dist/content.js"] })` path that was causing `import.meta` parsing failures during recovery
 
 ## Decisions
 
-- Requested site access before sending `GENERATE_QUIZ` so the permission prompt happens inside the original user gesture
-- Left the background retry path intact because it still helps in edge cases where the panel cannot preflight access cleanly
-- Shared the origin-pattern helper instead of duplicating host-pattern logic across panel and background code
+- Kept the content-script bundle in module-oriented build output and changed the attach mechanism instead of trying to force the bundle into classic-script semantics
+- Used a small injected loader function with a per-tab global promise so repeated recovery attempts do not re-import the module unnecessarily
 
 ## Validation
 
@@ -19,4 +17,4 @@
 
 ## Gotchas
 
-- Optional host permission requests triggered too deep in an async background path may not behave like a direct user-gesture prompt, even when the original flow began with a button click
+- A bundle can be fine when loaded through one extension path and still fail when injected another way if the execution context changes from module to classic script

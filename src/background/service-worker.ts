@@ -24,6 +24,8 @@ type CompletedQuizData = {
   summary: SessionSummary;
 };
 
+const CONTENT_SCRIPT_PATH = 'dist/content.js';
+
 const storage = new StorageManager();
 const engine = new QuizEngine();
 
@@ -249,10 +251,7 @@ async function extractContentFromTab(tab: chrome.tabs.Tab) {
     }
 
     try {
-      await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ['dist/content.js'],
-      });
+      await attachContentScript(tab.id);
     } catch (injectionError) {
       const originPattern = buildOriginPermissionPattern(tab.url);
       if (originPattern && isHostPermissionInjectionError(injectionError)) {
@@ -262,10 +261,7 @@ async function extractContentFromTab(tab: chrome.tabs.Tab) {
           throw new Error('PageQuizzer needs site access for this page. Approve the Chrome permission prompt and try again.');
         }
 
-        await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          files: ['dist/content.js'],
-        });
+        await attachContentScript(tab.id);
       } else {
         throw buildContentScriptAccessError(injectionError);
       }
@@ -273,6 +269,23 @@ async function extractContentFromTab(tab: chrome.tabs.Tab) {
 
     return await chrome.tabs.sendMessage(tab.id, { type: 'EXTRACT_CONTENT' });
   }
+}
+
+async function attachContentScript(tabId: number) {
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    args: [chrome.runtime.getURL(CONTENT_SCRIPT_PATH)],
+    func: async (moduleUrl: string) => {
+      const globalKey = '__pageQuizzerContentScriptModulePromise';
+      const contentScriptGlobal = globalThis as typeof globalThis & Record<string, Promise<unknown> | undefined>;
+
+      if (!contentScriptGlobal[globalKey]) {
+        contentScriptGlobal[globalKey] = import(moduleUrl);
+      }
+
+      await contentScriptGlobal[globalKey];
+    },
+  });
 }
 
 async function handleTestConnection(

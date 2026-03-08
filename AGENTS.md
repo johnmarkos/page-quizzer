@@ -203,6 +203,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - Don’t treat a missing `tab.url` as proof that a normal page is inaccessible; try the recoverable path first and only classify the page as blocked if Chrome rejects injection
 - The page being loaded in the browser is not enough by itself; the extension still needs host access to inject/read it, so normal-page recovery may require a runtime per-site permission request
 - Optional host permission prompts work more reliably from a direct UI gesture than deep inside an async background recovery path; request site access as early as possible in the user action flow
+- If a runtime-injected script bundle depends on module semantics, don’t inject it as a raw file with `executeScript`; use a loader that `import()`s the extension URL instead
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.19 — Module-Safe Content Script Attach (2026-03-08)
+
+### Bug Fixes
+- Replaced direct `files: ["dist/content.js"]` injection with a tiny loader that imports the content script module by extension URL
+- Fixed `Cannot use 'import.meta' outside a module` during runtime attach by keeping the recovery path in module semantics
+
+### Testing
+- Existing 66-test suite and production build passed after the attach-path update
+
 ## v0.1.18 — Panel-Led Site Access Prompt (2026-03-08)
 
 ### Bug Fixes
