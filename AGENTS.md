@@ -247,6 +247,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - If users can guess the answer because it is the only long, clause-heavy, or highly specific option, the existing length-outlier heuristic is not enough; add a second structural check for a uniquely longest and more detailed correct answer
 - Front-matter suppression for books/PDFs works best in two layers: skip obvious praise/preface/copyright pages early in PDF segmentation, and still reject surviving front-matter questions structurally after generation
 - Provider schemas and TypeScript types are not enough to trust runtime model JSON; parsing/normalization helpers still need explicit guards before touching nested fields like `options.length`
+- If persistent progress records are smaller than the live UI section shape, merge progress onto the full `ContentSection` instead of reusing the storage shape directly; otherwise view-only fields like `preview` or page ranges get lost and the panel can crash
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

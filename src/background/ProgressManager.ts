@@ -97,21 +97,19 @@ export function updateDocumentProgressRecord(
   return {
     url,
     title,
-    sections: mergedSections.map(cloneSectionProgressRecord),
+    sections: mergedSections.map(toSectionProgressRecord),
   };
 }
 
 export function mergeSectionProgress(
   sections: ContentSection[],
   existing: DocumentProgressRecord | null,
-): SectionProgressRecord[] {
+): ContentSection[] {
   return sections.map((section) => {
     const existingSection = existing?.sections.find((candidate) => candidate.index === section.index);
 
     return {
-      index: section.index,
-      title: section.title,
-      wordCount: section.wordCount,
+      ...section,
       quizzed: existingSection?.quizzed ?? false,
       scorePercentage: existingSection?.scorePercentage,
       lastQuizzed: existingSection?.lastQuizzed,
@@ -146,4 +144,15 @@ function cloneDocumentProgress(record: DocumentProgressRecord): DocumentProgress
 
 function cloneSectionProgressRecord(record: SectionProgressRecord): SectionProgressRecord {
   return { ...record };
+}
+
+function toSectionProgressRecord(section: ContentSection): SectionProgressRecord {
+  return {
+    index: section.index,
+    title: section.title,
+    wordCount: section.wordCount,
+    quizzed: section.quizzed ?? false,
+    scorePercentage: section.scorePercentage,
+    lastQuizzed: section.lastQuizzed,
+  };
 }

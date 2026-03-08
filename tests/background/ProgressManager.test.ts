@@ -14,6 +14,8 @@ function buildSection(index: number, overrides: Partial<ContentSection> = {}): C
     title: `Part ${index + 1}`,
     wordCount: 900,
     preview: `Preview ${index + 1}`,
+    startPage: index + 1,
+    endPage: index + 1,
     ...overrides,
   };
 }
@@ -70,6 +72,9 @@ describe('ProgressManager', () => {
         index: 0,
         title: 'Part 1',
         wordCount: 900,
+        preview: 'Preview 1',
+        startPage: 1,
+        endPage: 1,
         quizzed: false,
         scorePercentage: undefined,
         lastQuizzed: undefined,
@@ -78,6 +83,9 @@ describe('ProgressManager', () => {
         index: 1,
         title: 'Part 2',
         wordCount: 900,
+        preview: 'Preview 2',
+        startPage: 2,
+        endPage: 2,
         quizzed: true,
         scorePercentage: 80,
         lastQuizzed: 123,
@@ -164,12 +172,18 @@ describe('ProgressManager', () => {
 
     expect(result.sections[0]).toMatchObject({
       index: 0,
+      preview: 'Preview 1',
+      startPage: 1,
+      endPage: 1,
       quizzed: true,
       scorePercentage: 60,
       lastQuizzed: 789,
     });
     expect(result.sections[2]).toMatchObject({
       index: 2,
+      preview: 'Preview 3',
+      startPage: 3,
+      endPage: 3,
       quizzed: false,
     });
     expect(result.summary).toEqual({

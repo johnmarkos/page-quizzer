@@ -2,6 +2,9 @@
 
 ## Completed
 
+- Fixed a PDF/section-picker crash where progress-aware section merges were dropping `preview` and page-range fields from `ContentSection`
+- Kept `DocumentProgressRecord` storage minimal, but changed the live merge path to preserve full section display data and only strip back to storage fields when persisting
+- Added regression coverage that merged section progress keeps `preview`, `startPage`, and `endPage`
 - Fixed a provider-response crash where malformed quiz JSON could trigger `Cannot read properties of undefined (reading 'length')` in quiz parsing
 - Hardened `parseQuizQuestions()` with a runtime shape guard so invalid questions are dropped instead of crashing generation
 - Added regression tests for missing `options` arrays and non-string option entries in provider output
@@ -82,6 +85,7 @@
 
 ## Decisions
 
+- Split the progress model into two concerns explicitly: storage records keep only durable progress fields, while UI-facing merged sections must preserve all `ContentSection` display fields like `preview` and page ranges
 - Treated provider quiz JSON as untrusted runtime input, not as a guaranteed `RawQuizQuestion`; parser safety belongs in the normalization layer even when provider schemas already exist
 - Treated Q10/Q11 as one shared generation-quality milestone: front-matter suppression belongs in both the content-selection layer and the post-generation filter, while “too easy by vibe” belongs in both the prompt and the structural critic
 - Kept the new easy-question critic structural rather than semantic: it looks for a uniquely longest, more detailed correct answer instead of trying to judge subject-matter validity
@@ -141,6 +145,7 @@
 
 ## Gotchas
 
+- If a helper merges persistent progress back into live section-picker data, do not reuse the storage shape as the UI shape; otherwise fields like `preview` and page ranges disappear and the panel crashes on perfectly valid sections
 - TypeScript types on provider response shapes do not protect runtime JSON; parser normalization still needs explicit guards before touching fields like `options.length`
 - If users say the answer is obvious because it is the only detailed option, word-count outlier checks alone are too weak; add a second heuristic for a uniquely longest, more specific correct answer
 - Suppressing front matter only in generation is not enough for books/PDFs; early PDF page scanning should also skip praise/preface/copyright-style pages so they do not become the first sections offered

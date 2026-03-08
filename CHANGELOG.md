@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.1.53 — Preserve Section Preview Data in Progress Merges (2026-03-08)
+
+### Bug Fixes
+- Fixed a PDF section-picker crash where progress-aware sections could lose `preview` and page-range metadata during progress merging, leading the panel to fail when rendering `section.preview`
+- Kept persistent progress storage minimal, but preserved full `ContentSection` display fields when merging progress back into live section-picker data
+
+### Review Loop
+- The first reviewer pass found the real contract bug: `mergeSectionProgress()` was returning stored progress records instead of full `ContentSection`s. Fixed by keeping display fields in the merged result and converting back to storage records only at persistence time.
+- A second reviewer pass found no further significant issues.
+
+### Testing
+- 151 tests: expanded `ProgressManager` coverage to assert that merged section progress preserves `preview`, `startPage`, and `endPage`
+
 ## v0.1.52 — Harden Quiz Parsing Against Malformed Provider Output (2026-03-08)
 
 ### Bug Fixes
