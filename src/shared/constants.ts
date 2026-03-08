@@ -9,4 +9,5 @@ export const STORAGE_KEYS = {
   MAX_QUESTIONS: 'maxQuestions',
   SESSIONS: 'sessions',
   TAB_QUIZ_SESSIONS: 'tabQuizSessions',
+  QUESTION_PERFORMANCE: 'questionPerformance',
 } as const;

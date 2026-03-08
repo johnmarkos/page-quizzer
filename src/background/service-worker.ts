@@ -12,6 +12,10 @@ import { mergeSessionRecords, parseImportedSessions } from './history-import.js'
 import { buildQuizBadgeText, shouldClearQuizBadge } from './quiz-badge.js';
 import { resolveConnectionSettings } from './connection-settings.js';
 import {
+  recordQuestionPerformance,
+  type QuestionPerformanceMap,
+} from './question-performance.js';
+import {
   createEmptySession,
   hasSessionData,
   getTabQuizSession,
@@ -41,6 +45,7 @@ let currentProblems: Problem[] = [];
 let currentTopics: string[] = [];
 let lastCompletedQuiz: CompletedQuizData | null = null;
 let currentGenerationWarning: string | null = null;
+let questionPerformance: QuestionPerformanceMap = {};
 
 engine.on('stateChange', async () => {
   await persistState();
@@ -54,6 +59,15 @@ engine.on('questionShow', (payload) => {
 
 engine.on('answerResult', (payload) => {
   broadcast({ type: 'ANSWER_RESULT', payload });
+  const problem = engine.currentProblem;
+  if (!problem) {
+    return;
+  }
+
+  questionPerformance = recordQuestionPerformance(questionPerformance, problem, payload.correct);
+  void chrome.storage.local.set({
+    [STORAGE_KEYS.QUESTION_PERFORMANCE]: questionPerformance,
+  });
 });
 
 engine.on('quizComplete', async (payload) => {
@@ -147,8 +161,13 @@ async function persistState() {
 }
 
 async function restoreState() {
-  const data = await chrome.storage.local.get([STORAGE_KEYS.TAB_QUIZ_SESSIONS]);
+  const data = await chrome.storage.local.get([
+    STORAGE_KEYS.TAB_QUIZ_SESSIONS,
+    STORAGE_KEYS.QUESTION_PERFORMANCE,
+  ]);
   tabSessions = (data[STORAGE_KEYS.TAB_QUIZ_SESSIONS] as TabQuizSessionMap | undefined) ?? {};
+  questionPerformance =
+    (data[STORAGE_KEYS.QUESTION_PERFORMANCE] as QuestionPerformanceMap | undefined) ?? {};
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab?.id !== undefined) {

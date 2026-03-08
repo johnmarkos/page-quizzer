@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.1.38 — Per-Question Performance Tracking (2026-03-08)
+
+### Data Layer
+- Added per-question performance tracking keyed by a deterministic content hash so repeated exposure to the same question can be counted across sessions
+- Stored `seen` and `correct` counts in `chrome.storage.local` after each answered question, without depending on provider-specific IDs or current option order
+- Made the hash resilient to shuffled choices by normalizing question text and sorting option text with correctness markers before hashing
+
+### Testing
+- 104 tests (was 100): added focused coverage for shuffle-stable question hashes, immutable counter updates, and separate tracking for distinct questions
+
 ## v0.1.37 — Partial Quiz Recovery (2026-03-08)
 
 ### Reliability

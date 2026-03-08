@@ -2,6 +2,8 @@
 
 ## Completed
 
+- Added per-question performance tracking in local storage using deterministic content hashes, with `seen` and `correct` counters updated after each answered question
+- Made question-performance keys stable across option shuffling by hashing normalized question text plus sorted option text/correctness markers
 - Added partial quiz recovery for mid-generation chunk failures: if later chunks fail after accepted questions already exist, PageQuizzer now keeps the partial quiz instead of failing the whole run
 - Added ready-state warnings and `Start with N Questions` UI so partial generation is explicitly surfaced to the user
 - Persisted partial-generation warnings in tab-scoped quiz session state so the recovery message survives service-worker restarts before the quiz starts
@@ -29,6 +31,8 @@
 
 ## Decisions
 
+- Kept per-question performance tracking as a background-only data layer with no UI yet; that lets future spaced-repetition work build on stable stored stats without forcing premature product decisions
+- Avoided using provider/generated problem IDs for performance tracking because they are session-local; the hash is based on normalized question content instead
 - Treated chunk failures as recoverable only after at least one accepted question exists; if generation never produced usable questions, the user still gets a normal error instead of an empty “recovered” quiz
 - Kept the partial-recovery warning in extension state rather than inferring it from problem count alone, because the ready UI needs to distinguish “short quiz by choice” from “short quiz because generation stopped early”
 - Kept the quality filter conservative and structural: reject only patterns that are clearly low-signal or giveaway, rather than trying to “understand” subject matter correctness heuristically
@@ -51,12 +55,13 @@
 
 ## Validation
 
-- `npm test` passed with 100/100 tests
+- `npm test` passed with 104/104 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- Question-performance keys must be independent of shuffled option order or the same question will fragment into multiple records across retries/sessions
 - Partial recovery needs to be persisted too; otherwise a service-worker restart between generation and quiz start would silently drop the warning and revert the ready screen to looking like a normal full-success run
 - Quality heuristics should be biased toward obviously bad structural patterns; if they get too semantic or too aggressive, they will quietly delete valid questions and make quiz counts unpredictable
 - If filtered questions reduce final counts, requesting a small buffer at generation time is simpler and safer than trying to regenerate recursively inside provider code
