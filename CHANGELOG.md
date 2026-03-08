@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.1.52 — Harden Quiz Parsing Against Malformed Provider Output (2026-03-08)
+
+### Bug Fixes
+- Fixed a runtime crash where malformed provider JSON could throw `Cannot read properties of undefined (reading 'length')` during quiz parsing
+- Hardened raw-question parsing so missing `options`, non-array `options`, non-string option entries, and other invalid shapes are dropped instead of crashing the generation flow
+
+### Review Loop
+- The first reviewer pass identified the root issue: provider JSON was being trusted as if TypeScript types existed at runtime. Fixed by adding a real runtime shape guard before reading `question.options.length`.
+- A second reviewer pass found no further significant issues.
+
+### Testing
+- 151 tests (was 149): added malformed-provider-response coverage for missing `options` and non-string option entries
+
 ## v0.1.51 — Front-Matter Suppression and Harsher Easy-Question Filter (2026-03-08)
 
 ### Quiz Quality

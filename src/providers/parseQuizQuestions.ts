@@ -18,6 +18,10 @@ export function parseQuizQuestions(raw: RawQuizQuestion[]): Problem[] {
 }
 
 function normalizeRawQuestion(question: RawQuizQuestion): RawQuizQuestion | null {
+  if (!isRawQuizQuestion(question)) {
+    return null;
+  }
+
   if (question.options.length === 4) {
     return question.correctIndex >= 0 && question.correctIndex <= 3 ? question : null;
   }
@@ -35,4 +39,19 @@ function normalizeRawQuestion(question: RawQuizQuestion): RawQuizQuestion | null
     ...question,
     options: ['True', 'False'],
   };
+}
+
+function isRawQuizQuestion(value: unknown): value is RawQuizQuestion {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<RawQuizQuestion>;
+  return (
+    typeof candidate.question === 'string'
+    && Array.isArray(candidate.options)
+    && candidate.options.every((option) => typeof option === 'string')
+    && typeof candidate.correctIndex === 'number'
+    && (candidate.explanation === undefined || typeof candidate.explanation === 'string')
+  );
 }

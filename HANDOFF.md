@@ -2,6 +2,9 @@
 
 ## Completed
 
+- Fixed a provider-response crash where malformed quiz JSON could trigger `Cannot read properties of undefined (reading 'length')` in quiz parsing
+- Hardened `parseQuizQuestions()` with a runtime shape guard so invalid questions are dropped instead of crashing generation
+- Added regression tests for missing `options` arrays and non-string option entries in provider output
 - Completed `Q10` by expanding front-matter suppression in both the generator prompt and the structural question-quality filter
 - Added front-matter rejection for blurbs, reviewer praise, acknowledgments, dedications, forewords, prefaces, back-cover copy, and similar book metadata noise
 - Expanded early PDF front-matter scanning so praise/preface/acknowledgment pages are skipped before page-range sections are offered
@@ -79,6 +82,7 @@
 
 ## Decisions
 
+- Treated provider quiz JSON as untrusted runtime input, not as a guaranteed `RawQuizQuestion`; parser safety belongs in the normalization layer even when provider schemas already exist
 - Treated Q10/Q11 as one shared generation-quality milestone: front-matter suppression belongs in both the content-selection layer and the post-generation filter, while “too easy by vibe” belongs in both the prompt and the structural critic
 - Kept the new easy-question critic structural rather than semantic: it looks for a uniquely longest, more detailed correct answer instead of trying to judge subject-matter validity
 - Treated quiz export as its own source-of-truth problem: when the visible state is a completed score screen, export should come from the stable completed quiz snapshot, not whichever mutable problem array happens to be current in the worker
@@ -131,12 +135,13 @@
 
 ## Validation
 
-- `npm test` passed with 149/149 tests
+- `npm test` passed with 151/151 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- TypeScript types on provider response shapes do not protect runtime JSON; parser normalization still needs explicit guards before touching fields like `options.length`
 - If users say the answer is obvious because it is the only detailed option, word-count outlier checks alone are too weak; add a second heuristic for a uniquely longest, more specific correct answer
 - Suppressing front matter only in generation is not enough for books/PDFs; early PDF page scanning should also skip praise/preface/copyright-style pages so they do not become the first sections offered
 - If a feature exports or persists quiz data from a completed score view, prefer the stable completed quiz snapshot over mutable “current problems” state; retries, narrowed flows, or later state changes can otherwise export the wrong problem set

@@ -246,6 +246,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - If a completed-score feature needs to export quiz content, prefer the stable completed quiz snapshot over mutable current-problem state; otherwise retries or narrowed follow-up flows can export the wrong quiz
 - If users can guess the answer because it is the only long, clause-heavy, or highly specific option, the existing length-outlier heuristic is not enough; add a second structural check for a uniquely longest and more detailed correct answer
 - Front-matter suppression for books/PDFs works best in two layers: skip obvious praise/preface/copyright pages early in PDF segmentation, and still reject surviving front-matter questions structurally after generation
+- Provider schemas and TypeScript types are not enough to trust runtime model JSON; parsing/normalization helpers still need explicit guards before touching nested fields like `options.length`
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

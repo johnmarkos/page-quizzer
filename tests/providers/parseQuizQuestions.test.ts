@@ -45,4 +45,27 @@ describe('parseQuizQuestions', () => {
 
     expect(problems).toHaveLength(0);
   });
+
+  it('drops malformed questions without throwing when options are missing', () => {
+    const problems = parseQuizQuestions([
+      {
+        question: 'Broken question',
+        correctIndex: 0,
+      } as unknown as Parameters<typeof parseQuizQuestions>[0][number],
+    ]);
+
+    expect(problems).toHaveLength(0);
+  });
+
+  it('drops malformed questions when options are not all strings', () => {
+    const problems = parseQuizQuestions([
+      {
+        question: 'Broken question',
+        options: ['A', 'B', 3, 'D'],
+        correctIndex: 0,
+      } as unknown as Parameters<typeof parseQuizQuestions>[0][number],
+    ]);
+
+    expect(problems).toHaveLength(0);
+  });
 });
