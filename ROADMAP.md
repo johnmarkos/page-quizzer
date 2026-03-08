@@ -24,6 +24,22 @@ These are well-defined, can be picked up in any order (unless noted), and each p
 
 - [ ] **C3: OpenQuizzer detection** — Wire `OpenQuizzerDetector` into content script. On page load, run detection. If detected, send `OPENQUIZZER_DETECTED` message to service worker. Panel shows "OpenQuizzer page detected — Load native quiz" badge. Clicking it loads problems directly into engine (no LLM call). Add `OPENQUIZZER_DETECTED` and `LOAD_OPENQUIZZER` to message protocol. Test: create a fixture HTML file with OpenQuizzer structure, verify detector parses it.
 
+- [ ] **C4: PDF text extraction** — Add `pdf.js` (`pdfjs-dist`) as a dependency. Create `src/content/PdfExtractor.ts` that detects when the current page is a PDF (check URL ending in `.pdf` or `content-type`), extracts text from all pages using `pdf.js`, and returns it as `ExtractedContent`. Chrome's built-in PDF viewer doesn't expose the DOM, so the content script needs to fetch the PDF URL directly and parse it. Integrate into content script alongside Readability: try PDF extraction first if URL looks like a PDF, fall back to Readability. Test: unit test with a small fixture PDF if feasible, otherwise manual.
+
+### Long-Form Content & Segmented Reading
+
+For long content (books, papers, lengthy documentation), PageQuizzer should segment the material into manageable sections and track progress through the whole document.
+
+- [ ] **L1: Content segmentation** — When extracted content exceeds a threshold (e.g., 3000 words), automatically split it into sections at heading boundaries (`<h1>`, `<h2>`, `<h3>`) or paragraph clusters. Present the user with a section picker: "This page has 8 sections (~1200 words each). Quiz which section?" with a "Quiz all" option. Store the section breakdown in the service worker. Each "Generate Quiz" produces questions for one section. New message types: `CONTENT_SECTIONS` (background → panel, lists sections with titles and word counts), `GENERATE_SECTION_QUIZ` (panel → background, with section index). Test: chunking logic as a pure function — split sample HTML with headings, verify section boundaries.
+
+- [ ] **L2: Document progress tracking** — Track which sections of a document the user has quizzed and their scores. Store in `chrome.storage.local` keyed by URL: `{ [url]: { title, sections: [{ title, wordCount, quizzed: boolean, score?: Score, lastQuizzed?: number }] } }`. Create `src/background/ProgressManager.ts` for CRUD operations. Panel shows a progress bar per document: "3/8 sections completed, 78% average". Test: unit test ProgressManager with mock data.
+
+- [ ] **L3: PDF page-range sections** — Extend C4 for long PDFs. Instead of heading-based splitting, split by page ranges (e.g., pages 1-10, 11-20). User picks a page range to quiz. Combine with L2 for progress tracking. The section picker shows "Pages 1-10 (~800 words)" entries. Depends on C4 and L1.
+
+- [ ] **L4: "Continue where I left off"** — When the user returns to a previously-segmented document, the panel shows their progress and highlights the next unquizzed section. "Continue" button auto-generates quiz for the next section. Uses L2 progress data. If the URL matches a tracked document, show progress view instead of the default idle view. Depends on L2.
+
+- [ ] **L5: Document library view** — New panel view (add "Library" tab alongside Quiz/History/Settings). Shows all tracked documents with progress bars, sorted by last activity. Click to jump to that URL and resume. Data comes from L2's ProgressManager. Test: manual.
+
 ### Quiz Experience
 
 - [ ] **Q1: Question type — true/false** — Add `true-false` question type. A `Problem` with exactly 2 options: "True" and "False". Update quiz generation prompt to sometimes produce true/false questions. Panel renders them as two large buttons instead of four small ones. Engine already handles 2-option problems correctly (no engine changes needed). Test: engine grading with 2-option problem.
@@ -67,7 +83,6 @@ These need architectural decisions before implementation. Flag for staff review.
 
 ## Exploring
 
-- [ ] PDF support — extract text from PDF viewer tabs
 - [ ] Collaborative quizzes — share generated quizzes via link
 - [ ] Question quality feedback — "report bad question" button
 
