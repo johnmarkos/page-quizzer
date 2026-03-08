@@ -12,6 +12,7 @@
       <h1>PageQuizzer</h1>
       <nav>
         <button class="nav-btn active" data-view="quiz">Quiz</button>
+        <button class="nav-btn" data-view="library">Library</button>
         <button class="nav-btn" data-view="history">History</button>
         <button class="nav-btn" data-view="settings">Settings</button>
       </nav>
@@ -117,6 +118,12 @@
         <p id="error-text" class="error"></p>
         <button id="error-dismiss-btn" class="secondary-btn">OK</button>
       </div>
+    </div>
+
+    <!-- Library View -->
+    <div id="library-view" class="view hidden">
+      <div id="library-list"></div>
+      <p id="library-empty">No tracked documents yet.</p>
     </div>
 
     <!-- History View -->

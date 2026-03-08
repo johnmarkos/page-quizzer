@@ -2,6 +2,10 @@
 
 ## Completed
 
+- Completed `L5` by adding a `Library` tab backed by tracked document progress rather than quiz history
+- Added document-library summaries with completed section counts, average score, next-section metadata, and last-activity sorting
+- Added a `GET_DOCUMENT_PROGRESS` / `DOCUMENT_PROGRESS` message path so the panel can request tracked-document summaries directly from `ProgressManager`
+- Opening a document from the library now navigates the active tab to that URL and switches back to the Quiz view, where the existing resume logic restores the document-progress card
 - Completed `L4` by adding a resumable long-form idle state for previously tracked documents
 - Added a `document-progress` restored-state branch plus an idle resume card that shows completed sections, average score, and the next unquizzed section
 - Added a `CONTINUE_DOCUMENT` background action that re-extracts the current page/PDF and auto-generates a quiz for the next unquizzed section
@@ -90,6 +94,8 @@
 
 ## Decisions
 
+- Kept the library backed by document-progress storage, not quiz history, because the feature is about resumable long-form reading state rather than completed quiz sessions
+- Opening a library entry reuses the active tab by default so the side panel stays attached to the tab that will immediately show resume state
 - Kept L4 as an idle resume card rather than a whole new view: it satisfies the roadmap behavior while minimizing view churn and preserving the normal `Generate Quiz` path beside it
 - Used the current extracted page to determine the next section to continue, not just the stored progress record, so the resume target reflects current segmentation and progress annotations
 - When all sections are complete, resumed long-form content should return to the section picker instead of auto-selecting a lowest-score or first section; choosing the post-completion strategy is a later product decision
@@ -147,12 +153,14 @@
 
 ## Validation
 
-- `npm test` passed with 152/152 tests
+- `npm test` passed with 153/153 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- A document library should not be derived from quiz history; history tells you what quizzes were finished, while resumable long-form state lives in document progress
+- If opening a tracked document from the panel should preserve the side-panel workflow, reusing the active tab is smoother than opening a background tab and leaving the panel pointed at the wrong page
 - Resume/progress lookup on PDFs should use the resolved underlying PDF URL, not the Chrome viewer wrapper URL, or saved progress will look like it disappeared
 - If an idle state is replaced by a resumable-document card, make sure untracked tabs explicitly clear that state or the previous tab’s resume UI can leak into a different page
 - If a helper merges persistent progress back into live section-picker data, do not reuse the storage shape as the UI shape; otherwise fields like `preview` and page ranges disappear and the panel crashes on perfectly valid sections

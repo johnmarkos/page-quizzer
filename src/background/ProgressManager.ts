@@ -32,10 +32,20 @@ export type DocumentResumeState = ProgressSummary & {
   allSectionsCompleted: boolean;
 };
 
+export type DocumentLibraryItem = DocumentResumeState & {
+  url: string;
+  lastActivity: number | null;
+};
+
 export class ProgressManager {
   async getDocumentProgress(url: string): Promise<DocumentProgressRecord | null> {
     const allProgress = await this.#getAllProgress();
     return allProgress[url] ? cloneDocumentProgress(allProgress[url]) : null;
+  }
+
+  async listDocuments(): Promise<DocumentLibraryItem[]> {
+    const allProgress = await this.#getAllProgress();
+    return buildDocumentLibraryItems(Object.values(allProgress));
   }
 
   async recordSectionResult(
@@ -155,6 +165,35 @@ export function buildDocumentResumeState(record: DocumentProgressRecord): Docume
     nextSectionTitle: nextSection?.title,
     allSectionsCompleted: nextSection === null && summary.totalCount > 0,
   };
+}
+
+export function buildDocumentLibraryItems(records: DocumentProgressRecord[]): DocumentLibraryItem[] {
+  return records
+    .map((record) => {
+      const resumeState = buildDocumentResumeState(record);
+      const lastActivity = record.sections.reduce<number | null>((latest, section) => {
+        if (typeof section.lastQuizzed !== 'number') {
+          return latest;
+        }
+
+        return latest === null ? section.lastQuizzed : Math.max(latest, section.lastQuizzed);
+      }, null);
+
+      return {
+        url: record.url,
+        lastActivity,
+        ...resumeState,
+      };
+    })
+    .sort((left, right) => {
+      const leftActivity = left.lastActivity ?? 0;
+      const rightActivity = right.lastActivity ?? 0;
+      if (rightActivity !== leftActivity) {
+        return rightActivity - leftActivity;
+      }
+
+      return left.title.localeCompare(right.title);
+    });
 }
 
 function cloneDocumentProgress(record: DocumentProgressRecord): DocumentProgressRecord {

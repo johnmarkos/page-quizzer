@@ -146,6 +146,40 @@ nav {
   margin-top: 10px;
 }
 
+#library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.library-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  padding: 14px;
+}
+
+.library-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.library-meta,
+.library-next,
+.library-url {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.library-url {
+  word-break: break-word;
+}
+
+.library-actions {
+  margin-top: 8px;
+}
+
 #manual-input-panel {
   margin-bottom: 12px;
 }

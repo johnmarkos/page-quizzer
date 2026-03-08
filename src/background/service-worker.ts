@@ -271,6 +271,8 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
       return await handleTestConnection(message.payload);
     case 'GET_SESSIONS':
       return { type: 'SESSIONS', payload: await storage.getSessions() };
+    case 'GET_DOCUMENT_PROGRESS':
+      return { type: 'DOCUMENT_PROGRESS', payload: await progress.listDocuments() };
     case 'IMPORT_SESSIONS':
       return await handleImportSessions(message.payload.json);
     default: {

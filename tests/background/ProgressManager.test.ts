@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContentSection } from '../../src/shared/messages.js';
 import { STORAGE_KEYS } from '../../src/shared/constants.js';
 import {
+  buildDocumentLibraryItems,
   buildDocumentResumeState,
   ProgressManager,
   buildProgressSummary,
@@ -142,6 +143,45 @@ describe('ProgressManager', () => {
       nextSectionIndex: 1,
       nextSectionTitle: 'Part 2',
       allSectionsCompleted: false,
+    });
+  });
+
+  it('builds library items sorted by last activity', () => {
+    const items = buildDocumentLibraryItems([
+      {
+        url: 'https://example.com/older',
+        title: 'Older Book',
+        sections: [
+          { index: 0, title: 'Part 1', wordCount: 900, quizzed: true, scorePercentage: 60, lastQuizzed: 100 },
+          { index: 1, title: 'Part 2', wordCount: 900, quizzed: false },
+        ],
+      },
+      {
+        url: 'https://example.com/newer',
+        title: 'Newer Book',
+        sections: [
+          { index: 0, title: 'Part 1', wordCount: 900, quizzed: true, scorePercentage: 90, lastQuizzed: 300 },
+        ],
+      },
+    ]);
+
+    expect(items.map((item) => item.url)).toEqual([
+      'https://example.com/newer',
+      'https://example.com/older',
+    ]);
+    expect(items[0]).toMatchObject({
+      title: 'Newer Book',
+      completedCount: 1,
+      totalCount: 1,
+      averageScorePercentage: 90,
+      allSectionsCompleted: true,
+      lastActivity: 300,
+    });
+    expect(items[1]).toMatchObject({
+      title: 'Older Book',
+      nextSectionIndex: 1,
+      nextSectionTitle: 'Part 2',
+      lastActivity: 100,
     });
   });
 

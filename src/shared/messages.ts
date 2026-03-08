@@ -90,6 +90,10 @@ export type ContinueDocumentRequest = {
   type: 'CONTINUE_DOCUMENT';
 };
 
+export type GetDocumentProgressRequest = {
+  type: 'GET_DOCUMENT_PROGRESS';
+};
+
 export type GetReviewRequest = {
   type: 'GET_REVIEW';
 };
@@ -207,6 +211,21 @@ export type SessionsMessage = {
     answers: SessionSummary['answers'];
     startedAt: number;
     completedAt: number;
+  }>;
+};
+
+export type DocumentProgressMessage = {
+  type: 'DOCUMENT_PROGRESS';
+  payload: Array<{
+    url: string;
+    title: string;
+    completedCount: number;
+    totalCount: number;
+    averageScorePercentage?: number;
+    nextSectionIndex: number | null;
+    nextSectionTitle?: string;
+    allSectionsCompleted: boolean;
+    lastActivity: number | null;
   }>;
 };
 
@@ -329,11 +348,13 @@ export type Message =
   | SettingsMessage
   | ConnectionResultMessage
   | SessionsMessage
+  | DocumentProgressMessage
   | RestoredStateMessage
   | ImportSessionsResultMessage
   | GetSettingsRequest
   | SaveSettingsRequest
   | TestConnectionRequest
   | GetSessionsRequest
+  | GetDocumentProgressRequest
   | ImportSessionsRequest
   | GetStateRequest;

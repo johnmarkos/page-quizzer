@@ -250,6 +250,8 @@ Co-Authored-By: Gemini <noreply@google.com>
 - If persistent progress records are smaller than the live UI section shape, merge progress onto the full `ContentSection` instead of reusing the storage shape directly; otherwise view-only fields like `preview` or page ranges get lost and the panel can crash
 - Resume/progress lookup for PDFs should key off the resolved PDF source URL, not the Chrome viewer wrapper URL, or “continue where I left off” will fail on documents that were already tracked
 - If an idle panel can show document-specific resume UI, explicitly clear that state when a tab has no tracked document; otherwise resume cards can leak across tab switches
+- Document-library state should come from document-progress storage, not quiz history; history is session-oriented, while resumable long-form reading state is document-oriented
+- If a panel action needs to open a tracked document and immediately show resume state, reusing the active tab works better with side-panel restore logic than opening a separate tab and leaving the panel on the old one
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

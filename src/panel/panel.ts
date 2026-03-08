@@ -37,6 +37,17 @@ function hide(el: HTMLElement) { el.classList.add('hidden'); }
 let selectedOptionIndex = -1;
 let currentExplanation = '';
 let currentSessions: SessionRecord[] = [];
+let currentDocuments: Array<{
+  url: string;
+  title: string;
+  completedCount: number;
+  totalCount: number;
+  averageScorePercentage?: number;
+  nextSectionIndex: number | null;
+  nextSectionTitle?: string;
+  allSectionsCompleted: boolean;
+  lastActivity: number | null;
+}> = [];
 let currentOptionCount = 4;
 let shortcutHelpVisible = false;
 let activeHistoryTopic: string | null = null;
@@ -57,14 +68,10 @@ let currentResumeDocument: {
 // --- Navigation ---
 document.querySelectorAll('.nav-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-    const viewId = (btn as HTMLElement).dataset.view + '-view';
-    $(viewId).classList.remove('hidden');
-
-    if ((btn as HTMLElement).dataset.view === 'settings') loadSettings();
-    if ((btn as HTMLElement).dataset.view === 'history') loadHistory();
+    const view = (btn as HTMLElement).dataset.view;
+    if (view) {
+      void activateView(view);
+    }
   });
 });
 
@@ -671,6 +678,33 @@ async function getSavedSettings() {
   return response.payload;
 }
 
+async function loadLibrary() {
+  const response = await chrome.runtime.sendMessage({ type: 'GET_DOCUMENT_PROGRESS' });
+  currentDocuments = response?.type === 'DOCUMENT_PROGRESS' ? response.payload : [];
+  renderLibrary();
+}
+
+async function activateView(view: string) {
+  document.querySelectorAll('.nav-btn').forEach((button) => {
+    button.classList.toggle('active', (button as HTMLElement).dataset.view === view);
+  });
+  document.querySelectorAll('.view').forEach((panel) => panel.classList.add('hidden'));
+  $(`${view}-view`).classList.remove('hidden');
+
+  if (view === 'settings') {
+    await loadSettings();
+  }
+  if (view === 'history') {
+    await loadHistory();
+  }
+  if (view === 'library') {
+    await loadLibrary();
+  }
+  if (view === 'quiz') {
+    await checkRestoredState();
+  }
+}
+
 // --- History ---
 async function loadHistory() {
   const sessions = await fetchSessions();
@@ -1153,6 +1187,57 @@ function renderHistory() {
       </div>
     `)
     .join('');
+}
+
+function renderLibrary() {
+  const list = $('library-list');
+  const empty = $('library-empty');
+
+  if (currentDocuments.length === 0) {
+    list.innerHTML = '';
+    show(empty);
+    return;
+  }
+
+  hide(empty);
+  list.innerHTML = currentDocuments.map((document, index) => `
+    <div class="library-card">
+      <div class="library-title">${escapeHtml(document.title)}</div>
+      <div class="library-meta">
+        ${document.completedCount}/${document.totalCount} sections completed${typeof document.averageScorePercentage === 'number' ? ` • Avg ${document.averageScorePercentage}%` : ''}
+      </div>
+      <div class="library-next">
+        ${document.allSectionsCompleted
+          ? 'All sections completed'
+          : `Next section: ${escapeHtml(document.nextSectionTitle ?? `Section ${document.nextSectionIndex! + 1}`)}`}
+      </div>
+      <div class="library-url">${escapeHtml(document.url)}</div>
+      <div class="library-actions">
+        <button class="secondary-btn" type="button" data-library-index="${index}">Open Document</button>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll<HTMLButtonElement>('[data-library-index]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const documentIndex = Number(button.dataset.libraryIndex);
+      const document = currentDocuments[documentIndex];
+      if (document) {
+        void openLibraryDocument(document.url);
+      }
+    });
+  });
+}
+
+async function openLibraryDocument(url: string) {
+  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (activeTab?.id) {
+    await chrome.tabs.update(activeTab.id, { url, active: true });
+  } else {
+    await chrome.tabs.create({ url, active: true });
+  }
+
+  await activateView('quiz');
 }
 
 function renderHistoryTopics(topics?: string[]) {

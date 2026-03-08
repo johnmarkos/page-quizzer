@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.1.55 — Document Library View (2026-03-08)
+
+### Long-Form Content
+- Added a `Library` tab that lists tracked long-form documents from progress storage instead of quiz history
+- Library entries show completed section counts, average score, next section, and are sorted by most recent activity
+- Opening a library entry navigates the active tab to that document so the existing resume flow can take over in the Quiz tab
+
+### Architecture
+- Extended `ProgressManager` with library-summary helpers so document resume and document library both derive from the same stored progress model
+- Added a dedicated `GET_DOCUMENT_PROGRESS` / `DOCUMENT_PROGRESS` message path for library data instead of reusing history/session records
+
+### Review Loop
+- The first reviewer pass focused on data-model drift and navigation timing. The final version keeps the library backed by progress storage rather than history, and relies on the existing panel tab-update restore flow after navigation instead of introducing a second resume mechanism.
+- A second reviewer pass found no further significant issues.
+
+### Security Review
+- No new permissions, dependencies, or network destinations were added
+- `npm audit --omit=dev` reported 0 vulnerabilities
+
+### Testing
+- 153 tests (was 152): added library-summary coverage for last-activity sorting and next-section metadata
+
 ## v0.1.54 — Continue Where You Left Off (2026-03-08)
 
 ### Long-Form Content
