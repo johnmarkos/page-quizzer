@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.28 — Service Worker PDF Import Fix (2026-03-08)
+
+### Bug Fixes
+- Removed the runtime `import()` call from the background PDF extractor, which Chrome disallows inside `ServiceWorkerGlobalScope`
+- Switched the service worker to a static bundled `pdfjs` import so PDF extraction works in the MV3 background context again
+
+### Testing
+- Existing 74-test suite and production build passed after the background PDF loader change
+
 ## v0.1.27 — Start Quiz State Sync (2026-03-08)
 
 ### Bug Fixes

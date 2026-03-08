@@ -1,4 +1,5 @@
 import type { ExtractedContent } from '../shared/messages.js';
+import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
 import type {
   DocumentInitParameters,
   PDFDocumentProxy,
@@ -17,8 +18,6 @@ import {
   hasAllowedFileSchemeAccess,
   isLocalFilePdfUrl,
 } from './pdf-source.js';
-
-const PDF_JS_MODULE_PATH = 'dist/pdfjs.js';
 
 export async function extractPdfContentFromTabUrl(
   tabUrl: string,
@@ -53,7 +52,6 @@ export async function extractPdfContentFromTabUrl(
   }
 
   const pdfBytes = new Uint8Array(await response.arrayBuffer());
-  const pdfjs = await import(chrome.runtime.getURL(PDF_JS_MODULE_PATH));
   const loadingTask = pdfjs.getDocument(buildPdfDocumentParams(pdfBytes));
 
   let pdfDocument: PDFDocumentProxy | null = null;
