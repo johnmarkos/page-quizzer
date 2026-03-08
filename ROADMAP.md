@@ -10,7 +10,7 @@ These are well-defined, can be picked up in any order (unless noted), and each p
 
 ### Providers
 
-- [ ] **P1: OpenAI provider** — `src/providers/OpenAIProvider.ts`. Extends `BaseProvider`. Uses chat completions API with `response_format: { type: "json_object" }` for structured output. Default model: `gpt-4o-mini`. Add to provider registry. Add to settings dropdown in panel HTML. Test: factory creates it, name/model getters work.
+- [x] **P1: OpenAI provider** — `src/providers/OpenAIProvider.ts`. Extends `BaseProvider`. Uses chat completions API with `response_format: { type: "json_object" }` for structured output. Default model: `gpt-4o-mini`. Add to provider registry. Add to settings dropdown in panel HTML. Test: factory creates it, name/model getters work.
 
 - [ ] **P2: Gemini provider** — `src/providers/GeminiProvider.ts`. Extends `BaseProvider`. Uses Gemini API with JSON mode. Default model: `gemini-2.0-flash`. Add to registry and settings dropdown. Test: same pattern as P1.
 
@@ -46,9 +46,9 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [ ] **Q2: Answer explanation improvements** — When showing answer result, if the LLM provided an explanation, render it in a styled callout box. Add a "Why?" button that only appears if explanation exists. Small CSS addition + panel logic. Test: manual.
 
-- [ ] **Q3: Question review at end of quiz** — After quiz completion, show a "Review Missed" button on the score view. Clicking it shows a scrollable list of incorrectly-answered questions with the correct answer highlighted. Data is already in `SessionSummary.answers` — just need to display it. Service worker needs to hold the problems array and return it via a `GET_REVIEW` message. Test: manual.
+- [x] **Q3: Question review at end of quiz** — After quiz completion, show a "Review Missed" button on the score view. Clicking it shows a scrollable list of incorrectly-answered questions with the correct answer highlighted. Data is already in `SessionSummary.answers` — just need to display it. Service worker needs to hold the problems array and return it via a `GET_REVIEW` message. Test: manual.
 
-- [ ] **Q4: Retry missed questions only** — On the score view, add "Retry Missed" button alongside the existing "Retry" button. Sends a new message `RETRY_MISSED` to service worker, which calls `engine.loadProblems()` with only the problems the user got wrong, then `engine.start()`. Test: engine — load 3 problems, answer 1 wrong, retry missed gives 1 problem.
+- [x] **Q4: Retry missed questions only** — On the score view, add "Retry Missed" button alongside the existing "Retry" button. Sends a new message `RETRY_MISSED` to service worker, which calls `engine.loadProblems()` with only the problems the user got wrong, then `engine.start()`. Test: engine — load 3 problems, answer 1 wrong, retry missed gives 1 problem.
 
 - [ ] **Q5: Timer mode** — Optional countdown timer per question (configurable: 15/30/60 seconds, or off). Timer runs in the panel (not engine — engine stays timer-agnostic). When timer expires, auto-skip. Add timer setting to settings view and `chrome.storage.sync`. Show countdown bar in quiz view. Test: manual.
 

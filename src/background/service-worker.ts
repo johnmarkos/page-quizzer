@@ -3,14 +3,23 @@ import { QuizGenerator } from './QuizGenerator.js';
 import { StorageManager, type SessionRecord } from './StorageManager.js';
 import { createProvider } from '../providers/index.js';
 import type { Message, ExtractedContent } from '../shared/messages.js';
-import type { EngineSnapshot } from '../engine/types.js';
+import type { EngineSnapshot, Problem, SessionSummary } from '../engine/types.js';
 import { generateId } from '../engine/utils.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
+import { cloneProblems, getMissedProblems } from './retry-missed.js';
+import { buildReviewItems } from './review-missed.js';
+
+type CompletedQuizData = {
+  problems: Problem[];
+  summary: SessionSummary;
+};
 
 const storage = new StorageManager();
 const engine = new QuizEngine();
 
 let lastExtracted: ExtractedContent | null = null;
+let currentProblems: Problem[] = [];
+let lastCompletedQuiz: CompletedQuizData | null = null;
 
 // --- Service worker persistence ---
 // Persist engine state on every state change so Chrome can kill/restart the worker safely
@@ -31,11 +40,21 @@ async function restoreState() {
   const data = await chrome.storage.local.get([
     STORAGE_KEYS.ENGINE_SNAPSHOT,
     STORAGE_KEYS.LAST_EXTRACTED,
+    STORAGE_KEYS.LAST_COMPLETED_QUIZ,
   ]);
   const snapshot = data[STORAGE_KEYS.ENGINE_SNAPSHOT] as EngineSnapshot | undefined;
   if (snapshot && snapshot.state !== 'idle' && snapshot.problems.length > 0) {
     engine.restore(snapshot);
+    currentProblems = cloneProblems(snapshot.problems);
     lastExtracted = data[STORAGE_KEYS.LAST_EXTRACTED] || null;
+  }
+
+  const completedQuiz = data[STORAGE_KEYS.LAST_COMPLETED_QUIZ] as CompletedQuizData | undefined;
+  if (completedQuiz) {
+    lastCompletedQuiz = {
+      problems: cloneProblems(completedQuiz.problems),
+      summary: cloneSummary(completedQuiz.summary),
+    };
   }
 }
 
@@ -59,6 +78,13 @@ engine.on('answerResult', (payload) => {
 });
 
 engine.on('quizComplete', async (payload) => {
+  lastCompletedQuiz = {
+    problems: cloneProblems(currentProblems),
+    summary: cloneSummary(payload),
+  };
+  await chrome.storage.local.set({
+    [STORAGE_KEYS.LAST_COMPLETED_QUIZ]: lastCompletedQuiz,
+  });
   broadcast({ type: 'QUIZ_COMPLETE', payload });
 
   // Save session record
@@ -101,6 +127,10 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
     case 'SKIP_QUESTION':
       engine.skip();
       return { type: 'ok' };
+    case 'RETRY_MISSED':
+      return handleRetryMissed();
+    case 'GET_REVIEW':
+      return handleGetReview();
     case 'GET_SETTINGS':
       return { type: 'SETTINGS', payload: await storage.getSettings() };
     case 'SAVE_SETTINGS':
@@ -178,6 +208,7 @@ async function handleGenerateQuiz() {
     throw new Error('Failed to generate questions from this content');
   }
 
+  currentProblems = cloneProblems(problems);
   engine.loadProblems(problems);
 
   return {
@@ -197,6 +228,49 @@ async function handleTestConnection() {
   });
   const ok = await provider.testConnection();
   return { type: 'CONNECTION_RESULT', payload: { success: ok } };
+}
+
+function handleRetryMissed() {
+  if (!lastCompletedQuiz || lastCompletedQuiz.problems.length === 0) {
+    throw new Error('No completed quiz available to retry.');
+  }
+
+  const missedProblems = getMissedProblems(
+    lastCompletedQuiz.problems,
+    lastCompletedQuiz.summary.answers,
+  );
+  if (missedProblems.length === 0) {
+    throw new Error('No missed questions to retry.');
+  }
+
+  currentProblems = cloneProblems(missedProblems);
+  engine.loadProblems(missedProblems);
+  engine.start();
+  return { type: 'ok' };
+}
+
+function handleGetReview() {
+  if (!lastCompletedQuiz || lastCompletedQuiz.problems.length === 0) {
+    throw new Error('No completed quiz available for review.');
+  }
+
+  return {
+    type: 'REVIEW_DATA',
+    payload: {
+      items: buildReviewItems(
+        lastCompletedQuiz.problems,
+        lastCompletedQuiz.summary.answers,
+      ),
+    },
+  };
+}
+
+function cloneSummary(summary: SessionSummary): SessionSummary {
+  return {
+    ...summary,
+    score: { ...summary.score },
+    answers: summary.answers.map(answer => ({ ...answer })),
+  };
 }
 
 function broadcast(message: any) {

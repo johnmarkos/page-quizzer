@@ -1,4 +1,5 @@
 import type { Problem, SessionSummary } from '../engine/types.js';
+import type { ReviewItem } from '../shared/messages.js';
 
 // --- DOM helpers ---
 function $(id: string): HTMLElement {
@@ -27,7 +28,7 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 
 // --- Quiz Flow ---
 function showQuizSection(section: string) {
-  ['quiz-idle', 'quiz-loading', 'quiz-ready', 'quiz-question', 'quiz-complete', 'quiz-error']
+  ['quiz-idle', 'quiz-loading', 'quiz-ready', 'quiz-question', 'quiz-complete', 'quiz-review', 'quiz-error']
     .forEach(id => hide($(id)));
   show($(section));
 }
@@ -65,8 +66,38 @@ $('retry-btn').addEventListener('click', () => {
   chrome.runtime.sendMessage({ type: 'START_QUIZ' });
 });
 
+$('review-missed-btn').addEventListener('click', async () => {
+  try {
+    const response = await chrome.runtime.sendMessage({ type: 'GET_REVIEW' });
+    if (response?.type === 'QUIZ_ERROR') {
+      showError(response.payload.error);
+      return;
+    }
+    if (response?.type === 'REVIEW_DATA') {
+      showReview(response.payload.items);
+    }
+  } catch (err) {
+    showError(err instanceof Error ? err.message : 'Failed to load review');
+  }
+});
+
+$('retry-missed-btn').addEventListener('click', async () => {
+  try {
+    const response = await chrome.runtime.sendMessage({ type: 'RETRY_MISSED' });
+    if (response?.type === 'QUIZ_ERROR') {
+      showError(response.payload.error);
+    }
+  } catch (err) {
+    showError(err instanceof Error ? err.message : 'Failed to retry missed questions');
+  }
+});
+
 $('new-quiz-btn').addEventListener('click', () => {
   showQuizSection('quiz-idle');
+});
+
+$('review-back-btn').addEventListener('click', () => {
+  showQuizSection('quiz-complete');
 });
 
 $('error-dismiss-btn').addEventListener('click', () => {
@@ -153,6 +184,48 @@ function showComplete(payload: SessionSummary) {
   ($('score-display') as HTMLElement).textContent = payload.score.percentage + '%';
   ($('score-breakdown') as HTMLElement).textContent =
     `${payload.score.correct} correct, ${payload.score.incorrect} incorrect, ${payload.score.skipped} skipped out of ${payload.score.total}`;
+
+  const reviewMissedBtn = $('review-missed-btn') as HTMLButtonElement;
+  reviewMissedBtn.disabled = payload.score.incorrect === 0;
+  reviewMissedBtn.textContent = payload.score.incorrect > 0
+    ? `Review Missed (${payload.score.incorrect})`
+    : 'Review Missed';
+
+  const retryMissedBtn = $('retry-missed-btn') as HTMLButtonElement;
+  retryMissedBtn.disabled = payload.score.incorrect === 0;
+  retryMissedBtn.textContent = payload.score.incorrect > 0
+    ? `Retry Missed (${payload.score.incorrect})`
+    : 'Retry Missed';
+}
+
+function showReview(items: ReviewItem[]) {
+  showQuizSection('quiz-review');
+
+  const list = $('review-list');
+  const empty = $('review-empty');
+  if (items.length === 0) {
+    list.innerHTML = '';
+    show(empty);
+    return;
+  }
+
+  hide(empty);
+  list.innerHTML = items
+    .map(item => `
+      <article class="review-card">
+        <h3 class="review-question">${escapeHtml(item.question)}</h3>
+        <div class="review-options">
+          ${item.options.map((option, index) => `
+            <div class="review-option${option.correct ? ' correct' : ''}${option.selected && !option.correct ? ' incorrect' : ''}">
+              <span class="review-option-key">${index + 1}</span>
+              <span class="review-option-text">${escapeHtml(option.text)}</span>
+            </div>
+          `).join('')}
+        </div>
+        ${item.explanation ? `<p class="review-explanation">${escapeHtml(item.explanation)}</p>` : ''}
+      </article>
+    `)
+    .join('');
 }
 
 function showError(message: string) {

@@ -1,5 +1,50 @@
 # Changelog
 
+## v0.1.4 — Review Missed Questions (2026-03-08)
+
+### Quiz Experience
+- Added a `Review Missed` action on the score view that opens a scrollable review screen for incorrectly answered questions
+- Highlighted the correct option in green and the selected incorrect option in red, with explanations shown when available
+- Disabled `Review Missed` when a quiz has zero incorrect answers and show the incorrect-count in the button label
+
+### Background Logic
+- Added `GET_REVIEW` and `REVIEW_DATA` to the message protocol so the panel receives a render-ready review payload instead of reaching into engine state
+- Added a pure review builder in `src/background/review-missed.ts` to transform completed quiz data into panel-friendly review items
+- Persisted the last completed quiz context in `chrome.storage.local` so review and retry-missed survive service worker restarts after quiz completion
+
+### Testing
+- 35 tests (was 33): added review-item coverage for incorrect-answer filtering, correct/selected markers, and defensive copies
+
+## v0.1.3 — Retry Missed Questions (2026-03-08)
+
+### Quiz Experience
+- Added a `Retry Missed` action to the score view so users can restart with only incorrectly answered questions
+- Disabled `Retry Missed` when a quiz has zero incorrect answers and show the incorrect-count in the button label
+- Added `RETRY_MISSED` to the message protocol and wired the service worker to reload only missed problems before restarting the engine
+
+### Background Logic
+- Added a pure retry-selection helper in `src/background/retry-missed.ts` to keep missed-question filtering testable and separate from Chrome message handling
+- Restored the in-memory retry problem set from the serialized engine snapshot after service worker restart, so mid-quiz worker restarts do not break the follow-up retry flow
+
+### Testing
+- 33 tests (was 31): added retry-missed coverage using engine-generated answers and defensive-copy assertions
+
+## v0.1.2 — OpenAI Provider (2026-03-08)
+
+### Providers
+- Added `OpenAIProvider` using the Chat Completions API with JSON mode (`response_format: { type: "json_object" }`)
+- Registered `openai` in the provider factory with default model `gpt-4o-mini`
+- Added OpenAI to the settings provider dropdown in the side panel
+
+### Security
+- Added explicit `host_permissions` for `https://api.anthropic.com/*` and `https://api.openai.com/*` so provider requests are limited to intended API origins
+
+### Testing
+- 31 tests (was 29): added provider registry coverage for OpenAI defaults and custom model overrides
+
+### Type Safety
+- Removed the remaining `as any` cast from the provider registry test
+
 ## v0.1.1 — Readability + Persistence (2026-03-07)
 
 ### Content Extraction

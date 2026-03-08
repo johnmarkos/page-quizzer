@@ -41,6 +41,29 @@ export type SkipQuestionRequest = {
   type: 'SKIP_QUESTION';
 };
 
+export type RetryMissedRequest = {
+  type: 'RETRY_MISSED';
+};
+
+export type GetReviewRequest = {
+  type: 'GET_REVIEW';
+};
+
+export type ReviewItemOption = {
+  text: string;
+  correct: boolean;
+  selected: boolean;
+};
+
+export type ReviewItem = {
+  problemId: string;
+  question: string;
+  explanation?: string;
+  selectedIndex: number;
+  correctIndex: number;
+  options: ReviewItemOption[];
+};
+
 // Background → Panel
 export type QuizGeneratedMessage = {
   type: 'QUIZ_GENERATED';
@@ -80,6 +103,11 @@ export type GeneratingStatusMessage = {
   payload: { status: string };
 };
 
+export type ReviewDataMessage = {
+  type: 'REVIEW_DATA';
+  payload: { items: ReviewItem[] };
+};
+
 // Settings messages
 export type GetSettingsRequest = {
   type: 'GET_SETTINGS';
@@ -115,12 +143,15 @@ export type Message =
   | AnswerQuestionRequest
   | NextQuestionRequest
   | SkipQuestionRequest
+  | RetryMissedRequest
+  | GetReviewRequest
   | QuizGeneratedMessage
   | QuizErrorMessage
   | QuestionShowMessage
   | AnswerResultMessage
   | QuizCompleteMessage
   | GeneratingStatusMessage
+  | ReviewDataMessage
   | GetSettingsRequest
   | SaveSettingsRequest
   | TestConnectionRequest

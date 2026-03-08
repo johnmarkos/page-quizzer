@@ -184,6 +184,9 @@ Co-Authored-By: Gemini <noreply@google.com>
 - Content scripts can't import ES modules directly — esbuild bundles dependencies (like Readability) into the output
 - All message types must be in the `Message` union — `as any` casts hide bugs and break the type system
 - `chrome.runtime.sendMessage` can fail if the receiver isn't open — always `.catch()` broadcasts
+- New provider APIs need matching `host_permissions` entries in `manifest.json` or extension-origin `fetch()` calls will fail at runtime
+- If a background feature keeps derived quiz state in memory (not just the engine snapshot), rebuild it from the serialized engine state after service worker restart or follow-up actions will silently break
+- For post-quiz actions like review/retry, persist the last completed quiz context separately from the in-progress engine snapshot; completion clears the snapshot but the follow-up UI still needs stable data
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

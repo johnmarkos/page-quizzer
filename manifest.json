@@ -4,6 +4,10 @@
   "version": "0.1.0",
   "description": "Generate quiz questions from any web page for retrieval practice",
   "permissions": ["sidePanel", "activeTab", "storage"],
+  "host_permissions": [
+    "https://api.anthropic.com/*",
+    "https://api.openai.com/*"
+  ],
   "background": {
     "service_worker": "dist/background.js",
     "type": "module"

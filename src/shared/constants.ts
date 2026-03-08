@@ -10,4 +10,5 @@ export const STORAGE_KEYS = {
   SESSIONS: 'sessions',
   ENGINE_SNAPSHOT: 'engineSnapshot',
   LAST_EXTRACTED: 'lastExtracted',
+  LAST_COMPLETED_QUIZ: 'lastCompletedQuiz',
 } as const;

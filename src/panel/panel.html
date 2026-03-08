@@ -51,8 +51,19 @@
         <h2>Quiz Complete!</h2>
         <div id="score-display"></div>
         <div id="score-breakdown"></div>
+        <button id="review-missed-btn" class="secondary-btn">Review Missed</button>
         <button id="retry-btn" class="primary-btn">Retry</button>
+        <button id="retry-missed-btn" class="secondary-btn">Retry Missed</button>
         <button id="new-quiz-btn" class="secondary-btn">New Quiz</button>
+      </div>
+
+      <div id="quiz-review" class="hidden">
+        <div class="review-header">
+          <h2>Review Missed</h2>
+          <button id="review-back-btn" class="secondary-btn">Back to Score</button>
+        </div>
+        <div id="review-list"></div>
+        <p id="review-empty" class="hidden">No missed questions to review.</p>
       </div>
 
       <div id="quiz-error" class="hidden">
@@ -73,6 +84,7 @@
         <label for="provider-select">Provider</label>
         <select id="provider-select">
           <option value="anthropic">Anthropic (Claude)</option>
+          <option value="openai">OpenAI (GPT)</option>
         </select>
       </div>
       <div class="setting-group">

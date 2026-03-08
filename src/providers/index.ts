@@ -1,10 +1,12 @@
 import { BaseProvider, type ProviderConfig } from './BaseProvider.js';
 import { AnthropicProvider } from './AnthropicProvider.js';
+import { OpenAIProvider } from './OpenAIProvider.js';
 
-export type ProviderName = 'anthropic';
+export type ProviderName = 'anthropic' | 'openai';
 
 const PROVIDERS: Record<ProviderName, new (config: ProviderConfig) => BaseProvider> = {
   anthropic: AnthropicProvider,
+  openai: OpenAIProvider,
 };
 
 export function createProvider(name: ProviderName, config: ProviderConfig): BaseProvider {
@@ -21,3 +23,4 @@ export function getAvailableProviders(): ProviderName[] {
 
 export { BaseProvider, type ProviderConfig } from './BaseProvider.js';
 export { AnthropicProvider } from './AnthropicProvider.js';
+export { OpenAIProvider } from './OpenAIProvider.js';
