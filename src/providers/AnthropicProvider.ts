@@ -2,7 +2,7 @@ import { BaseProvider } from './BaseProvider.js';
 import type { Problem } from '../engine/types.js';
 import type { QuizGenerationParams, RawQuizQuestion } from '../prompts/types.js';
 import { buildSystemPrompt, buildUserPrompt, QUIZ_TOOL_SCHEMA } from '../prompts/quiz-generation.js';
-import { generateId } from '../engine/utils.js';
+import { parseQuizQuestions } from './parseQuizQuestions.js';
 
 export class AnthropicProvider extends BaseProvider {
   get name(): string {
@@ -70,16 +70,6 @@ export class AnthropicProvider extends BaseProvider {
   }
 
   #parseQuestions(raw: RawQuizQuestion[]): Problem[] {
-    return raw
-      .filter(q => q.options?.length === 4 && q.correctIndex >= 0 && q.correctIndex <= 3)
-      .map(q => ({
-        id: generateId(),
-        question: q.question,
-        options: q.options.map((text, i) => ({
-          text,
-          correct: i === q.correctIndex,
-        })),
-        explanation: q.explanation,
-      }));
+    return parseQuizQuestions(raw);
   }
 }

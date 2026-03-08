@@ -1,17 +1,19 @@
 import type { QuizGenerationParams } from './types.js';
 
-export const QUIZ_GENERATION_VERSION = '1.0';
+export const QUIZ_GENERATION_VERSION = '1.1';
 
 export function buildSystemPrompt(): string {
   return `You are a quiz question generator for retrieval practice. Your job is to create multiple-choice questions from the provided text content.
 
 Rules:
 - Questions should test comprehension of key concepts, not trivial details
-- Each question must have exactly 4 options
+- Each question must have exactly 4 options, or exactly 2 options for true/false questions
+- For true/false questions, the options must be exactly ["True", "False"]
 - Exactly one option must be correct
 - Wrong options should be plausible but clearly incorrect
 - Questions should be self-contained (understandable without the source text)
 - Vary question types: factual recall, conceptual understanding, application
+- Include some true/false questions when the content supports concise binary claims, but keep most questions as 4-option multiple choice
 - Avoid "all of the above" or "none of the above" options
 - Keep questions concise and clear`;
 }
@@ -38,6 +40,12 @@ Return your response as a JSON object with this exact structure:
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "correctIndex": 0,
       "explanation": "Brief explanation of why the answer is correct"
+    },
+    {
+      "question": "True or false: ...?",
+      "options": ["True", "False"],
+      "correctIndex": 1,
+      "explanation": "Brief explanation of why the answer is correct"
     }
   ]
 }`;
@@ -56,10 +64,20 @@ export const QUIZ_TOOL_SCHEMA = {
           properties: {
             question: { type: 'string' as const },
             options: {
-              type: 'array' as const,
-              items: { type: 'string' as const },
-              minItems: 4,
-              maxItems: 4,
+              anyOf: [
+                {
+                  type: 'array' as const,
+                  items: { type: 'string' as const },
+                  minItems: 2,
+                  maxItems: 2,
+                },
+                {
+                  type: 'array' as const,
+                  items: { type: 'string' as const },
+                  minItems: 4,
+                  maxItems: 4,
+                },
+              ],
             },
             correctIndex: { type: 'integer' as const, minimum: 0, maximum: 3 },
             explanation: { type: 'string' as const },

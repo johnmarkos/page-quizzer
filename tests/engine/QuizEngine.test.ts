@@ -17,6 +17,18 @@ function mockProblem(id: string): Problem {
   };
 }
 
+function mockTrueFalseProblem(id: string): Problem {
+  return {
+    id,
+    question: `True or false ${id}?`,
+    options: [
+      { text: 'True', correct: true },
+      { text: 'False', correct: false },
+    ],
+    explanation: `Explanation for ${id}`,
+  };
+}
+
 function collectEvents<E extends EngineEvent>(engine: QuizEngine, event: E) {
   const events: EngineEventPayloads[E][] = [];
   engine.on(event, (payload) => events.push(payload));
@@ -88,6 +100,16 @@ describe('QuizEngine', () => {
     engine.selectOption(1); // incorrect
 
     expect(results[0].correct).toBe(false);
+  });
+
+  it('grades true-false questions correctly', () => {
+    const results = collectEvents(engine, 'answerResult');
+    engine.loadProblems([mockTrueFalseProblem('1')]);
+    engine.start(false);
+
+    engine.selectOption(1); // false on a true statement
+    expect(results[0].correct).toBe(false);
+    expect(results[0].correctIndex).toBe(0);
   });
 
   it('moves to next question', () => {

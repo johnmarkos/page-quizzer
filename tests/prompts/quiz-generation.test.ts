@@ -6,6 +6,7 @@ describe('quiz-generation prompts', () => {
     const prompt = buildSystemPrompt();
     expect(prompt).toContain('multiple-choice');
     expect(prompt).toContain('4 options');
+    expect(prompt).toContain('true/false');
     expect(prompt).toContain('retrieval practice');
   });
 
@@ -54,5 +55,8 @@ describe('quiz-generation prompts', () => {
     expect(itemProps.question).toBeDefined();
     expect(itemProps.options).toBeDefined();
     expect(itemProps.correctIndex).toBeDefined();
+    expect(itemProps.options.anyOf).toHaveLength(2);
+    expect(itemProps.options.anyOf[0].maxItems).toBe(2);
+    expect(itemProps.options.anyOf[1].maxItems).toBe(4);
   });
 });

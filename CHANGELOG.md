@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.1.7 — True/False Questions (2026-03-08)
+
+### Quiz Experience
+- Added true/false question support, with two large option buttons in the quiz panel when a problem has exactly two choices
+- Kept the engine unchanged while confirming grading works correctly for 2-option problems
+
+### Prompt & Provider Contract
+- Updated the quiz generation prompt and tool schema to allow either 4-option multiple-choice questions or 2-option true/false questions
+- Standardized provider parsing through a shared helper so both Anthropic and OpenAI accept 4-option questions and normalize valid `["True", "False"]` outputs
+- Rejected invalid 2-option outputs that are not true/false, instead of silently treating arbitrary binary choices as supported question types
+
+### Testing
+- 44 tests (was 40): added engine coverage for 2-option grading and provider parsing coverage for valid/invalid true-false outputs
+
 ## v0.1.6 — Answer Explanation Toggle (2026-03-08)
 
 ### Quiz Experience

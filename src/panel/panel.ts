@@ -154,10 +154,11 @@ function showQuestion(payload: { problem: Problem; index: number; total: number 
 
   const container = $('options-container');
   container.innerHTML = '';
+  container.classList.toggle('true-false-options', problem.options.length === 2);
 
   problem.options.forEach((opt, i) => {
     const btn = document.createElement('button');
-    btn.className = 'option-btn';
+    btn.className = problem.options.length === 2 ? 'option-btn true-false-btn' : 'option-btn';
     btn.innerHTML = `<span class="option-key">${i + 1}</span>${escapeHtml(opt.text)}`;
     btn.addEventListener('click', () => {
       selectedOptionIndex = i;
