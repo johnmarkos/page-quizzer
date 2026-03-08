@@ -1,6 +1,6 @@
 import type { QuizGenerationParams } from './types.js';
 
-export const QUIZ_GENERATION_VERSION = '1.2';
+export const QUIZ_GENERATION_VERSION = '1.3';
 
 export function buildSystemPrompt(): string {
   return `You are a quiz question generator for retrieval practice. Your job is to create multiple-choice questions from the provided text content.
@@ -15,10 +15,14 @@ Rules:
 - Avoid giveaway distractors: joke answers, obviously vague answers, answers that are much shorter or longer than the others, or options that repeat the question wording in an unnatural way
 - Questions should be self-contained (understandable without the source text)
 - Prefer conceptual understanding, comparison, cause/effect, and application over trivial fact recall
+- For long-form books, papers, and chapters, prefer mechanism, implication, comparison, and scope questions over date/edition/publisher trivia
 - When possible, make the wrong answers reflect likely confusions a reader could have after skimming the text
 - Include some true/false questions when the content supports concise binary claims, but keep most questions as 4-option multiple choice
 - Avoid "all of the above" or "none of the above" options
 - Avoid questions whose answer is obvious from tone alone or because one option sounds noticeably more sophisticated than the others
+- If three options can be rejected immediately as vague, generic, or from the wrong conceptual category, rewrite or skip the question
+- Make wrong answers share domain vocabulary with the correct answer when the text supports that, so the choice requires discrimination rather than spotting the only specific option
+- Avoid publication-metadata questions (edition, publisher, copyright, ISBN, table of contents) unless that metadata is itself central to the passage
 - If the source text does not support a strong question, skip it rather than inventing weak options
 - Keep questions concise and clear`;
 }
@@ -59,7 +63,9 @@ Additional quality requirements:
 - Write questions that reward understanding, not just keyword matching
 - For 4-option questions, make all options parallel in style and detail so the correct answer does not stand out
 - Use distractors that are close enough to tempt an attentive but imperfect reader
-- Avoid options that are silly, extreme, or obviously unrelated to the passage`;
+- Avoid options that are silly, extreme, generic, or obviously unrelated to the passage
+- For long-form expository text, avoid bibliographic/front-matter trivia unless it is genuinely part of the argument
+- If one option is much more precise or domain-specific than the others, rewrite the question so all choices are similarly specific`;
 }
 
 export const QUIZ_TOOL_SCHEMA = {

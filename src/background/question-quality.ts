@@ -8,6 +8,32 @@ const BANNED_OPTION_PATTERNS = [
   /^both [a-d] and [a-d]$/i,
 ];
 
+const BIBLIOGRAPHIC_QUESTION_PATTERNS = [
+  /\bcopyright\b/i,
+  /\bedition\b/i,
+  /\bpublisher\b/i,
+  /\bisbn\b/i,
+  /\blibrary of congress\b/i,
+  /\btable of contents\b/i,
+  /\bprinted\b/i,
+  /\bprinting\b/i,
+];
+
+const VAGUE_OPTION_PATTERNS = [
+  /\bsomething\b/i,
+  /\bsome kind of\b/i,
+  /\ba general (idea|concept|principle|property|factor|thing)\b/i,
+  /\ban important (thing|factor|idea)\b/i,
+  /\bthe main point\b/i,
+  /\boverall meaning\b/i,
+];
+
+const STOPWORDS = new Set([
+  'a', 'an', 'and', 'are', 'as', 'at', 'be', 'because', 'by', 'for', 'from', 'how', 'if', 'in',
+  'into', 'is', 'it', 'its', 'of', 'on', 'or', 'that', 'the', 'their', 'there', 'these', 'they',
+  'this', 'those', 'to', 'was', 'were', 'what', 'when', 'which', 'who', 'why', 'with',
+]);
+
 export function filterLowQualityQuestions(problems: Problem[]): Problem[] {
   return problems.filter((problem) => getQuestionQualityIssues(problem).length === 0);
 }
@@ -16,6 +42,11 @@ export function getQuestionQualityIssues(problem: Problem): string[] {
   const issues: string[] = [];
   const optionTexts = problem.options.map((option) => option.text.trim());
   const normalizedOptions = optionTexts.map(normalizeOptionText);
+  const questionText = problem.question.trim();
+
+  if (BIBLIOGRAPHIC_QUESTION_PATTERNS.some((pattern) => pattern.test(questionText))) {
+    issues.push('bibliographic-trivia');
+  }
 
   if (normalizedOptions.some((option) => option.length === 0)) {
     issues.push('empty-option');
@@ -59,6 +90,30 @@ export function getQuestionQualityIssues(problem: Problem): string[] {
     issues.push('single-sentence-like-option');
   }
 
+  const correctSpecificity = countContentTokens(optionTexts[correctIndex]);
+  const distractorSpecificity = optionTexts
+    .filter((_, index) => index !== correctIndex)
+    .map(countContentTokens);
+  const lowSpecificityDistractors = distractorSpecificity.filter((count) => count <= 1).length;
+  if (correctSpecificity >= 3 && lowSpecificityDistractors >= 2 && median(distractorSpecificity) <= 1) {
+    issues.push('correct-option-specificity-outlier');
+  }
+
+  const vagueDistractorCount = optionTexts
+    .filter((_, index) => index !== correctIndex)
+    .filter((option) => VAGUE_OPTION_PATTERNS.some((pattern) => pattern.test(option)))
+    .length;
+  if (
+    correctSpecificity >= 3
+    && vagueDistractorCount >= 2
+    && median(distractorSpecificity) <= correctSpecificity
+  ) {
+    issues.push('correct-option-specificity-outlier');
+  }
+  if (vagueDistractorCount >= 2) {
+    issues.push('vague-distractors');
+  }
+
   return issues;
 }
 
@@ -81,6 +136,17 @@ function countWords(text: string): number {
 function isSentenceLikeOption(text: string): boolean {
   const trimmed = text.trim();
   return countWords(trimmed) >= 7 && /[.!?]$/.test(trimmed);
+}
+
+function countContentTokens(text: string): number {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter((token) => token.length >= 5)
+    .filter((token) => !STOPWORDS.has(token))
+    .length;
 }
 
 function median(values: number[]): number {

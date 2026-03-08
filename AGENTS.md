@@ -236,6 +236,8 @@ Co-Authored-By: Gemini <noreply@google.com>
 - If a sectioned document can spawn a narrowed section quiz and later return to the broader section picker, keep the original section source separately from the current narrowed extracted content
 - For arbitrary fallback chunk labels, assign display names after chunk rebalancing; otherwise merged chunks inherit confusing skipped numbers from their source paragraphs
 - PDF front-matter skipping should be heuristic and conservative: scan only the early pages for obvious copyright/edition/contents patterns, then stop as soon as likely body text begins
+- If long-form question quality is failing because the correct answer is the only specific option, fix both layers: strengthen the prompt and add a filter for vague distractors/domain-specific answer outliers
+- Bibliographic or publication-metadata questions are usually low-value retrieval practice for books/PDFs even when they are “supported” by the text; filtering them explicitly is reasonable
 - If a restorable intermediate state can be cancelled, give it an explicit background reset message instead of only hiding it in the panel
 - If you generate standalone export HTML, treat embedded quiz text and source URLs as separate risks: JSON/script embedding needs script-safe escaping, and clickable links still need scheme sanitization
 - If a panel feature introduces a new message payload branch, add pure tests for the payload-construction helper as well as any downstream content helper; otherwise the visible feature can work in one path while the actual request shape goes unverified

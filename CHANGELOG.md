@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.1.48 — Harder Long-Form Questions (2026-03-08)
+
+### Quiz Quality
+- Strengthened the quiz-generation prompt for books, papers, and chapters so it pushes harder toward mechanism, implication, comparison, and scope questions instead of edition/publisher/front-matter trivia
+- Added stronger instructions that wrong answers should share domain vocabulary with the correct answer and that questions should be skipped if three choices can be rejected immediately as vague or from the wrong conceptual category
+- Tightened the post-generation quality filter to reject bibliographic trivia, multiple vague distractors, and cases where the correct answer is the only clearly domain-specific option
+
+### Review Loop
+- The first reviewer pass found that the new “domain-specific correct answer” failure mode was only being rejected indirectly as vague distractors, not via the intended specificity signal. Fixed by tightening the specificity-outlier heuristic so that case is rejected explicitly too.
+
+### Security Review
+- No new permissions, storage categories, or network destinations were added
+- `npm audit --omit=dev` reported 0 vulnerabilities
+
+### Testing
+- 138 tests (was 135): added prompt assertions for the new long-form difficulty instructions and quality-filter coverage for bibliographic trivia, vague distractors, and specificity-outlier questions
+
 ## v0.1.47 — Section Picker Follow-Up Fixes (2026-03-08)
 
 ### Long-Form UX

@@ -109,6 +109,40 @@ describe('question quality heuristics', () => {
     expect(filterLowQualityQuestions([accepted, rejected]).map((problem) => problem.id)).toEqual(['accepted']);
   });
 
+  it('rejects bibliographic trivia questions', () => {
+    const problem = buildProblem({
+      question: 'Which edition of the book was published in 1963?',
+    });
+
+    expect(getQuestionQualityIssues(problem)).toContain('bibliographic-trivia');
+  });
+
+  it('rejects questions where only the correct answer is domain-specific', () => {
+    const problem = buildProblem({
+      options: [
+        { text: 'Conservation of momentum during collisions', correct: true },
+        { text: 'A general idea about movement', correct: false },
+        { text: 'Some kind of force', correct: false },
+        { text: 'An important thing in physics', correct: false },
+      ],
+    });
+
+    expect(getQuestionQualityIssues(problem)).toContain('correct-option-specificity-outlier');
+  });
+
+  it('rejects multiple vague distractors', () => {
+    const problem = buildProblem({
+      options: [
+        { text: 'Resistance to changes in motion', correct: true },
+        { text: 'A general idea about movement', correct: false },
+        { text: 'Some kind of force', correct: false },
+        { text: 'The path of a moving object', correct: false },
+      ],
+    });
+
+    expect(getQuestionQualityIssues(problem)).toContain('vague-distractors');
+  });
+
   it('adds a small generation buffer without overshooting too far', () => {
     expect(buildGenerationBuffer(1)).toBe(0);
     expect(buildGenerationBuffer(2)).toBe(1);

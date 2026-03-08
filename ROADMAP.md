@@ -58,7 +58,7 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [x] **Q8: Answer choice typography polish** — Clean up the answer choice layout so the numbered key badge does not skew line spacing or vertical rhythm for wrapped options. Likely needs CSS/layout refinement in `panel.css` and possibly slightly different markup in `panel.ts`. Test: manual on long wrapped options.
 
-- [ ] **Q9: Harder questions for long-form content** — Improve book/article question difficulty so answers are less obvious by tone alone and more often require conceptual discrimination. Likely needs another prompt revision plus stricter post-generation rejection of giveaway distractors and shallow recall questions. Test: manual comparison on long-form books/PDFs.
+- [x] **Q9: Harder questions for long-form content** — Improve book/article question difficulty so answers are less obvious by tone alone and more often require conceptual discrimination. Likely needs another prompt revision plus stricter post-generation rejection of giveaway distractors and shallow recall questions. Test: manual comparison on long-form books/PDFs.
 
 ### Data & History
 

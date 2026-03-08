@@ -2,10 +2,12 @@
 
 ## Completed
 
+- Completed `Q9` by strengthening long-form question generation and filtering
+- Updated the prompt to discourage bibliographic/front-matter trivia and to require more conceptual discrimination for long-form books, papers, and chapters
+- Tightened quality filtering to reject bibliographic questions, multiple vague distractors, and questions where the correct option is the only clearly domain-specific answer
 - Fixed long-form fallback section names so arbitrary chunks are now labeled sequentially instead of skipping numbers
 - Preserved the full sectioned source document separately from the active section quiz, so the score view’s `New Quiz` flow can return to the section picker without forcing a new extraction
 - Added a conservative PDF front-matter skip heuristic so obvious copyright/edition/contents pages are not offered as the first quizable ranges in book-like PDFs
-- Added `Q9` to the roadmap for harder long-form question quality, since real book testing still surfaced easy/giveaway questions
 - Added PDF page-range sectioning on top of the long-content picker, so PDFs now segment by contiguous page ranges instead of generic heading/fallback chunks
 - Preserved per-page text during PDF extraction and carried it through extracted-content state for pending section selection
 - Fixed a review-found mutation risk by deep-cloning extracted PDF `pageTexts` arrays when persisting/restoring tab session state
@@ -64,6 +66,8 @@
 
 ## Decisions
 
+- Kept the long-form difficulty improvement as a prompt-plus-filter pass instead of introducing a second LLM review stage; that raises the floor without adding more latency, cost, or provider complexity
+- Treated bibliographic/front-matter questions as low-value by default and filtered them structurally even if they are technically answerable from the text
 - Kept the full extracted long-form source and the currently selected section as separate state values; reusing one field for both made “back to sections” fundamentally lossy
 - Treated front-matter skipping as a conservative heuristic limited to the first few PDF pages, not as a semantic parser; the goal is to avoid the most obvious edition/copyright noise without overfitting
 - Treated PDFs as a different segmentation source from HTML: if per-page text exists, prefer page ranges outright instead of trying heading heuristics on flattened PDF text
@@ -108,12 +112,14 @@
 
 ## Validation
 
-- `npm test` passed with 135/135 tests
+- `npm test` passed with 138/138 tests
 - `npm run build` passed
 - `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- If the real product complaint is “the answer is obvious because the other options are generic,” improving the prompt alone is not enough; add a structural filter for vague distractors and domain-specific-option outliers too
+- Front-matter/bibliographic trivia is often technically extractable from books and PDFs but still low-value for retrieval practice; filtering it explicitly gives better quiz quality than hoping segmentation alone removes it
 - If the app needs to return from a narrowed subsection quiz back to a broader section picker, don’t overwrite the original source document with the narrowed subsection; keep both pieces of state
 - Generic fallback section labels should be assigned after rebalancing, not before; otherwise merged chunks inherit misleading source indexes like `Part 7`
 - Front-matter skipping for PDFs should stay conservative and early-page-only; over-aggressive heuristics would hide legitimate body content
