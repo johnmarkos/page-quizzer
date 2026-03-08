@@ -4,7 +4,7 @@ import {
   looksLikePdfUrl,
   resolvePdfUrl,
   textContentToString,
-} from '../../src/content/PdfExtractor.js';
+} from '../../src/shared/pdf.js';
 
 describe('PdfExtractor helpers', () => {
   it('detects direct PDF URLs', () => {
@@ -16,6 +16,11 @@ describe('PdfExtractor helpers', () => {
   it('resolves viewer-style file parameters to the underlying PDF URL', () => {
     const url = 'chrome-extension://viewer/index.html?file=https%3A%2F%2Fexample.com%2Fpaper.pdf';
     expect(resolvePdfUrl(url)).toBe('https://example.com/paper.pdf');
+  });
+
+  it('resolves chrome pdf viewer src parameters to the underlying PDF URL', () => {
+    const url = 'chrome-extension://mhjfbmdgcfjbbpaeojofohoefgiehjai/index.html?src=https%3A%2F%2Fexample.com%2Fbook.pdf';
+    expect(resolvePdfUrl(url)).toBe('https://example.com/book.pdf');
   });
 
   it('falls back to content type when the URL does not end with pdf', () => {

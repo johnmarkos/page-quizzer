@@ -208,6 +208,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - When debugging Chrome extension reload/caching issues, add a short visible version marker to the user-facing error path; it’s faster than guessing which bundle Chrome is actually running
 - If per-site host permission requests depend on the current tab URL, make sure the extension can actually read that URL; without `tabs` or equivalent host access, the permission prompt flow can silently fail to target the right origin
 - If one dependency forces ESM-only syntax into a content script bundle, split that dependency into a separately loaded module asset instead of forcing the whole content script down the same execution model
+- Chrome’s built-in PDF viewer is not a normal injectable page even when the underlying document is just a PDF; detect the viewer URL and operate on the resolved PDF source URL instead
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

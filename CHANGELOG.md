@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.1.24 — Chrome PDF Viewer Bypass (2026-03-08)
+
+### Bug Fixes
+- Added a viewer-aware PDF path that resolves the underlying PDF URL from Chrome’s built-in PDF viewer tab and extracts the PDF in the background instead of trying to inject into the blocked viewer page
+- Updated per-site permission lookup to use the underlying PDF origin for viewer URLs, so site-access prompts target the real PDF host instead of the Chrome viewer wrapper
+
+### Architecture
+- Moved reusable PDF URL/text helpers into a shared module and added a dedicated background PDF extractor for viewer/direct-PDF tabs
+
+### Security Review
+- Kept PDF fetches scoped to the resolved PDF origin and dependent on the same per-site host access flow
+- `npm audit --omit=dev` reported 0 vulnerabilities
+
+### Testing
+- 66 tests: added coverage for Chrome PDF viewer `src=` URL resolution while keeping the full suite and production build passing
+
 ## v0.1.23 — Classic-Safe Content Bundle (2026-03-08)
 
 ### Bug Fixes

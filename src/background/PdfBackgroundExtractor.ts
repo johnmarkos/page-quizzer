@@ -2,8 +2,6 @@ import type { ExtractedContent } from '../shared/messages.js';
 import type {
   DocumentInitParameters,
   PDFDocumentProxy,
-  TextItem,
-  TextMarkedContent,
 } from 'pdfjs-dist/types/src/display/api';
 import {
   countWords,
@@ -15,14 +13,12 @@ import {
 } from '../shared/pdf.js';
 
 const PDF_JS_MODULE_PATH = 'dist/pdfjs.js';
-const PDF_WORKER_PATH = 'dist/pdf.worker.js';
 
-export async function extractPdfContent(
-  locationHref = window.location.href,
-  contentType = document.contentType,
-  documentTitle = document.title,
+export async function extractPdfContentFromTabUrl(
+  tabUrl: string,
+  tabTitle?: string,
 ): Promise<ExtractedContent | null> {
-  const pdfUrl = resolvePdfUrl(locationHref, contentType);
+  const pdfUrl = resolvePdfUrl(tabUrl);
   if (!pdfUrl) {
     return null;
   }
@@ -34,9 +30,8 @@ export async function extractPdfContent(
 
   const pdfBytes = new Uint8Array(await response.arrayBuffer());
   const pdfjs = await import(chrome.runtime.getURL(PDF_JS_MODULE_PATH));
-  pdfjs.GlobalWorkerOptions.workerSrc = chrome.runtime.getURL(PDF_WORKER_PATH);
-
   const loadingTask = pdfjs.getDocument(buildPdfDocumentParams(pdfBytes));
+
   let pdfDocument: PDFDocumentProxy | null = null;
 
   try {
@@ -60,7 +55,7 @@ export async function extractPdfContent(
     }
 
     return {
-      title: derivePdfTitle(pdfUrl, metadata.title, documentTitle),
+      title: derivePdfTitle(pdfUrl, metadata.title, tabTitle),
       content: textContent,
       textContent,
       wordCount: countWords(textContent),
@@ -80,6 +75,7 @@ function buildPdfDocumentParams(data: Uint8Array): DocumentInitParameters {
   return {
     data,
     disableFontFace: true,
+    disableWorker: true,
     isEvalSupported: false,
     stopAtErrors: false,
     useSystemFonts: false,

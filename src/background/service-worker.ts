@@ -12,11 +12,13 @@ import { mergeSessionRecords, parseImportedSessions } from './history-import.js'
 import { buildQuizBadgeText, shouldClearQuizBadge } from './quiz-badge.js';
 import { resolveConnectionSettings } from './connection-settings.js';
 import { buildOriginPermissionPattern } from '../shared/site-access.js';
+import { resolvePdfUrl } from '../shared/pdf.js';
 import {
   buildContentScriptAccessError,
   hasUnsupportedInjectionProtocol,
   isHostPermissionInjectionError,
 } from './content-script-bridge.js';
+import { extractPdfContentFromTabUrl } from './PdfBackgroundExtractor.js';
 
 type CompletedQuizData = {
   problems: Problem[];
@@ -195,13 +197,22 @@ async function handleGenerateQuiz() {
 
   broadcastStatus('Extracting page content...');
 
-  const extractResponse = await extractContentFromTab(tab);
+  if (tab.url && resolvePdfUrl(tab.url)) {
+    broadcastStatus('Extracting PDF text...');
+    const pdfContent = await extractPdfContentFromTabUrl(tab.url, tab.title);
+    if (!pdfContent) {
+      throw new Error('Failed to resolve the PDF URL for this tab.');
+    }
+    lastExtracted = pdfContent;
+  } else {
+    const extractResponse = await extractContentFromTab(tab);
 
-  if (extractResponse?.payload?.error) {
-    throw new Error(extractResponse.payload.error);
+    if (extractResponse?.payload?.error) {
+      throw new Error(extractResponse.payload.error);
+    }
+
+    lastExtracted = extractResponse.payload as ExtractedContent;
   }
-
-  lastExtracted = extractResponse.payload as ExtractedContent;
 
   if (!lastExtracted.textContent || lastExtracted.wordCount < 50) {
     throw new Error('Not enough text content on this page (minimum 50 words)');
