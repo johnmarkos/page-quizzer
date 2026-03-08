@@ -2,6 +2,7 @@
 
 ## Completed
 
+- Fixed a service-worker startup race by gating tab-routing and message handling on the initial restore pass before touching in-memory quiz state
 - Added per-question performance tracking in local storage using deterministic content hashes, with `seen` and `correct` counters updated after each answered question
 - Made question-performance keys stable across option shuffling by hashing normalized question text plus sorted option text/correctness markers
 - Added partial quiz recovery for mid-generation chunk failures: if later chunks fail after accepted questions already exist, PageQuizzer now keeps the partial quiz instead of failing the whole run
@@ -31,6 +32,7 @@
 
 ## Decisions
 
+- Treated service-worker restore as a prerequisite for message handling instead of a fire-and-forget startup task; otherwise fresh actions can run against empty in-memory state before persistence finishes loading
 - Kept per-question performance tracking as a background-only data layer with no UI yet; that lets future spaced-repetition work build on stable stored stats without forcing premature product decisions
 - Avoided using provider/generated problem IDs for performance tracking because they are session-local; the hash is based on normalized question content instead
 - Treated chunk failures as recoverable only after at least one accepted question exists; if generation never produced usable questions, the user still gets a normal error instead of an empty “recovered” quiz
@@ -61,6 +63,7 @@
 
 ## Gotchas
 
+- In MV3, async startup restore should be treated as a real dependency, not best-effort background work; if messages can arrive before restore completes, newer state can be computed from stale in-memory data and then persisted incorrectly
 - Question-performance keys must be independent of shuffled option order or the same question will fragment into multiple records across retries/sessions
 - Partial recovery needs to be persisted too; otherwise a service-worker restart between generation and quiz start would silently drop the warning and revert the ready screen to looking like a normal full-success run
 - Quality heuristics should be biased toward obviously bad structural patterns; if they get too semantic or too aggressive, they will quietly delete valid questions and make quiz counts unpredictable

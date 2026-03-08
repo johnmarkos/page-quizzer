@@ -92,7 +92,7 @@ engine.on('quizComplete', async (payload) => {
 });
 
 clearQuizBadge();
-void restoreState();
+const restorePromise = restoreState();
 
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 
@@ -123,11 +123,15 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
 });
 
 chrome.tabs.onActivated.addListener(async ({ tabId }) => {
+  await restorePromise;
   await ensureActiveTabSession(tabId);
 });
 
 chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
-  handleMessage(message, sender).then(sendResponse).catch((err) => {
+  restorePromise
+    .then(() => handleMessage(message, sender))
+    .then(sendResponse)
+    .catch((err) => {
     sendResponse({ type: 'QUIZ_ERROR', payload: { error: err.message } });
   });
   return true;

@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.39 — Startup Restore Gate (2026-03-08)
+
+### Reliability
+- Fixed a service-worker startup race where runtime messages and tab-activation routing could run before persisted quiz state had finished restoring
+- Ensured message handling waits for the initial restore pass before operating on tab-scoped quiz state or per-question performance data
+
+### Review Loop
+- This fix came from a harsher post-implementation review pass after adding per-question performance tracking; the review caught that restore timing could otherwise overwrite fresh in-memory state on a just-started worker
+
 ## v0.1.38 — Per-Question Performance Tracking (2026-03-08)
 
 ### Data Layer
