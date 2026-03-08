@@ -55,12 +55,23 @@ describe('quiz state sync helpers', () => {
     });
   });
 
-  it('ignores idle and complete states', () => {
+  it('ignores idle, ready, and complete states', () => {
     const idleResponse: RestoredStateMessage = {
       type: 'RESTORED_STATE',
       payload: { state: 'idle' },
     };
 
     expect(getQuestionPayloadFromRestoredState(idleResponse)).toBeNull();
+
+    const readyResponse: RestoredStateMessage = {
+      type: 'RESTORED_STATE',
+      payload: {
+        state: 'ready',
+        title: 'Physics',
+        total: 4,
+      },
+    };
+
+    expect(getQuestionPayloadFromRestoredState(readyResponse)).toBeNull();
   });
 });

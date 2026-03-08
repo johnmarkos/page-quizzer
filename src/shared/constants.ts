@@ -8,8 +8,5 @@ export const STORAGE_KEYS = {
   DENSITY: 'density',
   MAX_QUESTIONS: 'maxQuestions',
   SESSIONS: 'sessions',
-  ENGINE_SNAPSHOT: 'engineSnapshot',
-  LAST_EXTRACTED: 'lastExtracted',
-  CURRENT_TOPICS: 'currentTopics',
-  LAST_COMPLETED_QUIZ: 'lastCompletedQuiz',
+  TAB_QUIZ_SESSIONS: 'tabQuizSessions',
 } as const;

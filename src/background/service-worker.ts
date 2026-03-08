@@ -3,7 +3,7 @@ import { QuizGenerator } from './QuizGenerator.js';
 import { StorageManager, type SessionRecord } from './StorageManager.js';
 import { createProvider, type ProviderName } from '../providers/index.js';
 import type { Message, ExtractedContent } from '../shared/messages.js';
-import type { EngineSnapshot, Problem, SessionSummary } from '../engine/types.js';
+import type { Problem, SessionSummary } from '../engine/types.js';
 import { generateId } from '../engine/utils.js';
 import { STORAGE_KEYS } from '../shared/constants.js';
 import { cloneProblems, getMissedProblems } from './retry-missed.js';
@@ -11,6 +11,15 @@ import { buildReviewItems } from './review-missed.js';
 import { mergeSessionRecords, parseImportedSessions } from './history-import.js';
 import { buildQuizBadgeText, shouldClearQuizBadge } from './quiz-badge.js';
 import { resolveConnectionSettings } from './connection-settings.js';
+import {
+  createEmptySession,
+  hasSessionData,
+  getTabQuizSession,
+  removeTabQuizSession,
+  setTabQuizSession,
+  type CompletedQuizData,
+  type TabQuizSessionMap,
+} from './tab-quiz-sessions.js';
 import { buildOriginPermissionPattern } from '../shared/site-access.js';
 import { resolvePdfUrl } from '../shared/pdf.js';
 import {
@@ -20,81 +29,23 @@ import {
 } from './content-script-bridge.js';
 import { extractPdfContentFromTabUrl } from './PdfBackgroundExtractor.js';
 
-type CompletedQuizData = {
-  problems: Problem[];
-  summary: SessionSummary;
-};
-
 const CONTENT_SCRIPT_PATH = 'dist/content.js';
 
 const storage = new StorageManager();
 const engine = new QuizEngine();
 
+let activeTabId: number | null = null;
+let tabSessions: TabQuizSessionMap = {};
 let lastExtracted: ExtractedContent | null = null;
 let currentProblems: Problem[] = [];
 let currentTopics: string[] = [];
 let lastCompletedQuiz: CompletedQuizData | null = null;
-
-// --- Service worker persistence ---
-// Persist engine state on every state change so Chrome can kill/restart the worker safely
 
 engine.on('stateChange', async () => {
   await persistState();
   await syncBadgeFromEngineState();
 });
 
-async function persistState() {
-  const snapshot = engine.serialize();
-  await chrome.storage.local.set({
-    [STORAGE_KEYS.ENGINE_SNAPSHOT]: snapshot,
-    [STORAGE_KEYS.LAST_EXTRACTED]: lastExtracted,
-    [STORAGE_KEYS.CURRENT_TOPICS]: currentTopics,
-  });
-}
-
-async function restoreState() {
-  const data = await chrome.storage.local.get([
-    STORAGE_KEYS.ENGINE_SNAPSHOT,
-    STORAGE_KEYS.LAST_EXTRACTED,
-    STORAGE_KEYS.CURRENT_TOPICS,
-    STORAGE_KEYS.LAST_COMPLETED_QUIZ,
-  ]);
-  const snapshot = data[STORAGE_KEYS.ENGINE_SNAPSHOT] as EngineSnapshot | undefined;
-  if (snapshot && snapshot.state !== 'idle' && snapshot.problems.length > 0) {
-    engine.restore(snapshot);
-    currentProblems = cloneProblems(snapshot.problems);
-    lastExtracted = data[STORAGE_KEYS.LAST_EXTRACTED] || null;
-    currentTopics = cloneTopics(data[STORAGE_KEYS.CURRENT_TOPICS]);
-  }
-
-  const completedQuiz = data[STORAGE_KEYS.LAST_COMPLETED_QUIZ] as CompletedQuizData | undefined;
-  if (completedQuiz) {
-    lastCompletedQuiz = {
-      problems: cloneProblems(completedQuiz.problems),
-      summary: cloneSummary(completedQuiz.summary),
-    };
-  }
-
-  await syncBadgeFromEngineState();
-}
-
-async function clearPersistedState() {
-  currentTopics = [];
-  await chrome.storage.local.remove([
-    STORAGE_KEYS.ENGINE_SNAPSHOT,
-    STORAGE_KEYS.LAST_EXTRACTED,
-    STORAGE_KEYS.CURRENT_TOPICS,
-  ]);
-}
-
-// Restore on startup
-clearQuizBadge();
-restoreState();
-
-// --- Side panel setup ---
-chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-
-// --- Wire engine events to panel messages ---
 engine.on('questionShow', (payload) => {
   setQuizBadge(payload.index, payload.total);
   broadcast({ type: 'QUESTION_SHOW', payload });
@@ -109,12 +60,9 @@ engine.on('quizComplete', async (payload) => {
     problems: cloneProblems(currentProblems),
     summary: cloneSummary(payload),
   };
-  await chrome.storage.local.set({
-    [STORAGE_KEYS.LAST_COMPLETED_QUIZ]: lastCompletedQuiz,
-  });
+  await persistState();
   broadcast({ type: 'QUIZ_COMPLETE', payload });
 
-  // Save session record
   if (lastExtracted) {
     const record: SessionRecord = {
       ...payload,
@@ -126,39 +74,90 @@ engine.on('quizComplete', async (payload) => {
     };
     await storage.saveSession(record);
   }
-
-  // Clear persisted mid-quiz state
-  await clearPersistedState();
 });
 
-// --- Message handling ---
+clearQuizBadge();
+void restoreState();
+
+chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  if (!(String(tabId) in tabSessions)) {
+    return;
+  }
+
+  tabSessions = removeTabQuizSession(tabSessions, tabId);
+  if (activeTabId === tabId) {
+    applyTabSession(createEmptySession(), null);
+  }
+  void chrome.storage.local.set({ [STORAGE_KEYS.TAB_QUIZ_SESSIONS]: tabSessions });
+  clearQuizBadge(tabId);
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (!changeInfo.url || !(String(tabId) in tabSessions)) {
+    return;
+  }
+
+  tabSessions = removeTabQuizSession(tabSessions, tabId);
+  if (activeTabId === tabId) {
+    applyTabSession(createEmptySession(), tabId);
+  }
+  void chrome.storage.local.set({ [STORAGE_KEYS.TAB_QUIZ_SESSIONS]: tabSessions });
+  clearQuizBadge(tabId);
+});
+
+chrome.tabs.onActivated.addListener(async ({ tabId }) => {
+  await ensureActiveTabSession(tabId);
+});
+
 chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
-  handleMessage(message, sender).then(sendResponse).catch(err => {
+  handleMessage(message, sender).then(sendResponse).catch((err) => {
     sendResponse({ type: 'QUIZ_ERROR', payload: { error: err.message } });
   });
-  return true; // async response
+  return true;
 });
+
+async function persistState() {
+  if (activeTabId === null) {
+    return;
+  }
+
+  const session = {
+    snapshot: engine.serialize(),
+    lastExtracted,
+    currentTopics: cloneTopics(currentTopics),
+    lastCompletedQuiz: lastCompletedQuiz
+      ? {
+          problems: cloneProblems(lastCompletedQuiz.problems),
+          summary: cloneSummary(lastCompletedQuiz.summary),
+        }
+      : null,
+  };
+
+  tabSessions = hasSessionData(session)
+    ? setTabQuizSession(tabSessions, activeTabId, session)
+    : removeTabQuizSession(tabSessions, activeTabId);
+
+  await chrome.storage.local.set({
+    [STORAGE_KEYS.TAB_QUIZ_SESSIONS]: tabSessions,
+  });
+}
+
+async function restoreState() {
+  const data = await chrome.storage.local.get([STORAGE_KEYS.TAB_QUIZ_SESSIONS]);
+  tabSessions = (data[STORAGE_KEYS.TAB_QUIZ_SESSIONS] as TabQuizSessionMap | undefined) ?? {};
+
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tab?.id !== undefined) {
+    await ensureActiveTabSession(tab.id);
+  } else {
+    applyTabSession(createEmptySession(), null);
+  }
+}
 
 async function handleMessage(message: Message, _sender: chrome.runtime.MessageSender) {
   switch (message.type) {
-    case 'GENERATE_QUIZ':
-      return await handleGenerateQuiz();
-    case 'START_QUIZ':
-      engine.start();
-      return { type: 'ok' };
-    case 'ANSWER_QUESTION':
-      engine.selectOption(message.payload.optionIndex);
-      return { type: 'ok' };
-    case 'NEXT_QUESTION':
-      engine.next();
-      return { type: 'ok' };
-    case 'SKIP_QUESTION':
-      engine.skip();
-      return { type: 'ok' };
-    case 'RETRY_MISSED':
-      return handleRetryMissed();
-    case 'GET_REVIEW':
-      return handleGetReview();
     case 'GET_SETTINGS':
       return { type: 'SETTINGS', payload: await storage.getSettings() };
     case 'SAVE_SETTINGS':
@@ -170,16 +169,52 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
       return { type: 'SESSIONS', payload: await storage.getSessions() };
     case 'IMPORT_SESSIONS':
       return await handleImportSessions(message.payload.json);
-    case 'GET_STATE':
-      return await handleGetState();
-    default:
-      return { type: 'ok' };
+    default: {
+      const activeTab = await getRequiredActiveTab();
+      await ensureActiveTabSession(activeTab.id);
+
+      switch (message.type) {
+        case 'GENERATE_QUIZ':
+          return await handleGenerateQuiz(activeTab);
+        case 'START_QUIZ':
+          engine.start();
+          return { type: 'ok' };
+        case 'ANSWER_QUESTION':
+          engine.selectOption(message.payload.optionIndex);
+          return { type: 'ok' };
+        case 'NEXT_QUESTION':
+          engine.next();
+          return { type: 'ok' };
+        case 'SKIP_QUESTION':
+          engine.skip();
+          return { type: 'ok' };
+        case 'RETRY_MISSED':
+          return handleRetryMissed();
+        case 'GET_REVIEW':
+          return handleGetReview();
+        case 'GET_STATE':
+          return await handleGetState();
+        default:
+          return { type: 'ok' };
+      }
+    }
   }
 }
 
-/** Panel can request current engine state on open (in case worker was restored) */
 async function handleGetState() {
   const state = engine.state;
+
+  if (state === 'idle' && currentProblems.length > 0 && lastExtracted) {
+    return {
+      type: 'RESTORED_STATE',
+      payload: {
+        state: 'ready',
+        title: lastExtracted.title,
+        total: currentProblems.length,
+      },
+    };
+  }
+
   if (state === 'practicing' || state === 'answered') {
     return {
       type: 'RESTORED_STATE',
@@ -192,18 +227,25 @@ async function handleGetState() {
       },
     };
   }
-  return { type: 'RESTORED_STATE', payload: { state } };
+
+  if (state === 'complete' && lastCompletedQuiz) {
+    return {
+      type: 'RESTORED_STATE',
+      payload: {
+        state: 'complete',
+        summary: cloneSummary(lastCompletedQuiz.summary),
+      },
+    };
+  }
+
+  return { type: 'RESTORED_STATE', payload: { state: 'idle' } };
 }
 
-async function handleGenerateQuiz() {
+async function handleGenerateQuiz(tab: chrome.tabs.Tab) {
   const settings = await storage.getSettings();
   if (!settings.apiKey) {
     throw new Error('No API key configured. Open Settings to add one.');
   }
-
-  // Extract content from active tab
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.id) throw new Error('No active tab');
 
   broadcastStatus('Extracting page content...');
 
@@ -228,7 +270,6 @@ async function handleGenerateQuiz() {
     throw new Error('Not enough text content on this page (minimum 50 words)');
   }
 
-  // Generate quiz
   const provider = createProvider(settings.provider, {
     apiKey: settings.apiKey,
     model: settings.model,
@@ -248,6 +289,7 @@ async function handleGenerateQuiz() {
 
   currentProblems = cloneProblems(problems);
   currentTopics = cloneTopics(generatedQuiz.topics);
+  lastCompletedQuiz = null;
   engine.loadProblems(problems);
 
   return {
@@ -353,6 +395,7 @@ function handleRetryMissed() {
   }
 
   currentProblems = cloneProblems(missedProblems);
+  currentTopics = [];
   engine.loadProblems(missedProblems);
   engine.start();
   return { type: 'ok' };
@@ -386,25 +429,66 @@ function cloneTopics(topics: unknown): string[] {
   return Array.isArray(topics) ? topics.filter((topic): topic is string => typeof topic === 'string') : [];
 }
 
-function setQuizBadge(index: number, total: number) {
-  chrome.action.setBadgeText({ text: buildQuizBadgeText(index, total) });
-  chrome.action.setBadgeBackgroundColor({ color: '#5b4cd4' });
+function applyTabSession(session: ReturnType<typeof getTabQuizSession>, tabId: number | null) {
+  activeTabId = tabId;
+  engine.restore(session.snapshot);
+  currentProblems = cloneProblems(session.snapshot.problems);
+  lastExtracted = session.lastExtracted ? { ...session.lastExtracted } : null;
+  currentTopics = cloneTopics(session.currentTopics);
+  lastCompletedQuiz = session.lastCompletedQuiz
+    ? {
+        problems: cloneProblems(session.lastCompletedQuiz.problems),
+        summary: cloneSummary(session.lastCompletedQuiz.summary),
+      }
+    : null;
 }
 
-function clearQuizBadge() {
-  chrome.action.setBadgeText({ text: '' });
+async function ensureActiveTabSession(tabId: number) {
+  if (activeTabId !== null && activeTabId !== tabId) {
+    await persistState();
+  }
+
+  applyTabSession(getTabQuizSession(tabSessions, tabId), tabId);
+  await syncBadgeFromEngineState();
+}
+
+async function getRequiredActiveTab(): Promise<chrome.tabs.Tab & { id: number }> {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab?.id) {
+    throw new Error('No active tab');
+  }
+
+  return tab as chrome.tabs.Tab & { id: number };
+}
+
+function setQuizBadge(index: number, total: number) {
+  if (activeTabId === null) {
+    return;
+  }
+
+  chrome.action.setBadgeText({ text: buildQuizBadgeText(index, total), tabId: activeTabId });
+  chrome.action.setBadgeBackgroundColor({ color: '#5b4cd4', tabId: activeTabId });
+}
+
+function clearQuizBadge(tabId?: number | null) {
+  if (tabId === undefined || tabId === null) {
+    chrome.action.setBadgeText({ text: '' });
+    return;
+  }
+
+  chrome.action.setBadgeText({ text: '', tabId });
 }
 
 async function syncBadgeFromEngineState() {
   if (shouldClearQuizBadge(engine.state) || engine.totalProblems === 0) {
-    clearQuizBadge();
+    clearQuizBadge(activeTabId);
     return;
   }
 
   setQuizBadge(engine.currentIndex, engine.totalProblems);
 }
 
-function broadcast(message: any) {
+function broadcast(message: Message) {
   chrome.runtime.sendMessage(message).catch(() => {
     // Panel might not be open — ignore
   });

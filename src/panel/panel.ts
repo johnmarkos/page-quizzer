@@ -1,6 +1,6 @@
 import type { Problem, SessionSummary } from '../engine/types.js';
 import type { SessionRecord } from '../background/StorageManager.js';
-import type { ReviewItem } from '../shared/messages.js';
+import type { RestoredStateMessage, ReviewItem } from '../shared/messages.js';
 import type { ProviderName } from '../providers/index.js';
 import { buildOriginPermissionPattern } from '../shared/site-access.js';
 import { buildHistoryExportFilename, serializeHistoryRecords } from './history-export.js';
@@ -531,9 +531,31 @@ function isElementVisible(element: Element | null): boolean {
 // If the service worker was restarted mid-quiz, the panel needs to catch up
 async function checkRestoredState() {
   try {
-    const questionPayload = await syncQuizStateFromBackground();
-    if (questionPayload) {
-      showQuestion(questionPayload);
+    const restoredState = await getRestoredStateFromBackground();
+    if (!restoredState || restoredState.type !== 'RESTORED_STATE') {
+      return;
+    }
+
+    switch (restoredState.payload.state) {
+      case 'practicing':
+      case 'answered': {
+        const questionPayload = getQuestionPayloadFromRestoredState(restoredState);
+        if (questionPayload) {
+          showQuestion(questionPayload);
+        }
+        break;
+      }
+      case 'ready':
+        ($('ready-info') as HTMLElement).textContent =
+          `Generated ${restoredState.payload.total} questions from "${restoredState.payload.title}"`;
+        showQuizSection('quiz-ready');
+        break;
+      case 'complete':
+        showComplete(restoredState.payload.summary);
+        break;
+      case 'idle':
+        showQuizSection('quiz-idle');
+        break;
     }
   } catch {
     // Service worker not ready yet — panel will show idle state
@@ -558,8 +580,12 @@ async function startQuizFlow(message: { type: 'START_QUIZ' } | { type: 'RETRY_MI
 }
 
 async function syncQuizStateFromBackground() {
+  return getQuestionPayloadFromRestoredState(await getRestoredStateFromBackground());
+}
+
+async function getRestoredStateFromBackground(): Promise<RestoredStateMessage | null> {
   const response = await chrome.runtime.sendMessage({ type: 'GET_STATE' });
-  return getQuestionPayloadFromRestoredState(response);
+  return response?.type === 'RESTORED_STATE' ? response : null;
 }
 
 function renderModelOptions(provider: ProviderName, requestedModel?: string) {
@@ -639,3 +665,15 @@ function renderHistoryTopics(topics?: string[]) {
 function renderTopicFilterButton(label: string, topic: string | null, isActive: boolean) {
   return `<button class="history-topic-filter${isActive ? ' active' : ''}" type="button" data-topic="${escapeHtml(topic ?? '__all__')}">${escapeHtml(label)}</button>`;
 }
+
+chrome.tabs.onActivated.addListener(() => {
+  void checkRestoredState();
+});
+
+chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
+  if (!tab.active || !changeInfo.url) {
+    return;
+  }
+
+  void checkRestoredState();
+});

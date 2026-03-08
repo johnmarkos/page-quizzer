@@ -143,7 +143,16 @@ export type SessionsMessage = {
 export type RestoredStateMessage = {
   type: 'RESTORED_STATE';
   payload:
-    | { state: 'idle' | 'complete' }
+    | { state: 'idle' }
+    | {
+        state: 'ready';
+        title: string;
+        total: number;
+      }
+    | {
+        state: 'complete';
+        summary: SessionSummary;
+      }
     | {
         state: 'practicing' | 'answered';
         problem: Problem | null;

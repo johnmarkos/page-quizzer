@@ -56,17 +56,19 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [ ] **Q7: Question quality filter** — Add a lightweight post-generation pass that rejects or regenerates questions with weak distractors, trivial fact recall, or obvious answer-pattern giveaways. Test: pure heuristics where feasible, manual review on sample pages.
 
+- [ ] **Q8: Answer choice typography polish** — Clean up the answer choice layout so the numbered key badge does not skew line spacing or vertical rhythm for wrapped options. Likely needs CSS/layout refinement in `panel.css` and possibly slightly different markup in `panel.ts`. Test: manual on long wrapped options.
+
 ### Data & History
 
 - [x] **D1: Export history as JSON** — Add "Export" button to history view. Calls `GET_SESSIONS`, creates a Blob, triggers download via `URL.createObjectURL`. File named `pagequizzer-history-YYYY-MM-DD.json`. Test: manual.
 
 - [x] **D2: Import history from JSON** — Add "Import" button + hidden file input to history view. Parse uploaded JSON, validate it's an array of `SessionRecord` objects (check required fields), merge with existing sessions (deduplicate by `id`). Save to storage. Test: export → import round-trip preserves data.
 
-- [ ] **D3: Topic categorization** — `src/prompts/topic-categorization.ts` already has the prompt. Add `categorizeTopics()` method to `BaseProvider` (default implementation: parse JSON response). Call it in `QuizGenerator` in parallel with quiz generation (use `Promise.all`). Store topics in `SessionRecord.topics` (field already exists). Add topic filter chips to history view. Test: prompt template produces valid JSON shape.
+- [x] **D3: Topic categorization** — `src/prompts/topic-categorization.ts` already has the prompt. Add `categorizeTopics()` method to `BaseProvider` (default implementation: parse JSON response). Call it in `QuizGenerator` in parallel with quiz generation (use `Promise.all`). Store topics in `SessionRecord.topics` (field already exists). Add topic filter chips to history view. Test: prompt template produces valid JSON shape.
 
 - [ ] **D4: Per-question performance tracking** — Track how many times each question (by content hash) has been seen and answered correctly. Store in `chrome.storage.local` as a map: `{ [hash]: { seen: number, correct: number } }`. Update after each answer. No UI yet — this is the data layer for future spaced repetition. Test: unit test the tracking logic as a pure function.
 
-- [ ] **D5: Per-tab quiz sessions** — Keep independent in-progress quizzes per browser tab or page, so switching tabs restores that tab’s quiz instead of replacing a single global session. Generating a quiz on a new tab should create a new session only for that tab. Requires tab-scoped persistence, panel restore routing, and a clear policy for tab close/navigation. Test: manual across multiple tabs plus pure session-routing helpers.
+- [x] **D5: Per-tab quiz sessions** — Keep independent in-progress quizzes per browser tab or page, so switching tabs restores that tab’s quiz instead of replacing a single global session. Generating a quiz on a new tab should create a new session only for that tab. Requires tab-scoped persistence, panel restore routing, and a clear policy for tab close/navigation. Test: manual across multiple tabs plus pure session-routing helpers.
 
 ### Settings & Polish
 

@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.1.33 — Per-Tab Quiz Sessions (2026-03-08)
+
+### Quiz State
+- Scoped in-progress and completed quiz state to the active browser tab instead of keeping one global background session
+- Restored the correct tab’s `idle`/`ready`/`question`/`complete` state through `GET_STATE`, so switching tabs brings back that tab’s quiz view instead of overwriting it
+- Cleared tab-scoped quiz sessions when a tab closes or navigates to a new URL
+
+### Panel & Background
+- Added a tab-session helper module for defensive cloning and storage updates
+- Updated the side panel to resync quiz state on tab activation and active-tab navigation, not just on panel open
+- Avoided storing empty tab-session records so idle tabs do not accumulate dead state in `chrome.storage.local`
+
+### Testing
+- 87 tests (was 84): added focused coverage for tab-session storage helpers and the new restored `ready` state shape
+
 ## v0.1.32 — Topic Categorization (2026-03-08)
 
 ### Data & History

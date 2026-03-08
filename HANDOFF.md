@@ -2,6 +2,10 @@
 
 ## Completed
 
+- Added per-tab quiz session persistence so each browser tab keeps its own quiz-ready, in-progress, and completed state
+- Updated the panel restore flow to re-query `GET_STATE` on tab activation and active-tab navigation, so switching tabs restores the right quiz instead of only the active-question case
+- Added defensive tab-session helpers/tests and stopped persisting empty tab entries in local storage
+- Added `Q8` to the roadmap for answer-choice typography cleanup and marked `D5` complete
 - Replaced the unconditional local-PDF block with a real file-scheme access check
 - Added manifest `file:///*` host coverage and a clearer fallback error when a local PDF is still unreadable
 - Hardened `Start Quiz`/`Retry`/`Retry Missed` by syncing quiz state from the service worker after the action instead of depending solely on a runtime broadcast
@@ -15,6 +19,9 @@
 
 ## Decisions
 
+- Kept D5 tab-scoped at the background/panel boundary instead of adding tab IDs to engine events; the engine stays tab-agnostic and the service worker routes state to the active tab
+- Preserved completed quiz summaries per tab as part of the tab session so switching away and back returns to that tab’s score view until the tab closes or navigates
+- Treated empty tab sessions as removable storage noise rather than durable state; only tabs with ready/in-progress/completed quiz data are written to `chrome.storage.local`
 - Treated local `file://` PDFs as a real permission/runtime path instead of a blanket failure case: if Chrome says file access is enabled, PageQuizzer now attempts extraction
 - Kept the user-facing guidance only for the actual blocked case, and separated it from the "file still unreadable" fallback so debugging is less misleading
 - Kept the state-sync fix panel-side to avoid changing the message protocol for a UI reliability bug; the service worker remains the source of truth and the panel simply asks for current state immediately after start-like actions
@@ -26,10 +33,13 @@
 
 ## Validation
 
-- `npm test` passed with 84/84 tests
+- `npm test` passed with 87/87 tests
 - `npm run build` passed
+- `npm audit --omit=dev` reported 0 vulnerabilities
 
 ## Gotchas
 
+- Tab-scoped persistence needs both sides to participate: the service worker must swap sessions when the active tab changes, and the panel must ask for fresh state on tab activation/navigation or it will keep showing the previous tab’s view
+- `GET_STATE` now represents more than “current question”; it also carries `ready` and `complete` views, so UI restore code should treat it as the source of truth for quiz state
 - Web PDF permissions and local-file PDF permissions are different in Chrome; working hosted PDFs do not imply that local PDFs will work without the file-URL setting
 - The file-URL details toggle is not enough on its own; the manifest also needs to declare `file://` access or local-PDF fetches remain unavailable
