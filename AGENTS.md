@@ -187,6 +187,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - New provider APIs need matching `host_permissions` entries in `manifest.json` or extension-origin `fetch()` calls will fail at runtime
 - If a background feature keeps derived quiz state in memory (not just the engine snapshot), rebuild it from the serialized engine state after service worker restart or follow-up actions will silently break
 - For post-quiz actions like review/retry, persist the last completed quiz context separately from the in-progress engine snapshot; completion clears the snapshot but the follow-up UI still needs stable data
+- If a content script depends on a worker asset, bundle that worker explicitly and expose only that file through `web_accessible_resources`; otherwise extension CSP/URL access will break at runtime
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

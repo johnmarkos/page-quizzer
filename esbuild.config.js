@@ -22,6 +22,12 @@ const configs = [
     entryPoints: ['src/content/content-script.ts'],
     outfile: 'dist/content.js',
   },
+  // PDF.js worker asset for content-script PDF parsing
+  {
+    ...shared,
+    entryPoints: ['node_modules/pdfjs-dist/build/pdf.worker.mjs'],
+    outfile: 'dist/pdf.worker.js',
+  },
   // Side panel
   {
     ...shared,

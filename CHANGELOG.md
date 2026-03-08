@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.1.5 — PDF Text Extraction (2026-03-08)
+
+### Content Extraction
+- Added `pdfjs-dist` and a dedicated `PdfExtractor` that detects direct PDF URLs, viewer-style `file=` URLs, and `application/pdf` content types
+- Integrated PDF-first extraction into the content script, with Readability as the fallback for normal HTML pages
+- Extracted text from every PDF page via `pdf.js`, normalized it into quizable plain text, and derived titles from PDF metadata or filenames
+
+### Build & Extension Packaging
+- Bundled `pdf.worker.mjs` into `dist/pdf.worker.js` and exposed it via `web_accessible_resources` so the content script can run the worker under extension CSP
+- Disabled `isEvalSupported` in PDF parsing options and verified `pdfjs-dist` has no install scripts
+
+### Testing
+- 40 tests (was 35): added helper coverage for PDF URL detection, viewer URL resolution, title derivation, and text normalization
+
+### Security Review
+- Added `pdfjs-dist@5.5.207`
+- `npm audit --omit=dev` reported 0 runtime vulnerabilities after install
+
 ## v0.1.4 — Review Missed Questions (2026-03-08)
 
 ### Quiz Experience
