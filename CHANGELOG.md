@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.31 — Expanded OpenAI Model Picker (2026-03-08)
+
+### Settings & Providers
+- Added `gpt-5-mini` and `gpt-4.1-nano` to the OpenAI model picker so lower-cost OpenAI options are available directly in Settings
+- Updated the OpenAI default model choice in the shared provider-model registry to `gpt-5-mini`
+
+### Testing
+- Existing 76-test suite and production build passed after expanding the OpenAI model list
+
 ## v0.1.30 — Model Selection Dropdown (2026-03-08)
 
 ### Settings & Providers

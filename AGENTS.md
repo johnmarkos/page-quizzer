@@ -215,6 +215,7 @@ Co-Authored-By: Gemini <noreply@google.com>
 - MV3 service workers cannot use runtime `import()` the same way page contexts can; if background code needs a module dependency at runtime, bundle it with a static import instead of loading it through `chrome.runtime.getURL(...)`
 - If bundled `pdfjs` runs in a service worker with `disableWorker: true`, it may still expect the fake-worker bootstrap path; preload `globalThis.pdfjsWorker.WorkerMessageHandler` to avoid a `workerSrc` requirement in the background context
 - If a provider setting exposes selectable models, normalize any stored model name against the current provider on read; stale saved model strings can otherwise break generation long after the UI is updated
+- Model-picker defaults are a product choice, not just a technical one; verify current pricing/docs before changing them and prefer exposing cheap fallback options explicitly so users can trade quality for cost themselves
 
 **Testing:**
 - Factory functions (`mockProblem(id)`) keep tests concise and readable

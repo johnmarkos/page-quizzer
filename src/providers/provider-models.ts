@@ -6,7 +6,9 @@ const PROVIDER_MODELS: Record<ProviderName, readonly string[]> = {
     'claude-sonnet-4-5-20250929',
   ],
   openai: [
+    'gpt-5-mini',
     'gpt-4o-mini',
+    'gpt-4.1-nano',
     'gpt-4.1-mini',
     'gpt-4.1',
   ],

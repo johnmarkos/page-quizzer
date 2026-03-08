@@ -25,7 +25,7 @@ describe('Provider Registry', () => {
   it('creates an openai provider', () => {
     const provider = createProvider('openai', { apiKey: 'test-key' });
     expect(provider.name).toBe('openai');
-    expect(provider.model).toBe('gpt-4o-mini');
+    expect(provider.model).toBe('gpt-5-mini');
     expect(provider.models).toEqual(getProviderModels('openai'));
   });
 
@@ -73,8 +73,8 @@ describe('Provider Registry', () => {
   });
 
   it('normalizes invalid or missing model selections to the provider default', () => {
-    expect(normalizeProviderModel('openai')).toBe('gpt-4o-mini');
-    expect(normalizeProviderModel('openai', 'not-a-real-model')).toBe('gpt-4o-mini');
+    expect(normalizeProviderModel('openai')).toBe('gpt-5-mini');
+    expect(normalizeProviderModel('openai', 'not-a-real-model')).toBe('gpt-5-mini');
     expect(normalizeProviderModel('openai', 'gpt-4.1')).toBe('gpt-4.1');
   });
 });
