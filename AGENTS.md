@@ -61,7 +61,7 @@ All changes to `main` require a pull request. No direct commits to `main`.
 - **Before opening a PR:** run `npm test`, `npm run build`, and the self-review checklist
 - **CI runs on every PR:** checkout → Node 20 → `npm ci` → `npm test` → `npm run build` → `npm audit --omit=dev`
 - **Branch protection** is configured in the GitHub UI (require PRs, require CI status check)
-- **After opening a PR:** comment `@codex review` to trigger a Codex code review
+- **Code review:** comment `@codex review` on significant PRs (new features, refactors, multi-file changes, security-sensitive code). Trivial PRs (version bumps, typos, config tweaks, doc-only) can merge after CI passes without a Codex review. Codex reviews have a weekly budget — if we hit the limit, fall back to Claude staff review or skip review for trivial changes.
 
 ## Testing Philosophy (Goldilocks)
 
