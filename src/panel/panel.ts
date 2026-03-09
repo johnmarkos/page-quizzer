@@ -2,6 +2,7 @@ import type { Problem, SessionSummary } from '../engine/types.js';
 import type { SessionRecord } from '../background/StorageManager.js';
 import type { ContentSection, RestoredStateMessage, ReviewItem } from '../shared/messages.js';
 import type { ProviderName } from '../providers/index.js';
+import { STORAGE_KEYS, providerApiKeyStorageKey } from '../shared/constants.js';
 import { buildOriginPermissionPattern } from '../shared/site-access.js';
 import { buildHistoryExportFilename, serializeHistoryRecords } from './history-export.js';
 import { buildManualGeneratePayload } from './manual-content.js';
@@ -11,6 +12,7 @@ import { getProviderModels, normalizeProviderModel } from '../providers/provider
 import {
   DEFAULT_OLLAMA_BASE_URL,
   normalizeProviderBaseUrl,
+  providerRequiresApiKey,
   providerSupportsBaseUrl,
 } from '../providers/provider-settings.js';
 import {
@@ -81,13 +83,18 @@ const apiKeyInput = document.getElementById('api-key-input') as HTMLInputElement
 const baseUrlInput = document.getElementById('base-url-input') as HTMLInputElement;
 renderModelOptions(providerSelect.value as ProviderName);
 providerSelect.addEventListener('change', () => {
-  const provider = providerSelect.value as ProviderName;
-  renderModelOptions(provider, modelSelect.value);
-  renderProviderSettingsFields(provider);
-  clearConnectionStatus();
+  void handleProviderChange();
 });
 const initialSettingsPromise = loadSettings();
 renderManualInputMode();
+
+async function handleProviderChange() {
+  const provider = providerSelect.value as ProviderName;
+  renderModelOptions(provider, modelSelect.value);
+  renderProviderSettingsFields(provider);
+  apiKeyInput.value = await loadSavedProviderApiKey(provider);
+  clearConnectionStatus();
+}
 
 // --- Quiz Flow ---
 function showQuizSection(section: string) {
@@ -589,6 +596,30 @@ async function loadSettings() {
     currentTimerSeconds = normalizeTimerSeconds(s.timerSeconds);
     (document.getElementById('timer-select') as HTMLSelectElement).value = String(currentTimerSeconds);
   }
+}
+
+async function loadSavedProviderApiKey(provider: ProviderName): Promise<string> {
+  if (!providerRequiresApiKey(provider)) {
+    return '';
+  }
+
+  const storageKey = providerApiKeyStorageKey(provider);
+  const local = await chrome.storage.local.get([STORAGE_KEYS.API_KEY, storageKey]);
+  const hasStoredProviderApiKey = Object.prototype.hasOwnProperty.call(local, storageKey);
+  if (hasStoredProviderApiKey) {
+    const stored = local[storageKey];
+    return typeof stored === 'string' ? stored : '';
+  }
+
+  if (!Object.prototype.hasOwnProperty.call(local, STORAGE_KEYS.API_KEY)) {
+    return '';
+  }
+
+  const legacyApiKey = local[STORAGE_KEYS.API_KEY];
+  const migratedApiKey = typeof legacyApiKey === 'string' ? legacyApiKey : '';
+  await chrome.storage.local.set({ [storageKey]: migratedApiKey });
+  await chrome.storage.local.remove(STORAGE_KEYS.API_KEY);
+  return migratedApiKey;
 }
 
 $('density-slider').addEventListener('input', (e) => {

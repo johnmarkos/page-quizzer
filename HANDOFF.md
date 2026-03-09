@@ -1,5 +1,13 @@
 # Handoff
 
+## Update — S5 Per-Provider API Keys
+
+- Added provider-specific API key storage via `apiKey_<provider>` keys.
+- Updated `StorageManager` to read/write provider-specific keys and migrate the old global `apiKey` slot.
+- Updated the panel provider-switch flow to reload the selected provider's saved key immediately.
+- Added `StorageManager` tests for per-provider storage, migration, intentionally cleared keys, and Ollama's no-key behavior.
+- Verification: `npm test`, `npm run build`.
+
 ## Staff Review (2026-03-07)
 
 Opus 4.6 reviewed the full codebase (~13,600 lines, 60 commits by GPT-5.4). Six blocking issues were found and fixed in commit `ca75ba3`:

@@ -3,11 +3,15 @@ import {
   DEFAULT_DENSITY,
   DEFAULT_MAX_QUESTIONS,
   DEFAULT_TIMER_SECONDS,
+  providerApiKeyStorageKey,
 } from '../shared/constants.js';
 import type { ProviderName } from '../providers/index.js';
 import type { SessionSummary } from '../engine/types.js';
 import { normalizeProviderModel } from '../providers/provider-models.js';
-import { normalizeProviderBaseUrl } from '../providers/provider-settings.js';
+import {
+  normalizeProviderBaseUrl,
+  providerRequiresApiKey,
+} from '../providers/provider-settings.js';
 
 export type SessionRecord = SessionSummary & {
   id: string;
@@ -37,13 +41,39 @@ export class StorageManager {
       STORAGE_KEYS.MAX_QUESTIONS,
       STORAGE_KEYS.TIMER_SECONDS,
     ]);
-    const local = await chrome.storage.local.get([STORAGE_KEYS.API_KEY]);
     const provider = (result[STORAGE_KEYS.PROVIDER] || 'anthropic') as ProviderName;
     const storedModel = result[STORAGE_KEYS.MODEL] as string | undefined;
     const storedBaseUrl = result[STORAGE_KEYS.BASE_URL] as string | undefined;
+    const providerApiKeyKey = providerRequiresApiKey(provider)
+      ? providerApiKeyStorageKey(provider)
+      : null;
+    const local = await chrome.storage.local.get(
+      providerApiKeyKey
+        ? [STORAGE_KEYS.API_KEY, providerApiKeyKey]
+        : [STORAGE_KEYS.API_KEY],
+    );
+    const hasLegacyApiKey = Object.prototype.hasOwnProperty.call(local, STORAGE_KEYS.API_KEY);
+    const legacyApiKey = this.#readStoredString(local[STORAGE_KEYS.API_KEY]);
+    const hasStoredProviderApiKey = providerApiKeyKey
+      ? Object.prototype.hasOwnProperty.call(local, providerApiKeyKey)
+      : false;
+    const storedProviderApiKey = providerApiKeyKey
+      ? this.#readStoredString(local[providerApiKeyKey])
+      : '';
+
+    if (providerApiKeyKey && hasLegacyApiKey) {
+      if (!hasStoredProviderApiKey) {
+        await chrome.storage.local.set({ [providerApiKeyKey]: legacyApiKey });
+      }
+      await chrome.storage.local.remove(STORAGE_KEYS.API_KEY);
+    }
 
     return {
-      apiKey: local[STORAGE_KEYS.API_KEY] || '',
+      apiKey: providerApiKeyKey
+        ? hasStoredProviderApiKey
+          ? storedProviderApiKey
+          : legacyApiKey
+        : '',
       provider,
       model: storedModel ? normalizeProviderModel(provider, storedModel) : undefined,
       baseUrl: normalizeProviderBaseUrl(provider, storedBaseUrl),
@@ -63,7 +93,12 @@ export class StorageManager {
     if (settings.density !== undefined) sync[STORAGE_KEYS.DENSITY] = settings.density;
     if (settings.maxQuestions !== undefined) sync[STORAGE_KEYS.MAX_QUESTIONS] = settings.maxQuestions;
     if (settings.timerSeconds !== undefined) sync[STORAGE_KEYS.TIMER_SECONDS] = settings.timerSeconds;
-    if (settings.apiKey !== undefined) local[STORAGE_KEYS.API_KEY] = settings.apiKey;
+    if (settings.apiKey !== undefined) {
+      const provider = settings.provider ?? await this.#getStoredProvider();
+      if (providerRequiresApiKey(provider)) {
+        local[providerApiKeyStorageKey(provider)] = settings.apiKey;
+      }
+    }
 
     if (Object.keys(sync).length) await chrome.storage.sync.set(sync);
     if (Object.keys(local).length) await chrome.storage.local.set(local);
@@ -85,5 +120,14 @@ export class StorageManager {
 
   async setSessions(records: SessionRecord[]): Promise<void> {
     await chrome.storage.local.set({ [STORAGE_KEYS.SESSIONS]: records });
+  }
+
+  async #getStoredProvider(): Promise<ProviderName> {
+    const result = await chrome.storage.sync.get(STORAGE_KEYS.PROVIDER);
+    return (result[STORAGE_KEYS.PROVIDER] || 'anthropic') as ProviderName;
+  }
+
+  #readStoredString(value: unknown): string {
+    return typeof value === 'string' ? value : '';
   }
 }

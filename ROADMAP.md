@@ -88,6 +88,8 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [x] **S4: Error recovery for failed generation** — If quiz generation fails mid-chunk (e.g., API rate limit), keep the questions generated so far and offer "Start with N questions" instead of showing an error. Only show error if zero questions were generated. Modify `QuizGenerator` and service worker error handling.
 
+- [x] **S5: Per-provider API keys** — Store API keys per provider in `chrome.storage.local` (e.g., `apiKey_anthropic`, `apiKey_openai`, `apiKey_gemini`). When switching providers in Settings, load that provider's saved key instead of keeping the previous provider's key in the field. Update `StorageManager.getSettings()` to return the active provider's key. Update `Settings` type, `STORAGE_KEYS` constants, panel settings UI, and `connection-settings.ts`. Migration: on first run with new schema, move existing `apiKey` value to the key for whichever provider is currently selected. Test: unit test StorageManager migration logic; manual test switching providers preserves keys.
+
 ## Future — Needs Design
 
 These need architectural decisions before implementation. Flag for staff review.
