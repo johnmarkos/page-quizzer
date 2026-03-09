@@ -86,6 +86,7 @@ export class StorageManager {
   async saveSettings(settings: Partial<Settings>): Promise<void> {
     const sync: Record<string, string | number> = {};
     const local: Record<string, string> = {};
+    let removeLegacyApiKey = false;
 
     if (settings.provider !== undefined) sync[STORAGE_KEYS.PROVIDER] = settings.provider;
     if (settings.model !== undefined) sync[STORAGE_KEYS.MODEL] = settings.model;
@@ -97,11 +98,13 @@ export class StorageManager {
       const provider = settings.provider ?? await this.#getStoredProvider();
       if (providerRequiresApiKey(provider)) {
         local[providerApiKeyStorageKey(provider)] = settings.apiKey;
+        removeLegacyApiKey = true;
       }
     }
 
     if (Object.keys(sync).length) await chrome.storage.sync.set(sync);
     if (Object.keys(local).length) await chrome.storage.local.set(local);
+    if (removeLegacyApiKey) await chrome.storage.local.remove(STORAGE_KEYS.API_KEY);
   }
 
   async saveSession(record: SessionRecord): Promise<void> {

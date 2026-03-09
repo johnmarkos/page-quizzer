@@ -62,6 +62,7 @@ let activeTimerId: number | null = null;
 let activeTimerDeadline = 0;
 let manualInputMode = false;
 let providerApiKeyLoadRequestId = 0;
+let providerApiKeyLoading = false;
 let currentResumeDocument: {
   title: string;
   completedCount: number;
@@ -98,6 +99,8 @@ async function handleProviderChange() {
   renderModelOptions(provider, modelSelect.value);
   renderProviderSettingsFields(provider);
   clearConnectionStatus();
+  apiKeyInput.value = '';
+  setProviderApiKeyLoadingState(provider, true);
   const requestId = ++providerApiKeyLoadRequestId;
   const savedApiKey = await loadSavedProviderApiKey(provider);
   if (!shouldApplyLoadedProviderKey(
@@ -109,6 +112,7 @@ async function handleProviderChange() {
     return;
   }
   apiKeyInput.value = savedApiKey;
+  setProviderApiKeyLoadingState(provider, false);
 }
 
 // --- Quiz Flow ---
@@ -610,6 +614,7 @@ async function loadSettings() {
     (document.getElementById('max-questions-input') as HTMLInputElement).value = String(s.maxQuestions);
     currentTimerSeconds = normalizeTimerSeconds(s.timerSeconds);
     (document.getElementById('timer-select') as HTMLSelectElement).value = String(currentTimerSeconds);
+    setProviderApiKeyLoadingState(s.provider, false);
   }
 }
 
@@ -633,6 +638,9 @@ $('density-slider').addEventListener('input', (e) => {
 });
 
 $('save-settings-btn').addEventListener('click', async () => {
+  if (providerApiKeyLoading) {
+    return;
+  }
   const settings = {
     provider: providerSelect.value as ProviderName,
     apiKey: apiKeyInput.value,
@@ -649,6 +657,9 @@ $('save-settings-btn').addEventListener('click', async () => {
 });
 
 $('test-connection-btn').addEventListener('click', async () => {
+  if (providerApiKeyLoading) {
+    return;
+  }
   const status = $('connection-status');
   status.textContent = 'Testing...';
   status.className = '';
@@ -704,6 +715,13 @@ function clearConnectionStatus() {
   const status = $('connection-status');
   status.textContent = '';
   status.className = '';
+}
+
+function setProviderApiKeyLoadingState(provider: ProviderName, isLoading: boolean) {
+  providerApiKeyLoading = providerRequiresApiKey(provider) && isLoading;
+  apiKeyInput.disabled = providerApiKeyLoading;
+  ($('save-settings-btn') as HTMLButtonElement).disabled = providerApiKeyLoading;
+  ($('test-connection-btn') as HTMLButtonElement).disabled = providerApiKeyLoading;
 }
 
 async function getSavedSettings() {

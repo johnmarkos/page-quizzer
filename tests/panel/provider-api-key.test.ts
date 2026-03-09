@@ -24,4 +24,8 @@ describe('provider api key loading', () => {
   it('prefers the provider-specific key over the legacy key for display', () => {
     expect(resolveDisplayedProviderApiKey('provider-key', 'legacy-key', true)).toBe('provider-key');
   });
+
+  it('returns an empty string when neither key is usable for display', () => {
+    expect(resolveDisplayedProviderApiKey(undefined, undefined, false)).toBe('');
+  });
 });

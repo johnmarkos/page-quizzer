@@ -87,6 +87,18 @@ describe('StorageManager settings', () => {
     expect(localState[providerApiKeyStorageKey('openai')]).toBe('openai-key');
   });
 
+  it('removes the legacy key when saving a provider-specific key', async () => {
+    localState[STORAGE_KEYS.API_KEY] = 'legacy-key';
+
+    await new StorageManager().saveSettings({
+      provider: 'openai',
+      apiKey: 'openai-key',
+    });
+
+    expect(localState[providerApiKeyStorageKey('openai')]).toBe('openai-key');
+    expect(localState[STORAGE_KEYS.API_KEY]).toBeUndefined();
+  });
+
   it('migrates the legacy API key into the active provider slot', async () => {
     syncState[STORAGE_KEYS.PROVIDER] = 'anthropic';
     localState[STORAGE_KEYS.API_KEY] = 'legacy-key';
