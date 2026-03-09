@@ -260,7 +260,7 @@ async function restoreState() {
   }
 }
 
-async function handleMessage(message: Message, _sender: chrome.runtime.MessageSender) {
+async function handleMessage(message: Message, sender: chrome.runtime.MessageSender) {
   switch (message.type) {
     case 'GET_SETTINGS':
       return { type: 'SETTINGS', payload: await storage.getSettings() };
@@ -331,6 +331,8 @@ async function handleMessage(message: Message, _sender: chrome.runtime.MessageSe
           return { type: 'ok' };
         case 'RETRY_MISSED':
           return handleRetryMissed();
+        case 'ABANDON_QUIZ':
+          return await handleAbandonQuiz(sender.tab?.id ?? activeTab.id);
         case 'CONTINUE_DOCUMENT':
           return await handleContinueDocument(activeTab);
         case 'GET_REVIEW':
@@ -735,6 +737,20 @@ function handleRetryMissed() {
   currentGenerationWarning = null;
   engine.loadProblems(missedProblems);
   engine.start();
+  return { type: 'ok' };
+}
+
+async function handleAbandonQuiz(tabId: number) {
+  tabSessions = removeTabQuizSession(tabSessions, tabId);
+
+  if (activeTabId === tabId) {
+    applyTabSession(createEmptySession(), tabId);
+  }
+
+  await chrome.storage.local.set({
+    [STORAGE_KEYS.TAB_QUIZ_SESSIONS]: tabSessions,
+  });
+  clearQuizBadge(tabId);
   return { type: 'ok' };
 }
 

@@ -86,6 +86,10 @@ export type RetryMissedRequest = {
   type: 'RETRY_MISSED';
 };
 
+export type AbandonQuizRequest = {
+  type: 'ABANDON_QUIZ';
+};
+
 export type ContinueDocumentRequest = {
   type: 'CONTINUE_DOCUMENT';
 };
@@ -338,6 +342,7 @@ export type Message =
   | NextQuestionRequest
   | SkipQuestionRequest
   | RetryMissedRequest
+  | AbandonQuizRequest
   | ContinueDocumentRequest
   | GetReviewRequest
   | GetExportQuizRequest

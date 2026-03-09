@@ -278,6 +278,23 @@ $('skip-btn').addEventListener('click', () => {
   chrome.runtime.sendMessage({ type: 'SKIP_QUESTION' });
 });
 
+$('quit-quiz-btn').addEventListener('click', async () => {
+  try {
+    stopQuestionTimer();
+    const response = await chrome.runtime.sendMessage({ type: 'ABANDON_QUIZ' });
+    if (response?.type === 'QUIZ_ERROR') {
+      showError(response.payload.error);
+      return;
+    }
+
+    resetExplanationState();
+    hideShortcutHelp();
+    showQuizSection('quiz-idle');
+  } catch (err) {
+    showError(err instanceof Error ? err.message : 'Failed to end quiz');
+  }
+});
+
 $('retry-btn').addEventListener('click', async () => {
   try {
     await startQuizFlow({ type: 'START_QUIZ' });
