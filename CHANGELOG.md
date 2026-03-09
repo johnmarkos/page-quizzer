@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.1.62 — OpenQuizzer JSON Export (2026-03-08)
+
+### Data & History
+- Added a panel-side OpenQuizzer export path that converts the current quiz into OpenQuizzer's native chapter JSON structure
+- Added "Export as OpenQuizzer" actions alongside the existing HTML export in both the ready and completed quiz views
+- Kept the export panel-only by reusing the existing `GET_EXPORT_QUIZ` / `EXPORT_QUIZ_DATA` message flow and converting PageQuizzer problems into `options: string[]` plus a numeric `correct` index
+
+### Testing
+- `npm test`
+- `npm run build`
+
 ## v0.1.61 — Readability Pass (2026-03-08)
 
 ### Cleanup
