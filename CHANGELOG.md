@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.1.58 — Quit Quiz Action (2026-03-08)
+
+### Quiz Experience
+- Added an `End Quiz` control to the active quiz header so users can abandon an in-progress quiz without leaving the page
+- Wired a new `ABANDON_QUIZ` message from the panel to the service worker and cleared the active tab’s persisted quiz session plus badge state when quitting
+- Reset the background to a true idle session on abandon instead of only resetting the engine, which avoids restoring a stale ready-state quiz after the panel reopens
+
+### Review Loop
+- The main self-review finding was state completeness: abandoning a quiz must clear `currentProblems` and other in-memory tab state, not just call `engine.reset()`, or restore logic will still bring the quiz back. The final implementation reuses the empty-session restore path that tab teardown already uses.
+
+### Testing
+- `npm test`
+- `npm run build`
+
 ## v0.1.57 — Advisory Fixes from Staff Review (2026-03-08)
 
 ### Cleanup

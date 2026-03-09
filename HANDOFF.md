@@ -1,5 +1,26 @@
 # Handoff
 
+_Generated: 2026-03-08_
+
+## Latest Session
+
+### Completed
+
+- Implemented Q14 quit/abandon quiz support.
+- Added `ABANDON_QUIZ` to the shared message union.
+- Added an `End Quiz` button to the active quiz header in the panel and wired it to return the UI to idle immediately after a successful background reset.
+- Updated the service worker to clear the active tab's persisted quiz session, restore an empty in-memory session, and clear the badge when a quiz is abandoned.
+- Updated `TASK-Q14.md` and `CHANGELOG.md`.
+
+### Decisions
+
+- Reused `applyTabSession(createEmptySession(), tabId)` for abandon handling instead of `engine.reset()`. `engine.reset()` alone would leave `currentProblems` populated and `GET_STATE` would incorrectly restore a ready quiz.
+- Kept the quit control scoped to the `quiz-question` view so it is automatically hidden outside active question states without extra UI state flags.
+
+### Unfinished
+
+- No commit, branch, PR, or remote review work was done in this session.
+
 ## Staff Review (2026-03-07)
 
 Opus 4.6 reviewed the full codebase (~13,600 lines, 60 commits by GPT-5.4). Six blocking issues were found and fixed in commit `ca75ba3`:

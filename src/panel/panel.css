@@ -326,6 +326,27 @@ nav {
   margin-bottom: 12px;
 }
 
+.quiz-meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quit-quiz-btn {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.quit-quiz-btn:hover {
+  color: var(--error);
+}
+
 .shortcut-help {
   position: relative;
   flex: 0 0 auto;
