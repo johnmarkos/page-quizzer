@@ -10,7 +10,6 @@
 ### Testing
 - `npm test`
 - `npm run build`
-
 ## v0.1.59 — Provider Key Loading Unlock Fix (2026-03-08)
 
 ### Bug Fixes

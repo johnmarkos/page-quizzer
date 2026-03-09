@@ -15,3 +15,7 @@ export const STORAGE_KEYS = {
   QUESTION_PERFORMANCE: 'questionPerformance',
   DOCUMENT_PROGRESS: 'documentProgress',
 } as const;
+
+export function providerApiKeyStorageKey(provider: string): string {
+  return `apiKey_${provider}`;
+}
