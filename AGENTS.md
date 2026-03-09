@@ -57,6 +57,7 @@ src/
 
 All changes to `main` require a pull request. No direct commits to `main`.
 
+- **Do not commit handoff or task files** — `CLAUDE-HANDOFF.md`, `CODEX-HANDOFF.md`, `HANDOFF.md`, and `TASK-*.md` are local coordination files. They are in `.gitignore`. Never `git add` them.
 - **Branch naming:** `feat/`, `fix/`, `chore/` prefixes (e.g., `fix/staff-review-advisory`)
 - **Before opening a PR:** run `npm test`, `npm run build`, and the self-review checklist
 - **CI runs on every PR:** checkout → Node 20 → `npm ci` → `npm test` → `npm run build` → `npm audit --omit=dev`
