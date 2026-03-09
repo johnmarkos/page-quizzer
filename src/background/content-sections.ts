@@ -1,4 +1,5 @@
 import type { ContentSection, ExtractedContent } from '../shared/messages.js';
+import { countWords } from '../shared/text-utils.js';
 
 export const SECTIONING_WORD_THRESHOLD = 3000;
 const TARGET_SECTION_WORDS = 1200;
@@ -38,6 +39,7 @@ type SectionChunk = {
   endPage?: number;
 };
 
+// --- Public API ---
 export function shouldOfferSectionChoice(content: ExtractedContent): boolean {
   return content.wordCount > SECTIONING_WORD_THRESHOLD && getContentSections(content).length > 1;
 }
@@ -93,6 +95,7 @@ function buildSectionChunks(content: ExtractedContent): SectionChunk[] {
   );
 }
 
+// --- Heading-Based Sectioning ---
 function buildHeadingSections(html: string): SectionChunk[] {
   const headingRegex = /<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/gi;
   const matches = [...html.matchAll(headingRegex)];
@@ -139,6 +142,7 @@ function buildFallbackSections(text: string, title: string): SectionChunk[] {
   });
 }
 
+// --- PDF Page Sectioning ---
 function buildPdfPageSections(pageTexts: string[]): SectionChunk[] {
   const startPage = findPdfBodyStartPage(pageTexts);
   const bodyPages = pageTexts.slice(startPage - 1);
@@ -245,6 +249,7 @@ function findPdfBodyStartPage(pageTexts: string[]): number {
   return 1;
 }
 
+// --- Rebalancing ---
 function rebalanceSections(sections: SectionChunk[], baseTitle: string): SectionChunk[] {
   const output: SectionChunk[] = [];
   let bufferTitle = '';
@@ -297,6 +302,7 @@ function rebalanceSections(sections: SectionChunk[], baseTitle: string): Section
   }
 }
 
+// --- Utilities ---
 function splitOversizedChunk(section: SectionChunk): SectionChunk[] {
   const words = section.textContent.split(/\s+/).filter(Boolean);
   if (words.length === 0) {
@@ -340,8 +346,4 @@ function normalizeText(text: string): string {
   return text
     .replace(/\s+/g, ' ')
     .trim();
-}
-
-function countWords(text: string): number {
-  return text ? text.split(/\s+/).filter(Boolean).length : 0;
 }

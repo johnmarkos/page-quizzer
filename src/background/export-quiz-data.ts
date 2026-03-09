@@ -1,5 +1,5 @@
-import type { Problem } from '../engine/types.js';
 import type { ExtractedContent } from '../shared/messages.js';
+import { cloneProblems } from './retry-missed.js';
 import type { CompletedQuizData } from './tab-quiz-sessions.js';
 
 export type ExportQuizData = {
@@ -31,11 +31,4 @@ export function resolveExportQuizData(params: {
     sourceUrl: params.lastExtracted.url,
     problems: cloneProblems(problems),
   };
-}
-
-function cloneProblems(problems: Problem[]): Problem[] {
-  return problems.map((problem) => ({
-    ...problem,
-    options: problem.options.map((option) => ({ ...option })),
-  }));
 }

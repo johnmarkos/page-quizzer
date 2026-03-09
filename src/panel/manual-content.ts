@@ -1,4 +1,5 @@
 import type { ExtractedContent } from '../shared/messages.js';
+import { countWords } from '../shared/text-utils.js';
 
 const DEFAULT_MANUAL_TITLE = 'Pasted Text';
 const DEFAULT_MANUAL_URL = 'pagequizzer://pasted-text';
@@ -32,8 +33,4 @@ export function buildManualGeneratePayload(
   return {
     content: buildManualExtractedContent(text, title),
   };
-}
-
-function countWords(text: string): number {
-  return text.split(/\s+/).filter(Boolean).length;
 }

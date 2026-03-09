@@ -57,6 +57,7 @@ const storage = new StorageManager();
 const engine = new QuizEngine();
 const progress = new ProgressManager();
 
+// --- Module State ---
 let activeTabId: number | null = null;
 let tabSessions: TabQuizSessionMap = {};
 let lastExtracted: ExtractedContent | null = null;
@@ -69,6 +70,7 @@ let lastCompletedQuiz: CompletedQuizData | null = null;
 let currentGenerationWarning: string | null = null;
 let questionPerformance: QuestionPerformanceMap = {};
 
+// --- Engine Event Handlers ---
 engine.on('stateChange', async () => {
   await persistState();
   await syncBadgeFromEngineState();
@@ -132,6 +134,7 @@ engine.on('quizComplete', async (payload) => {
   }
 });
 
+// --- Chrome Lifecycle ---
 clearQuizBadge();
 const restorePromise = restoreState();
 
@@ -213,6 +216,7 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
   return true;
 });
 
+// --- Persistence ---
 async function persistState() {
   if (activeTabId === null) {
     return;
@@ -260,6 +264,7 @@ async function restoreState() {
   }
 }
 
+// --- Message Router ---
 async function handleMessage(message: Message, sender: chrome.runtime.MessageSender) {
   switch (message.type) {
     case 'GET_SETTINGS':
@@ -421,6 +426,7 @@ async function handleGetState(activeTab?: chrome.tabs.Tab) {
   return { type: 'RESTORED_STATE', payload: { state: 'idle' } };
 }
 
+// --- Quiz Generation ---
 async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: ExtractedContent) {
   const settings = await storage.getSettings();
   lastExtracted = await resolveQuizContent(tab, providedContent);
@@ -458,6 +464,7 @@ async function handleGenerateQuiz(tab: chrome.tabs.Tab, providedContent?: Extrac
   return await generateQuizFromExtractedContent(lastExtracted, settings);
 }
 
+// --- Content Extraction ---
 async function resolveQuizContent(
   tab: chrome.tabs.Tab,
   providedContent?: ExtractedContent,
@@ -670,6 +677,7 @@ async function openSidePanelForTab(tabId: number) {
   }
 }
 
+// --- Connection & Settings ---
 async function handleTestConnection(
   override?: { provider: ProviderName; apiKey: string; model?: string; baseUrl?: string },
 ) {
@@ -704,6 +712,7 @@ async function handleTestConnection(
   }
 }
 
+// --- Post-Quiz Actions ---
 async function handleImportSessions(json: string) {
   const importedSessions = parseImportedSessions(json);
   const existingSessions = await storage.getSessions();
@@ -788,6 +797,7 @@ function handleGetExportQuiz() {
   };
 }
 
+// --- Clone Helpers ---
 function cloneSummary(summary: SessionSummary): SessionSummary {
   return {
     ...summary,
@@ -837,6 +847,7 @@ function mergeProgressIntoSections(
   });
 }
 
+// --- Tab Session Management ---
 function buildSectionsSummary(sections: ContentSection[]) {
   const completedSections = sections.filter((section) => section.quizzed);
   const scoredSections = completedSections.filter(
@@ -913,6 +924,7 @@ async function getRequiredActiveTab(): Promise<chrome.tabs.Tab & { id: number }>
   return tab as chrome.tabs.Tab & { id: number };
 }
 
+// --- Badge ---
 function setQuizBadge(index: number, total: number) {
   if (activeTabId === null) {
     return;
@@ -940,6 +952,7 @@ async function syncBadgeFromEngineState() {
   setQuizBadge(engine.currentIndex, engine.totalProblems);
 }
 
+// --- Broadcast ---
 function broadcast(message: Message) {
   chrome.runtime.sendMessage(message).catch(() => {
     // Panel might not be open — ignore

@@ -2,6 +2,7 @@ import { STORAGE_KEYS } from '../shared/constants.js';
 import type { ContentSection } from '../shared/messages.js';
 import type { Score } from '../engine/types.js';
 
+// --- Types ---
 export type SectionProgressRecord = {
   index: number;
   title: string;
@@ -37,6 +38,7 @@ export type DocumentLibraryItem = DocumentResumeState & {
   lastActivity: number | null;
 };
 
+// --- Progress Operations ---
 export class ProgressManager {
   async getDocumentProgress(url: string): Promise<DocumentProgressRecord | null> {
     const allProgress = await this.#getAllProgress();
@@ -134,6 +136,7 @@ export function mergeSectionProgress(
   });
 }
 
+// --- Summary Builders ---
 export function buildProgressSummary(sections: Array<Pick<SectionProgressRecord, 'quizzed' | 'scorePercentage'>>): ProgressSummary {
   const completedSections = sections.filter((section) => section.quizzed);
   const scoredSections = completedSections.filter(
@@ -196,6 +199,7 @@ export function buildDocumentLibraryItems(records: DocumentProgressRecord[]): Do
     });
 }
 
+// --- Clone Helpers ---
 function cloneDocumentProgress(record: DocumentProgressRecord): DocumentProgressRecord {
   return {
     ...record,
