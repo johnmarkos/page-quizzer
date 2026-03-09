@@ -79,19 +79,19 @@ describe('quizzer-core adapter', () => {
     });
   });
 
-  it('uses the first correct option when multiple options are marked correct', () => {
-    const adaptedProblem = toQuizzerCore(
-      buildProblem({
-        options: [
-          { text: 'Option A', correct: false },
-          { text: 'Option B', correct: true },
-          { text: 'Option C', correct: true },
-          { text: 'Option D', correct: false },
-        ],
-      }),
-    );
-
-    expect(adaptedProblem.correct).toBe(1);
+  it('throws when converting a PageQuizzer problem with multiple correct options', () => {
+    expect(() =>
+      toQuizzerCore(
+        buildProblem({
+          options: [
+            { text: 'Option A', correct: false },
+            { text: 'Option B', correct: true },
+            { text: 'Option C', correct: true },
+            { text: 'Option D', correct: false },
+          ],
+        }),
+      ),
+    ).toThrow('Problem "problem-1" must have exactly one correct option; found 2');
   });
 
   it('preserves a correct answer at the last option index', () => {
@@ -121,7 +121,7 @@ describe('quizzer-core adapter', () => {
           ],
         }),
       ),
-    ).toThrow('Problem "problem-1" must have at least one correct option');
+    ).toThrow('Problem "problem-1" must have exactly one correct option; found 0');
   });
 
   it('converts a quizzer-core problem back to PageQuizzer format', () => {
@@ -182,6 +182,16 @@ describe('quizzer-core adapter', () => {
         }),
       ),
     ).toThrow('QuizzerCore problem "mc-001" has invalid correct index 4');
+  });
+
+  it('throws when converting a quizzer-core problem with a non-integer correct index', () => {
+    expect(() =>
+      fromQuizzerCore(
+        buildQuizzerCoreProblem({
+          correct: 1.5,
+        }),
+      ),
+    ).toThrow('QuizzerCore problem "mc-001" has invalid correct index 1.5');
   });
 
   it('does not mutate the source PageQuizzer problem', () => {

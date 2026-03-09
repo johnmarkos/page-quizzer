@@ -11,10 +11,14 @@ export type QuizzerCoreProblem = {
 };
 
 export function toQuizzerCore(problem: Problem): QuizzerCoreProblem {
-  const correctIndex = problem.options.findIndex(option => option.correct);
+  const correctOptions = problem.options
+    .map((option, index) => ({ index, correct: option.correct }))
+    .filter(option => option.correct);
 
-  if (correctIndex === -1) {
-    throw new Error(`Problem "${problem.id}" must have at least one correct option`);
+  if (correctOptions.length !== 1) {
+    throw new Error(
+      `Problem "${problem.id}" must have exactly one correct option; found ${correctOptions.length}`,
+    );
   }
 
   return {
@@ -22,13 +26,17 @@ export function toQuizzerCore(problem: Problem): QuizzerCoreProblem {
     type: 'multiple-choice',
     question: problem.question,
     options: problem.options.map(option => option.text),
-    correct: correctIndex,
+    correct: correctOptions[0].index,
     ...(problem.explanation !== undefined ? { explanation: problem.explanation } : {}),
   };
 }
 
 export function fromQuizzerCore(problem: QuizzerCoreProblem): Problem {
-  if (problem.correct < 0 || problem.correct >= problem.options.length) {
+  if (
+    !Number.isInteger(problem.correct)
+    || problem.correct < 0
+    || problem.correct >= problem.options.length
+  ) {
     throw new Error(
       `QuizzerCore problem "${problem.id}" has invalid correct index ${problem.correct}`,
     );

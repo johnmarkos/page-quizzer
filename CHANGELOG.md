@@ -4,7 +4,7 @@
 
 ### Providers
 - Added `src/providers/quizzer-core-adapter.ts` with pure `toQuizzerCore()` and `fromQuizzerCore()` helpers for converting between PageQuizzer `Problem` objects and quizzer-core multiple-choice problems
-- Added descriptive validation for missing correct answers and out-of-bounds quizzer-core `correct` indexes
+- Added descriptive validation for malformed answer shapes, including zero/multiple correct PageQuizzer options and non-integer or out-of-bounds quizzer-core `correct` indexes
 - Kept the adapter defensive and non-mutating so it can be reused during the future engine migration without changing current provider or panel wiring
 
 ### Testing
