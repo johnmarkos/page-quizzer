@@ -1,25 +1,18 @@
 # Handoff
 
-_Generated: 2026-03-08_
+## Update — Post-Merge Provider Key Unlock Fix
 
-## Latest Session
+- Fixed a panel-only edge case where a failed provider-key storage read during provider switching could leave the API key field and Save/Test controls disabled until the panel reloaded.
+- `handleProviderChange()` now releases the loading lock in a `finally` block only for the still-current provider request, preserving the stale-request guard.
+- Verification: `npm test`, `npm run build`.
 
-### Completed
+## Update — S5 Per-Provider API Keys
 
-- Implemented Q14 quit/abandon quiz support.
-- Added `ABANDON_QUIZ` to the shared message union.
-- Added an `End Quiz` button to the active quiz header in the panel and wired it to return the UI to idle immediately after a successful background reset.
-- Updated the service worker to clear the active tab's persisted quiz session, restore an empty in-memory session, and clear the badge when a quiz is abandoned.
-- Updated `TASK-Q14.md` and `CHANGELOG.md`.
-
-### Decisions
-
-- Reused `applyTabSession(createEmptySession(), tabId)` for abandon handling instead of `engine.reset()`. `engine.reset()` alone would leave `currentProblems` populated and `GET_STATE` would incorrectly restore a ready quiz.
-- Kept the quit control scoped to the `quiz-question` view so it is automatically hidden outside active question states without extra UI state flags.
-
-### Unfinished
-
-- No commit, branch, PR, or remote review work was done in this session.
+- Added provider-specific API key storage via `apiKey_<provider>` keys.
+- Updated `StorageManager` to read/write provider-specific keys and migrate the old global `apiKey` slot.
+- Updated the panel provider-switch flow to reload the selected provider's saved key immediately.
+- Added `StorageManager` tests for per-provider storage, migration, intentionally cleared keys, and Ollama's no-key behavior.
+- Verification: `npm test`, `npm run build`.
 
 ## Staff Review (2026-03-07)
 

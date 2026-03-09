@@ -1,14 +1,31 @@
 # Changelog
 
-## v0.1.58 — Quit Quiz Action (2026-03-08)
+## v0.1.60 — Quit Quiz Action (2026-03-08)
 
 ### Quiz Experience
 - Added an `End Quiz` control to the active quiz header so users can abandon an in-progress quiz without leaving the page
 - Wired a new `ABANDON_QUIZ` message from the panel to the service worker and cleared the active tab’s persisted quiz session plus badge state when quitting
 - Reset the background to a true idle session on abandon instead of only resetting the engine, which avoids restoring a stale ready-state quiz after the panel reopens
 
-### Review Loop
-- The main self-review finding was state completeness: abandoning a quiz must clear `currentProblems` and other in-memory tab state, not just call `engine.reset()`, or restore logic will still bring the quiz back. The final implementation reuses the empty-session restore path that tab teardown already uses.
+### Testing
+- `npm test`
+- `npm run build`
+
+## v0.1.59 — Provider Key Loading Unlock Fix (2026-03-08)
+
+### Bug Fixes
+- Cleared the provider-key loading lock reliably if the panel-side storage read fails during a provider switch, so the API key input and Save/Test actions do not stay disabled until reload
+
+### Testing
+- `npm test`
+- `npm run build`
+
+## v0.1.58 — Per-Provider API Keys (2026-03-08)
+
+### Bug Fixes
+- Stored API keys per provider in `chrome.storage.local` instead of one shared `apiKey`, so switching providers in Settings now reloads the selected provider's saved key
+- Added legacy `apiKey` migration into the active provider slot and removed the old key without overwriting an intentionally cleared per-provider value
+- Kept Ollama keyless while still allowing the panel to backfill an unmigrated legacy key when the user switches from Ollama to a key-based provider
 
 ### Testing
 - `npm test`
