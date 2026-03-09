@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.1.59 — Provider Key Loading Unlock Fix (2026-03-08)
+
+### Bug Fixes
+- Cleared the provider-key loading lock reliably if the panel-side storage read fails during a provider switch, so the API key input and Save/Test actions do not stay disabled until reload
+
+### Testing
+- `npm test`
+- `npm run build`
+
 ## v0.1.58 — Per-Provider API Keys (2026-03-08)
 
 ### Bug Fixes
