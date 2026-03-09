@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.1.58 — Per-Provider API Keys (2026-03-08)
+
+### Bug Fixes
+- Stored API keys per provider in `chrome.storage.local` instead of one shared `apiKey`, so switching providers in Settings now reloads the selected provider's saved key
+- Added legacy `apiKey` migration into the active provider slot and removed the old key without overwriting an intentionally cleared per-provider value
+- Kept Ollama keyless while still allowing the panel to backfill an unmigrated legacy key when the user switches from Ollama to a key-based provider
+
+### Testing
+- `npm test`
+- `npm run build`
+
 ## v0.1.57 — Advisory Fixes from Staff Review (2026-03-08)
 
 ### Cleanup

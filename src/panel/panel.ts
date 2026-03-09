@@ -2,15 +2,21 @@ import type { Problem, SessionSummary } from '../engine/types.js';
 import type { SessionRecord } from '../background/StorageManager.js';
 import type { ContentSection, RestoredStateMessage, ReviewItem } from '../shared/messages.js';
 import type { ProviderName } from '../providers/index.js';
+import { STORAGE_KEYS, providerApiKeyStorageKey } from '../shared/constants.js';
 import { buildOriginPermissionPattern } from '../shared/site-access.js';
 import { buildHistoryExportFilename, serializeHistoryRecords } from './history-export.js';
 import { buildManualGeneratePayload } from './manual-content.js';
+import {
+  resolveDisplayedProviderApiKey,
+  shouldApplyLoadedProviderKey,
+} from './provider-api-key.js';
 import { buildQuizExportFilename, buildQuizExportHtml } from './quiz-export.js';
 import { filterSessionsByTopic, getHistoryTopics } from './history-topics.js';
 import { getProviderModels, normalizeProviderModel } from '../providers/provider-models.js';
 import {
   DEFAULT_OLLAMA_BASE_URL,
   normalizeProviderBaseUrl,
+  providerRequiresApiKey,
   providerSupportsBaseUrl,
 } from '../providers/provider-settings.js';
 import {
@@ -55,6 +61,8 @@ let currentTimerSeconds = 0;
 let activeTimerId: number | null = null;
 let activeTimerDeadline = 0;
 let manualInputMode = false;
+let providerApiKeyLoadRequestId = 0;
+let providerApiKeyLoading = false;
 let currentResumeDocument: {
   title: string;
   completedCount: number;
@@ -81,13 +89,31 @@ const apiKeyInput = document.getElementById('api-key-input') as HTMLInputElement
 const baseUrlInput = document.getElementById('base-url-input') as HTMLInputElement;
 renderModelOptions(providerSelect.value as ProviderName);
 providerSelect.addEventListener('change', () => {
+  void handleProviderChange();
+});
+const initialSettingsPromise = loadSettings();
+renderManualInputMode();
+
+async function handleProviderChange() {
   const provider = providerSelect.value as ProviderName;
   renderModelOptions(provider, modelSelect.value);
   renderProviderSettingsFields(provider);
   clearConnectionStatus();
-});
-const initialSettingsPromise = loadSettings();
-renderManualInputMode();
+  apiKeyInput.value = '';
+  setProviderApiKeyLoadingState(provider, true);
+  const requestId = ++providerApiKeyLoadRequestId;
+  const savedApiKey = await loadSavedProviderApiKey(provider);
+  if (!shouldApplyLoadedProviderKey(
+    requestId,
+    providerApiKeyLoadRequestId,
+    provider,
+    providerSelect.value as ProviderName,
+  )) {
+    return;
+  }
+  apiKeyInput.value = savedApiKey;
+  setProviderApiKeyLoadingState(provider, false);
+}
 
 // --- Quiz Flow ---
 function showQuizSection(section: string) {
@@ -588,7 +614,23 @@ async function loadSettings() {
     (document.getElementById('max-questions-input') as HTMLInputElement).value = String(s.maxQuestions);
     currentTimerSeconds = normalizeTimerSeconds(s.timerSeconds);
     (document.getElementById('timer-select') as HTMLSelectElement).value = String(currentTimerSeconds);
+    setProviderApiKeyLoadingState(s.provider, false);
   }
+}
+
+async function loadSavedProviderApiKey(provider: ProviderName): Promise<string> {
+  if (!providerRequiresApiKey(provider)) {
+    return '';
+  }
+
+  const storageKey = providerApiKeyStorageKey(provider);
+  const local = await chrome.storage.local.get([STORAGE_KEYS.API_KEY, storageKey]);
+  const hasStoredProviderApiKey = Object.prototype.hasOwnProperty.call(local, storageKey);
+  return resolveDisplayedProviderApiKey(
+    local[storageKey],
+    local[STORAGE_KEYS.API_KEY],
+    hasStoredProviderApiKey,
+  );
 }
 
 $('density-slider').addEventListener('input', (e) => {
@@ -596,6 +638,9 @@ $('density-slider').addEventListener('input', (e) => {
 });
 
 $('save-settings-btn').addEventListener('click', async () => {
+  if (providerApiKeyLoading) {
+    return;
+  }
   const settings = {
     provider: providerSelect.value as ProviderName,
     apiKey: apiKeyInput.value,
@@ -612,6 +657,9 @@ $('save-settings-btn').addEventListener('click', async () => {
 });
 
 $('test-connection-btn').addEventListener('click', async () => {
+  if (providerApiKeyLoading) {
+    return;
+  }
   const status = $('connection-status');
   status.textContent = 'Testing...';
   status.className = '';
@@ -667,6 +715,13 @@ function clearConnectionStatus() {
   const status = $('connection-status');
   status.textContent = '';
   status.className = '';
+}
+
+function setProviderApiKeyLoadingState(provider: ProviderName, isLoading: boolean) {
+  providerApiKeyLoading = providerRequiresApiKey(provider) && isLoading;
+  apiKeyInput.disabled = providerApiKeyLoading;
+  ($('save-settings-btn') as HTMLButtonElement).disabled = providerApiKeyLoading;
+  ($('test-connection-btn') as HTMLButtonElement).disabled = providerApiKeyLoading;
 }
 
 async function getSavedSettings() {
