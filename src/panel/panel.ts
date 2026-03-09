@@ -102,17 +102,27 @@ async function handleProviderChange() {
   apiKeyInput.value = '';
   setProviderApiKeyLoadingState(provider, true);
   const requestId = ++providerApiKeyLoadRequestId;
-  const savedApiKey = await loadSavedProviderApiKey(provider);
-  if (!shouldApplyLoadedProviderKey(
-    requestId,
-    providerApiKeyLoadRequestId,
-    provider,
-    providerSelect.value as ProviderName,
-  )) {
-    return;
+  try {
+    const savedApiKey = await loadSavedProviderApiKey(provider);
+    if (!shouldApplyLoadedProviderKey(
+      requestId,
+      providerApiKeyLoadRequestId,
+      provider,
+      providerSelect.value as ProviderName,
+    )) {
+      return;
+    }
+    apiKeyInput.value = savedApiKey;
+  } finally {
+    if (shouldApplyLoadedProviderKey(
+      requestId,
+      providerApiKeyLoadRequestId,
+      provider,
+      providerSelect.value as ProviderName,
+    )) {
+      setProviderApiKeyLoadingState(provider, false);
+    }
   }
-  apiKeyInput.value = savedApiKey;
-  setProviderApiKeyLoadingState(provider, false);
 }
 
 // --- Quiz Flow ---

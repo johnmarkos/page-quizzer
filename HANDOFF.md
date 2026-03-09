@@ -1,5 +1,11 @@
 # Handoff
 
+## Update — Post-Merge Provider Key Unlock Fix
+
+- Fixed a panel-only edge case where a failed provider-key storage read during provider switching could leave the API key field and Save/Test controls disabled until the panel reloaded.
+- `handleProviderChange()` now releases the loading lock in a `finally` block only for the still-current provider request, preserving the stale-request guard.
+- Verification: `npm test`, `npm run build`.
+
 ## Update — S5 Per-Provider API Keys
 
 - Added provider-specific API key storage via `apiKey_<provider>` keys.
