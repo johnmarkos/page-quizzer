@@ -6,6 +6,7 @@ import { STORAGE_KEYS, providerApiKeyStorageKey } from '../shared/constants.js';
 import { buildOriginPermissionPattern } from '../shared/site-access.js';
 import { buildHistoryExportFilename, serializeHistoryRecords } from './history-export.js';
 import { buildManualGeneratePayload } from './manual-content.js';
+import { shouldApplyLoadedProviderKey } from './provider-api-key.js';
 import { buildQuizExportFilename, buildQuizExportHtml } from './quiz-export.js';
 import { filterSessionsByTopic, getHistoryTopics } from './history-topics.js';
 import { getProviderModels, normalizeProviderModel } from '../providers/provider-models.js';
@@ -57,6 +58,7 @@ let currentTimerSeconds = 0;
 let activeTimerId: number | null = null;
 let activeTimerDeadline = 0;
 let manualInputMode = false;
+let providerApiKeyLoadRequestId = 0;
 let currentResumeDocument: {
   title: string;
   completedCount: number;
@@ -92,8 +94,18 @@ async function handleProviderChange() {
   const provider = providerSelect.value as ProviderName;
   renderModelOptions(provider, modelSelect.value);
   renderProviderSettingsFields(provider);
-  apiKeyInput.value = await loadSavedProviderApiKey(provider);
   clearConnectionStatus();
+  const requestId = ++providerApiKeyLoadRequestId;
+  const savedApiKey = await loadSavedProviderApiKey(provider);
+  if (!shouldApplyLoadedProviderKey(
+    requestId,
+    providerApiKeyLoadRequestId,
+    provider,
+    providerSelect.value as ProviderName,
+  )) {
+    return;
+  }
+  apiKeyInput.value = savedApiKey;
 }
 
 // --- Quiz Flow ---
