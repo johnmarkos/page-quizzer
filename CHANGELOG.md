@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.1.61 — Readability Pass (2026-03-08)
+
+### Cleanup
+- Added the requested section comments to the large panel, service-worker, content-sectioning, question-quality, and progress-manager files
+- Centralized `countWords()` in `src/shared/text-utils.ts` and rewired the existing PDF, sectioning, manual-input, and selection helpers to use the shared implementation
+- Removed the duplicate export-quiz `cloneProblems()` helper in favor of the shared clone helper from `retry-missed.ts`
+- Renamed the remaining readability offenders in `panel.ts`, including the saved-settings temporary and document-shadowing locals in the library flow
+
+### Testing
+- `npm test`
+- `npm run build`
+
 ## v0.1.60 — Quit Quiz Action (2026-03-08)
 
 ### Quiz Experience

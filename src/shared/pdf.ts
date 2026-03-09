@@ -106,7 +106,3 @@ export function normalizePdfText(text: string): string {
     .replace(/[ \t]{2,}/g, ' ')
     .trim();
 }
-
-export function countWords(text: string): number {
-  return text.split(/\s+/).filter(Boolean).length;
-}

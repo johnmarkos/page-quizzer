@@ -6,13 +6,13 @@ import type {
   TextMarkedContent,
 } from 'pdfjs-dist/types/src/display/api';
 import {
-  countWords,
   derivePdfTitle,
   normalizePdfText,
   resolvePdfUrl,
   textContentToString,
   type PdfMetadata,
 } from '../shared/pdf.js';
+import { countWords } from '../shared/text-utils.js';
 
 const PDF_JS_MODULE_PATH = 'dist/pdfjs.js';
 const PDF_WORKER_PATH = 'dist/pdf.worker.js';

@@ -630,18 +630,18 @@ function showError(message: string) {
 async function loadSettings() {
   const response = await chrome.runtime.sendMessage({ type: 'GET_SETTINGS' });
   if (response?.payload) {
-    const s = response.payload;
-    providerSelect.value = s.provider;
-    renderModelOptions(s.provider, s.model);
-    apiKeyInput.value = s.apiKey;
-    baseUrlInput.value = s.baseUrl || DEFAULT_OLLAMA_BASE_URL;
-    renderProviderSettingsFields(s.provider, s.baseUrl);
-    (document.getElementById('density-slider') as HTMLInputElement).value = String(s.density);
-    ($('density-value') as HTMLElement).textContent = String(s.density);
-    (document.getElementById('max-questions-input') as HTMLInputElement).value = String(s.maxQuestions);
-    currentTimerSeconds = normalizeTimerSeconds(s.timerSeconds);
+    const savedSettings = response.payload;
+    providerSelect.value = savedSettings.provider;
+    renderModelOptions(savedSettings.provider, savedSettings.model);
+    apiKeyInput.value = savedSettings.apiKey;
+    baseUrlInput.value = savedSettings.baseUrl || DEFAULT_OLLAMA_BASE_URL;
+    renderProviderSettingsFields(savedSettings.provider, savedSettings.baseUrl);
+    (document.getElementById('density-slider') as HTMLInputElement).value = String(savedSettings.density);
+    ($('density-value') as HTMLElement).textContent = String(savedSettings.density);
+    (document.getElementById('max-questions-input') as HTMLInputElement).value = String(savedSettings.maxQuestions);
+    currentTimerSeconds = normalizeTimerSeconds(savedSettings.timerSeconds);
     (document.getElementById('timer-select') as HTMLSelectElement).value = String(currentTimerSeconds);
-    setProviderApiKeyLoadingState(s.provider, false);
+    setProviderApiKeyLoadingState(savedSettings.provider, false);
   }
 }
 
@@ -803,6 +803,7 @@ async function fetchSessions(): Promise<SessionRecord[]> {
   return response?.payload || [];
 }
 
+// --- Export ---
 async function exportCurrentQuiz() {
   try {
     const response = await chrome.runtime.sendMessage({ type: 'GET_EXPORT_QUIZ' });
@@ -904,6 +905,7 @@ function hideShortcutHelp() {
   renderShortcutHelp();
 }
 
+// --- Timer ---
 function startQuestionTimer() {
   stopQuestionTimer();
 
@@ -1054,6 +1056,7 @@ function renderReadyState(title: string, count: number, warning?: string) {
   showQuizSection('quiz-ready');
 }
 
+// --- Sections ---
 function renderSectionsState(
   title: string,
   totalWords: number,
@@ -1150,6 +1153,7 @@ async function generateSectionQuiz(sectionIndex: number) {
   }
 }
 
+// --- Document Resume ---
 function renderManualInputMode() {
   const copy = $('idle-mode-copy');
   const toggleBtn = $('toggle-manual-btn') as HTMLButtonElement;
@@ -1271,6 +1275,7 @@ function renderHistory() {
     .join('');
 }
 
+// --- Library ---
 function renderLibrary() {
   const list = $('library-list');
   const empty = $('library-empty');
@@ -1282,18 +1287,18 @@ function renderLibrary() {
   }
 
   hide(empty);
-  list.innerHTML = currentDocuments.map((document, index) => `
+  list.innerHTML = currentDocuments.map((doc, index) => `
     <div class="library-card">
-      <div class="library-title">${escapeHtml(document.title)}</div>
+      <div class="library-title">${escapeHtml(doc.title)}</div>
       <div class="library-meta">
-        ${document.completedCount}/${document.totalCount} sections completed${typeof document.averageScorePercentage === 'number' ? ` • Avg ${document.averageScorePercentage}%` : ''}
+        ${doc.completedCount}/${doc.totalCount} sections completed${typeof doc.averageScorePercentage === 'number' ? ` • Avg ${doc.averageScorePercentage}%` : ''}
       </div>
       <div class="library-next">
-        ${document.allSectionsCompleted
+        ${doc.allSectionsCompleted
           ? 'All sections completed'
-          : `Next section: ${escapeHtml(document.nextSectionTitle ?? `Section ${document.nextSectionIndex! + 1}`)}`}
+          : `Next section: ${escapeHtml(doc.nextSectionTitle ?? `Section ${doc.nextSectionIndex! + 1}`)}`}
       </div>
-      <div class="library-url">${escapeHtml(document.url)}</div>
+      <div class="library-url">${escapeHtml(doc.url)}</div>
       <div class="library-actions">
         <button class="secondary-btn" type="button" data-library-index="${index}">Open Document</button>
       </div>
@@ -1303,9 +1308,9 @@ function renderLibrary() {
   list.querySelectorAll<HTMLButtonElement>('[data-library-index]').forEach((button) => {
     button.addEventListener('click', () => {
       const documentIndex = Number(button.dataset.libraryIndex);
-      const document = currentDocuments[documentIndex];
-      if (document) {
-        void openLibraryDocument(document.url);
+      const selectedDocument = currentDocuments[documentIndex];
+      if (selectedDocument) {
+        void openLibraryDocument(selectedDocument.url);
       }
     });
   });
@@ -1338,6 +1343,7 @@ function renderTopicFilterButton(label: string, topic: string | null, isActive: 
   return `<button class="history-topic-filter${isActive ? ' active' : ''}" type="button" data-topic="${escapeHtml(topic ?? '__all__')}">${escapeHtml(label)}</button>`;
 }
 
+// --- Tab Change Listeners ---
 chrome.tabs.onActivated.addListener(() => {
   void checkRestoredState();
 });

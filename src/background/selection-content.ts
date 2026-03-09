@@ -1,4 +1,5 @@
 import type { ExtractedContent } from '../shared/messages.js';
+import { countWords } from '../shared/text-utils.js';
 
 export function buildSelectionContent(
   selectionText: string,
@@ -29,8 +30,4 @@ export function resolveSelectedText(
   fallbackSelectionText?: string | null,
 ): string {
   return normalizeSelectionText(contentScriptText) || normalizeSelectionText(fallbackSelectionText || '');
-}
-
-function countWords(text: string): number {
-  return text ? text.split(/\s+/).length : 0;
 }

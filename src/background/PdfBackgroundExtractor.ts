@@ -6,13 +6,13 @@ import type {
   PDFDocumentProxy,
 } from 'pdfjs-dist/types/src/display/api';
 import {
-  countWords,
   derivePdfTitle,
   normalizePdfText,
   resolvePdfUrl,
   textContentToString,
   type PdfMetadata,
 } from '../shared/pdf.js';
+import { countWords } from '../shared/text-utils.js';
 import {
   buildLocalPdfAccessError,
   buildLocalPdfReadError,

@@ -1,5 +1,7 @@
 import type { Problem } from '../engine/types.js';
+import { countWords } from '../shared/text-utils.js';
 
+// --- Quality Patterns ---
 const BANNED_OPTION_PATTERNS = [
   /^all of the above$/i,
   /^none of the above$/i,
@@ -45,10 +47,12 @@ const STOPWORDS = new Set([
   'this', 'those', 'to', 'was', 'were', 'what', 'when', 'which', 'who', 'why', 'with',
 ]);
 
+// --- Quality Filter ---
 export function filterLowQualityQuestions(problems: Problem[]): Problem[] {
   return problems.filter((problem) => getQuestionQualityIssues(problem).length === 0);
 }
 
+// --- Issue Detection ---
 export function getQuestionQualityIssues(problem: Problem): string[] {
   const issues: string[] = [];
   const optionTexts = problem.options.map((option) => option.text.trim());
@@ -147,6 +151,7 @@ export function getQuestionQualityIssues(problem: Problem): string[] {
   return issues;
 }
 
+// --- Generation Buffer ---
 export function buildGenerationBuffer(remainingQuestions: number): number {
   if (remainingQuestions <= 1) {
     return 0;
@@ -155,6 +160,7 @@ export function buildGenerationBuffer(remainingQuestions: number): number {
   return Math.min(3, Math.max(1, Math.ceil(remainingQuestions * 0.4)));
 }
 
+// --- Utilities ---
 function normalizeOptionText(text: string): string {
   return text.trim().toLowerCase().replace(/\s+/g, ' ');
 }
@@ -168,10 +174,6 @@ function isFrontMatterQuestion(questionText: string): boolean {
     /\bwho (described|praised|called|endorsed|recommended|wrote)\b/i.test(questionText)
     && /\b(book|volume|text|work)\b/i.test(questionText)
   );
-}
-
-function countWords(text: string): number {
-  return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
 function isSentenceLikeOption(text: string): boolean {
