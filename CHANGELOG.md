@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.1.63 — quizzer-core Problem Adapter (2026-03-08)
+
+### Providers
+- Added `src/providers/quizzer-core-adapter.ts` with pure `toQuizzerCore()` and `fromQuizzerCore()` helpers for converting between PageQuizzer `Problem` objects and quizzer-core multiple-choice problems
+- Added descriptive validation for missing correct answers and out-of-bounds quizzer-core `correct` indexes
+- Kept the adapter defensive and non-mutating so it can be reused during the future engine migration without changing current provider or panel wiring
+
+### Testing
+- Added focused adapter coverage for four-option questions, true/false questions, first/last correct-index handling, round-trips, invalid input errors, and non-mutation guarantees
+- `npm test`
+- `npm run build`
+
 ## v0.1.62 — OpenQuizzer JSON Export (2026-03-08)
 
 ### Data & History
