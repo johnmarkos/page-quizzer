@@ -10,6 +10,10 @@ import {
   resolveDisplayedProviderApiKey,
   shouldApplyLoadedProviderKey,
 } from './provider-api-key.js';
+import {
+  buildOpenQuizzerExportFilename,
+  convertToOpenQuizzerFormat,
+} from './openquizzer-export.js';
 import { buildQuizExportFilename, buildQuizExportHtml } from './quiz-export.js';
 import { filterSessionsByTopic, getHistoryTopics } from './history-topics.js';
 import { getProviderModels, normalizeProviderModel } from '../providers/provider-models.js';
@@ -374,6 +378,14 @@ $('export-ready-quiz-btn').addEventListener('click', () => {
 
 $('export-complete-quiz-btn').addEventListener('click', () => {
   void exportCurrentQuiz();
+});
+
+$('export-openquizzer-ready-btn').addEventListener('click', () => {
+  void exportAsOpenQuizzer();
+});
+
+$('export-openquizzer-complete-btn').addEventListener('click', () => {
+  void exportAsOpenQuizzer();
 });
 
 $('review-back-btn').addEventListener('click', () => {
@@ -822,6 +834,32 @@ async function exportCurrentQuiz() {
     const link = document.createElement('a');
     link.href = url;
     link.download = buildQuizExportFilename(response.payload.title);
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  } catch (err) {
+    showError(err instanceof Error ? err.message : 'Failed to export quiz');
+  }
+}
+
+async function exportAsOpenQuizzer() {
+  try {
+    const response = await chrome.runtime.sendMessage({ type: 'GET_EXPORT_QUIZ' });
+    if (response?.type === 'QUIZ_ERROR') {
+      showError(response.payload.error);
+      return;
+    }
+
+    if (response?.type !== 'EXPORT_QUIZ_DATA') {
+      throw new Error('Failed to export quiz');
+    }
+
+    const chapter = convertToOpenQuizzerFormat(response.payload);
+    const json = JSON.stringify(chapter, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = buildOpenQuizzerExportFilename(response.payload.title);
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   } catch (err) {
