@@ -6,7 +6,10 @@ import { STORAGE_KEYS, providerApiKeyStorageKey } from '../shared/constants.js';
 import { buildOriginPermissionPattern } from '../shared/site-access.js';
 import { buildHistoryExportFilename, serializeHistoryRecords } from './history-export.js';
 import { buildManualGeneratePayload } from './manual-content.js';
-import { shouldApplyLoadedProviderKey } from './provider-api-key.js';
+import {
+  resolveDisplayedProviderApiKey,
+  shouldApplyLoadedProviderKey,
+} from './provider-api-key.js';
 import { buildQuizExportFilename, buildQuizExportHtml } from './quiz-export.js';
 import { filterSessionsByTopic, getHistoryTopics } from './history-topics.js';
 import { getProviderModels, normalizeProviderModel } from '../providers/provider-models.js';
@@ -618,20 +621,11 @@ async function loadSavedProviderApiKey(provider: ProviderName): Promise<string> 
   const storageKey = providerApiKeyStorageKey(provider);
   const local = await chrome.storage.local.get([STORAGE_KEYS.API_KEY, storageKey]);
   const hasStoredProviderApiKey = Object.prototype.hasOwnProperty.call(local, storageKey);
-  if (hasStoredProviderApiKey) {
-    const stored = local[storageKey];
-    return typeof stored === 'string' ? stored : '';
-  }
-
-  if (!Object.prototype.hasOwnProperty.call(local, STORAGE_KEYS.API_KEY)) {
-    return '';
-  }
-
-  const legacyApiKey = local[STORAGE_KEYS.API_KEY];
-  const migratedApiKey = typeof legacyApiKey === 'string' ? legacyApiKey : '';
-  await chrome.storage.local.set({ [storageKey]: migratedApiKey });
-  await chrome.storage.local.remove(STORAGE_KEYS.API_KEY);
-  return migratedApiKey;
+  return resolveDisplayedProviderApiKey(
+    local[storageKey],
+    local[STORAGE_KEYS.API_KEY],
+    hasStoredProviderApiKey,
+  );
 }
 
 $('density-slider').addEventListener('input', (e) => {
