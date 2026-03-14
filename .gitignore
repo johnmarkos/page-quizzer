@@ -144,3 +144,10 @@ CODEX-HANDOFF.md
 HANDOFF.md
 TASK-*.md
 TASK.md
+
+# Scratch directory (working files, not committed)
+.scratch/
+
+# Packaging artifacts
+pagequizzer-*.zip
+.package-stage/
