@@ -91,6 +91,16 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [x] **S5: Per-provider API keys** — Store API keys per provider in `chrome.storage.local` (e.g., `apiKey_anthropic`, `apiKey_openai`, `apiKey_gemini`). When switching providers in Settings, load that provider's saved key instead of keeping the previous provider's key in the field. Update `StorageManager.getSettings()` to return the active provider's key. Update `Settings` type, `STORAGE_KEYS` constants, panel settings UI, and `connection-settings.ts`. Migration: on first run with new schema, move existing `apiKey` value to the key for whichever provider is currently selected. Test: unit test StorageManager migration logic; manual test switching providers preserves keys.
 
+### Chrome Web Store Readiness
+
+- [x] **CWS-ICONS: Extension icons** — Create 16/48/128px PNG icons, wire into `manifest.json` `icons` and `action.default_icon`. Task spec: `.scratch/TASK-CWS-ICONS.md`.
+- [ ] **CWS-PACKAGE: Packaging script + version bump** — Add `npm run package` to produce a `.zip` for CWS upload. Bump version to `1.0.0` in both `manifest.json` and `package.json`. Task spec: `.scratch/TASK-CWS-PACKAGE.md`.
+- [ ] **CWS-PRIVACY: Privacy policy** — Create `docs/privacy.html` for CWS listing. Covers data handling, API key storage, no-telemetry pledge, third-party LLM provider links. Task spec: `.scratch/TASK-CWS-PRIVACY.md`.
+
+### Content & Extraction (remaining)
+
+- [ ] **C3: OpenQuizzer detection** — Wire `OpenQuizzerDetector` into content script. On page load, run detection. If detected, show "Load native quiz" badge in panel. Task spec: `TASK-QC1.md` (existing, pending).
+
 ## Future — Needs Design
 
 These need architectural decisions before implementation. Flag for staff review.

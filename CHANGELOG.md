@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.1.64 — Chrome Web Store Icons (2026-03-14)
+
+### Chrome Web Store Readiness
+- Added `scripts/generate-icons.js`, a dependency-free Node script that renders the extension icon as valid PNG files using a small built-in PNG encoder
+- Generated and checked in `icons/icon-16.png`, `icons/icon-48.png`, and `icons/icon-128.png` for the toolbar, extensions page, and Chrome Web Store listing
+- Wired `manifest.json` `icons` and `action.default_icon` to the generated assets so the unpacked extension and store package use the same icon set
+
+### Testing
+- Verified the generated assets are valid PNG files at 16x16, 48x48, and 128x128
+- `npm test`
+- `npm run build`
+
 ## v0.1.63 — quizzer-core Problem Adapter (2026-03-08)
 
 ### Providers
