@@ -80,4 +80,9 @@ function reportPackage() {
   console.log(`\nPackaged: ${relative(root, outputFile)} (${(sizeBytes / 1024).toFixed(1)} KB)`);
 }
 
-main();
+try {
+  main();
+} catch (error) {
+  console.error(error.message || error);
+  process.exitCode = 1;
+}
