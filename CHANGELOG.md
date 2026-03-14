@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.0.0 — Chrome Web Store Release Prep (2026-03-14)
+
+### Chrome Web Store Readiness
+- Bumped version to 1.0.0 in both `manifest.json` and `package.json`
+- Added `npm run package` script that builds the extension and produces a clean `pagequizzer-1.0.0.zip` for Chrome Web Store upload
+- The zip includes only runtime files: manifest, built JS bundles (no source maps), panel HTML/CSS, and icons
+
+### Testing
+- `npm test`
+- `npm run build`
+- `npm run package`
+
 ## v0.1.64 — Chrome Web Store Icons (2026-03-14)
 
 ### Chrome Web Store Readiness

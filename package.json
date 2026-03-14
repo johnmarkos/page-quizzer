@@ -1,13 +1,14 @@
 {
   "name": "page-quizzer",
-  "version": "0.1.57",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "node esbuild.config.js",
     "build:watch": "node esbuild.config.js --watch",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "package": "node scripts/package.js"
   },
   "devDependencies": {
     "esbuild": "^0.24.0",
