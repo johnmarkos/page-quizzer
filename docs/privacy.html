@@ -151,8 +151,8 @@
       </ul>
       <p>
         PageQuizzer also uses <code>chrome.storage.sync</code> for non-sensitive settings. These include your selected provider,
-        selected model, timer duration, question count, and related quiz preferences such as question density. If you use Ollama,
-        the configured base URL is also synced as a setting. API keys, page URLs, quiz content, browsing history, and progress data
+        selected model, timer duration, question count, and related quiz preferences such as question density.
+        The configured base URL is also synced as a setting. API keys, page URLs, quiz content, browsing history, and progress data
         are not synced across devices.
       </p>
     </section>
@@ -160,7 +160,7 @@
     <section>
       <h2>Data Sent Externally</h2>
       <p>
-        When you generate a quiz, PageQuizzer sends the extracted page text to the AI provider you selected so it can create quiz questions.
+        When you generate a quiz, PageQuizzer sends the extracted page text to the AI provider you selected so it can create quiz questions and categorize the content by topic.
         The extension also sends that provider's API key in the request headers when the provider requires one.
       </p>
       <ul>
