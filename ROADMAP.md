@@ -95,7 +95,7 @@ For long content (books, papers, lengthy documentation), PageQuizzer should segm
 
 - [x] **CWS-ICONS: Extension icons** — Create 16/48/128px PNG icons, wire into `manifest.json` `icons` and `action.default_icon`. Task spec: `.scratch/TASK-CWS-ICONS.md`.
 - [x] **CWS-PACKAGE: Packaging script + version bump** — Add `npm run package` to produce a `.zip` for CWS upload. Bump version to `1.0.0` in both `manifest.json` and `package.json`. Task spec: `.scratch/TASK-CWS-PACKAGE.md`.
-- [ ] **CWS-PRIVACY: Privacy policy** — Create `docs/privacy.html` for CWS listing. Covers data handling, API key storage, no-telemetry pledge, third-party LLM provider links. Task spec: `.scratch/TASK-CWS-PRIVACY.md`.
+- [x] **CWS-PRIVACY: Privacy policy** — Create `docs/privacy.html` for CWS listing. Covers data handling, API key storage, no-telemetry pledge, third-party LLM provider links. Task spec: `.scratch/TASK-CWS-PRIVACY.md`.
 
 ### Content & Extraction (remaining)
 

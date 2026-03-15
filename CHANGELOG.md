@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.1 — Privacy Policy (2026-03-15)
+
+### Chrome Web Store Readiness
+- Added `docs/privacy.html` - self-contained privacy policy page for Chrome Web Store listing
+- Covers data storage, external transmission to LLM providers, permissions, and data deletion
+
 ## v1.0.0 — Chrome Web Store Release Prep (2026-03-14)
 
 ### Chrome Web Store Readiness

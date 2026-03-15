@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PageQuizzer - Privacy Policy</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page-bg: #f7f4ec;
+      --card-bg: #fffdfa;
+      --text: #2d241d;
+      --muted: #6d6259;
+      --border: #dbcdbd;
+      --accent: #0f766e;
+      --accent-soft: #dff3ef;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(15, 118, 110, 0.12), transparent 28rem),
+        linear-gradient(180deg, #fbf7ef 0%, var(--page-bg) 100%);
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 2rem 1rem 3rem;
+    }
+
+    .hero,
+    section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 18px 40px rgba(45, 36, 29, 0.06);
+    }
+
+    .hero {
+      padding: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    section {
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    h1,
+    h2 {
+      line-height: 1.2;
+      margin: 0 0 0.75rem;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 2.6rem);
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+    }
+
+    p,
+    li {
+      margin: 0 0 0.85rem;
+    }
+
+    ul {
+      padding-left: 1.25rem;
+      margin: 0;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      background: #f1ece4;
+      border-radius: 6px;
+      padding: 0.08rem 0.3rem;
+    }
+
+    a {
+      color: var(--accent);
+    }
+
+    a:hover {
+      color: #115e59;
+    }
+
+    .updated {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 0;
+    }
+
+    .callout {
+      background: var(--accent-soft);
+      border-left: 4px solid var(--accent);
+      border-radius: 12px;
+      padding: 0.9rem 1rem;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 480px) {
+      main {
+        padding: 1rem 0.75rem 2rem;
+      }
+
+      .hero,
+      section {
+        border-radius: 14px;
+        padding: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <h1>PageQuizzer Privacy Policy</h1>
+      <p class="updated">Last updated: March 15, 2026</p>
+      <div class="callout">
+        PageQuizzer generates quiz questions from pages you choose to study. The extension is local-first: it stores quiz data in your browser and only sends page text to the AI provider you configure for quiz generation.
+      </div>
+    </header>
+
+    <section>
+      <h2>Overview</h2>
+      <p>
+        PageQuizzer is a Chrome extension that turns web pages, PDFs, pasted text, and selected text into practice quizzes.
+        It stores your quiz state locally in Chrome storage and does not run analytics, ads, or background data collection.
+      </p>
+    </section>
+
+    <section>
+      <h2>Data Collected and Stored</h2>
+      <p>PageQuizzer stores the following data in <code>chrome.storage.local</code> on your device:</p>
+      <ul>
+        <li>API keys for Anthropic, OpenAI, and Google Gemini. Ollama does not require an API key.</li>
+        <li>Quiz history, including source URLs, quiz scores, timestamps, and topic tags</li>
+        <li>Document progress for long-form content, including which sections you have already quizzed</li>
+        <li>Per-question performance data, tracked by a content hash so the extension can remember how often a question was seen or answered correctly</li>
+        <li>In-progress quiz state for each browser tab</li>
+      </ul>
+      <p>
+        PageQuizzer also uses <code>chrome.storage.sync</code> for non-sensitive settings. These include your selected provider,
+        selected model, timer duration, question count, and related quiz preferences such as question density. If you use Ollama,
+        the configured base URL is also synced as a setting. API keys, page URLs, quiz content, browsing history, and progress data
+        are not synced across devices.
+      </p>
+    </section>
+
+    <section>
+      <h2>Data Sent Externally</h2>
+      <p>
+        When you generate a quiz, PageQuizzer sends the extracted page text to the AI provider you selected so it can create quiz questions.
+        The extension also sends that provider's API key in the request headers when the provider requires one.
+      </p>
+      <ul>
+        <li><a href="https://www.anthropic.com/privacy">Anthropic privacy policy</a> - used when you choose Anthropic</li>
+        <li><a href="https://openai.com/privacy">OpenAI privacy policy</a> - used when you choose OpenAI</li>
+        <li><a href="https://policies.google.com/privacy">Google privacy policy</a> - used when you choose Google Gemini</li>
+        <li>Ollama - self-hosted by you. Requests go to your configured Ollama server, which defaults to <code>http://localhost:11434</code>.</li>
+      </ul>
+      <p>No other network requests are made by the extension. There is no analytics, telemetry, or tracking service.</p>
+    </section>
+
+    <section>
+      <h2>Data NOT Collected</h2>
+      <ul>
+        <li>No user accounts or authentication</li>
+        <li>No analytics or telemetry</li>
+        <li>No crash reporting</li>
+        <li>No advertising or ad networks</li>
+        <li>No sale of personal data</li>
+        <li>No sharing of your data with third parties beyond the AI provider you choose for quiz generation</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Permissions</h2>
+      <ul>
+        <li><code>sidePanel</code> - shows the PageQuizzer interface in Chrome's side panel</li>
+        <li><code>activeTab</code> - reads the currently active page when you ask the extension to create a quiz</li>
+        <li><code>storage</code> - saves settings, API keys, quiz history, progress, and in-progress quiz state locally</li>
+        <li><code>scripting</code> - injects the content extraction script into pages you choose to quiz</li>
+        <li><code>tabs</code> - keeps quiz sessions scoped to the correct browser tab</li>
+        <li><code>contextMenus</code> - adds the "Quiz this selection" right-click menu item</li>
+        <li>Optional host permissions for <code>http://*/*</code> and <code>https://*/*</code> - requested per site so PageQuizzer can extract content from pages you choose to study</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Data Deletion</h2>
+      <ul>
+        <li>Uninstalling the extension removes PageQuizzer data stored by the extension.</li>
+        <li>You can clear quiz history from the History view inside the extension.</li>
+        <li>You can export quiz history as JSON before clearing it.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Open Source</h2>
+      <p>
+        PageQuizzer is open source and released under the MIT License.
+        Source code is available at
+        <a href="https://github.com/johnmarkos/page-quizzer">github.com/johnmarkos/page-quizzer</a>.
+      </p>
+    </section>
+
+    <section>
+      <h2>Contact</h2>
+      <p>
+        If you have questions about this policy or the extension, please open an issue at
+        <a href="https://github.com/johnmarkos/page-quizzer/issues">the PageQuizzer GitHub repository</a>.
+      </p>
+    </section>
+
+    <section>
+      <h2>Changes to This Policy</h2>
+      <p>
+        If this privacy policy changes, the updated version will be posted on this page with a revised "Last updated" date.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
