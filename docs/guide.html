@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Getting Started with PageQuizzer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page-bg: #f7f4ec;
+      --card-bg: #fffdfa;
+      --text: #2d241d;
+      --muted: #6d6259;
+      --border: #dbcdbd;
+      --accent: #0f766e;
+      --accent-soft: #dff3ef;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(15, 118, 110, 0.12), transparent 28rem),
+        linear-gradient(180deg, #fbf7ef 0%, var(--page-bg) 100%);
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 2rem 1rem 3rem;
+    }
+
+    .hero,
+    section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 18px 40px rgba(45, 36, 29, 0.06);
+    }
+
+    .hero {
+      padding: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    section {
+      padding: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    h1,
+    h2 {
+      line-height: 1.2;
+      margin: 0 0 0.75rem;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 2.6rem);
+      letter-spacing: -0.03em;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+    }
+
+    p,
+    li {
+      margin: 0 0 0.85rem;
+    }
+
+    ol {
+      padding-left: 1.25rem;
+      margin: 0;
+    }
+
+    ul {
+      padding-left: 1.25rem;
+      margin: 0;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      background: #f1ece4;
+      border-radius: 6px;
+      padding: 0.08rem 0.3rem;
+    }
+
+    a {
+      color: var(--accent);
+    }
+
+    a:hover {
+      color: #115e59;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.05rem;
+      margin-bottom: 0;
+    }
+
+    .callout {
+      background: var(--accent-soft);
+      border-left: 4px solid var(--accent);
+      border-radius: 12px;
+      padding: 0.9rem 1rem;
+      margin-top: 1rem;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0;
+    }
+
+    strong {
+      color: var(--text);
+    }
+
+    @media (max-width: 480px) {
+      main {
+        padding: 1rem 0.75rem 2rem;
+      }
+
+      .hero,
+      section {
+        border-radius: 14px;
+        padding: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <h1>Getting Started with PageQuizzer</h1>
+      <p class="subtitle">A guide for people who don't know what an API key is (yet)</p>
+      <div class="callout">
+        PageQuizzer turns any web page into a quiz. You read something, click a button, and answer questions about it. That's it.
+        The quiz questions are written by AI &mdash; specifically, Google's Gemini, which you can use <strong>for free</strong> with no credit card required. You just need to get a key that lets PageQuizzer talk to it. This guide walks you through that in about five minutes.
+      </div>
+    </header>
+
+    <section>
+      <h2>Step 1: Install PageQuizzer</h2>
+      <ol>
+        <li>Go to the <a href="https://chromewebstore.google.com/detail/pagequizzer/gfnlfbkdhdmpdpahbdokpdeglnefmpnb">PageQuizzer page on the Chrome Web Store</a></li>
+        <li>Click <strong>Add to Chrome</strong></li>
+        <li>Click <strong>Add extension</strong> when prompted</li>
+      </ol>
+      <p>You'll see the PageQuizzer icon appear in your browser toolbar (top right). You may need to click the puzzle piece icon and pin it.</p>
+    </section>
+
+    <section>
+      <h2>Step 2: Get your free Gemini API key</h2>
+      <p>This is the only technical part. An "API key" is just a password that lets PageQuizzer use Google's AI on your behalf. Google gives these out for free.</p>
+      <ol>
+        <li>Go to <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a></li>
+        <li>Sign in with your Google account</li>
+        <li>Click <strong>Create API key</strong></li>
+        <li>Click <strong>Create API key in new project</strong></li>
+        <li>A long string of letters and numbers will appear &mdash; that's your key. Click the <strong>copy</strong> button next to it.</li>
+      </ol>
+      <p>Keep this tab open, or paste the key somewhere safe temporarily. You'll use it in the next step.</p>
+    </section>
+
+    <section>
+      <h2>Step 3: Add your key to PageQuizzer</h2>
+      <ol>
+        <li>Click the PageQuizzer icon in your Chrome toolbar</li>
+        <li>Click the <strong>Settings</strong> gear icon</li>
+        <li>Under <strong>AI Provider</strong>, select <strong>Google Gemini</strong></li>
+        <li>Paste your key into the <strong>API Key</strong> field</li>
+        <li>Click <strong>Save</strong></li>
+      </ol>
+      <p>You're done. You only have to do this once.</p>
+    </section>
+
+    <section>
+      <h2>Step 4: Quiz something</h2>
+      <ol>
+        <li>Go to any article or web page you want to learn from</li>
+        <li>Click the PageQuizzer icon</li>
+        <li>Click <strong>Generate Quiz</strong></li>
+        <li>Answer the questions</li>
+      </ol>
+      <p>That's the whole thing.</p>
+    </section>
+
+    <section>
+      <h2>FAQ</h2>
+      <p><strong>Is it really free?</strong><br>
+        Yes. Google's free tier is generous for casual use. You'd have to quiz dozens of long articles every day before hitting any limits.</p>
+      <p><strong>Is it safe?</strong><br>
+        Your API key is stored only in your browser. PageQuizzer never sends it anywhere except directly to Google. No accounts, no tracking.</p>
+      <p><strong>What if something doesn't work?</strong><br>
+        File an issue at <a href="https://github.com/johnmarkos/page-quizzer/issues">github.com/johnmarkos/page-quizzer/issues</a>.</p>
+    </section>
+
+    <section>
+      <p style="margin-bottom: 0; color: var(--muted); font-size: 0.9rem;">
+        <a href="privacy.html">Privacy Policy</a> &middot;
+        <a href="https://github.com/johnmarkos/page-quizzer">Source Code</a>
+      </p>
+    </section>
+  </main>
+</body>
+</html>
